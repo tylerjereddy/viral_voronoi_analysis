@@ -165,4 +165,23 @@ class radial_distance_assessment:
             axis.set_title(title_string)
 
         self.matplotlib_figure_object.set_size_inches(16,24)
-    
+
+def TMD_particle_selector(input_array,molecule_type):
+    '''selects the TMD coordinate elements from the input array and combines to a simplified new numpy array with TMD particle coordinates only.'''
+    if molecule_type == 'lipid':
+        output_array = input_array #still using the COG of the entire lipid
+    elif molecule_type == 'HA': #the index numbers are based on study of topology combined with Danny's DPhil thesis
+        HA_1_TMD_numpy_array = input_array[1110:1174] 
+        HA_2_TMD_numpy_array = input_array[2305:2369]
+        HA_3_TMD_numpy_array = input_array[3500:3564]
+        output_array = numpy.concatenate((HA_1_TMD_numpy_array,HA_2_TMD_numpy_array,HA_3_TMD_numpy_array))
+    elif molecule_type == 'NA':
+        NA_1_TMD_numpy_array = input_array[13:70]
+        NA_2_TMD_numpy_array = input_array[1037:1094]
+        NA_3_TMD_numpy_array = input_array[2059:2116]
+        NA_4_TMD_numpy_array = input_array[3083:3140]
+        output_array = numpy.concatenate((NA_1_TMD_numpy_array,NA_2_TMD_numpy_array,NA_3_TMD_numpy_array,NA_4_TMD_numpy_array))
+    elif molecule_type == 'M2':
+        output_array = input_array #this protein doesn't really have an ectodomain so I think it is quite acceptable to continue with usage of the overall COG
+    return output_array
+
