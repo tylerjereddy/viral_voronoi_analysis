@@ -25,14 +25,14 @@ def calculate_surface_area_sphere(radius):
 
 def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data):
     plot_number = 1
-    color_list = ['black','blue','green','red','purple']
+    color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange'}
     for current_voronoi_index in list_Voronoi_indices:
         ax = matplotlib_figure_object.add_subplot(1,4,plot_number,projection='3d')
         index = 0
         list_residue_names = []
         for residue_name, subdictionary in dict_data.iteritems():
             list_Voronoi_cell_vertex_arrays = subdictionary[dict_key_Voronoi_data][current_voronoi_index]
-            color = color_list[index]
+            color = color_dict[residue_name]
             for vertex_array in list_Voronoi_cell_vertex_arrays:
                 polygon = Poly3DCollection([vertex_array/10.],alpha=1.0) #convert to nm
                 polygon.set_color(color)
@@ -46,12 +46,8 @@ def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,d
         ax.set_xlabel('x (nm)')
         ax.set_ylabel('y (nm)')
         ax.set_zlabel('z (nm)')
-        POPS_legend_object = Rectangle((0, 0), 1, 1, fc="black")
-        DOPE_legend_object = Rectangle((0, 0), 1, 1, fc="blue")
-        CHOL_legend_object = Rectangle((0, 0), 1, 1, fc="green")
-        PPCH_legend_object = Rectangle((0, 0), 1, 1, fc="red")
-        DOPX_legend_object = Rectangle((0, 0), 1, 1, fc="purple")
-        ax.legend([POPS_legend_object,DOPE_legend_object,CHOL_legend_object,PPCH_legend_object,DOPX_legend_object],list_residue_names,loc=2,prop={'size':8})
+        list_legend_objects = [Rectangle((0, 0), 1, 1, fc=color_dict[residue_name]) for residue_name in list_residue_names]
+        ax.legend(list_legend_objects,list_residue_names,loc=2,prop={'size':8})
         plot_number += 1
     matplotlib_figure_object.set_size_inches(24,6)
 
