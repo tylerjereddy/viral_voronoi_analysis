@@ -51,6 +51,43 @@ def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,d
         plot_number += 1
     matplotlib_figure_object.set_size_inches(24,6)
 
+def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data):
+    plot_number = 1
+    color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange'}
+    for current_voronoi_index in list_Voronoi_indices:
+        ax = matplotlib_figure_object.add_subplot(1,4,plot_number,projection='3d')
+        index = 0
+        list_residue_names = []
+        for residue_name, subdictionary in dict_data.iteritems():
+            list_Voronoi_cell_vertex_arrays = subdictionary[dict_key_Voronoi_data][current_voronoi_index]
+            color = color_dict[residue_name]
+            for vertex_array in list_Voronoi_cell_vertex_arrays:
+                if numpy.abs(vertex_array[...,1:]).max() > 99: #filter beyond zoom limit
+                    continue
+                if vertex_array[...,0].max() < 0: #filter beyond zoom limit
+                    continue
+                polygon = Poly3DCollection([vertex_array/10.],alpha=1.0) #convert to nm
+                polygon.set_color(color)
+                polygon.set_edgecolor('black')
+                ax.add_collection3d(polygon)
+            list_residue_names.append(residue_name)
+            index += 1
+        ax.set_title('~{time} $\mu$s ({title})'.format(time=plot_number,title=plot_title))
+        #it is proving tricky to place labels and ticks in this 3D zoom-in workflow
+        #ax.text(-10,0,0,'x (nm)',fontsize=60)
+        #ax.set_xlabel('x (nm)')
+        ax.set_ylabel('y (nm)')
+        ax.set_zlabel('z (nm)')
+        list_legend_objects = [Rectangle((0, 0), 1, 1, fc=color_dict[residue_name]) for residue_name in list_residue_names]
+        #ax.legend(list_legend_objects,list_residue_names,loc=2,prop={'size':8})
+        ax.set_xlim(0,40);
+        ax.set_ylim(-10,10);ax.set_zlim(-10,10);
+        ax.w_xaxis.set_ticklabels([''])
+        ax.azim = 0
+        ax.elev = 0
+        plot_number += 1
+    matplotlib_figure_object.set_size_inches(24,6)
+
 class radial_distance_assessment:
 
     def __init__(self,matplotlib_figure_object,list_min_PPCH_PO4_distances,list_max_PPCH_PO4_distances,list_average_PPCH_PO4_distances,list_std_dev_PPCH_PO4_distances,list_frame_numbers,list_PPCH_percent_above_threshold,list_min_CHOL_ROH_distances,list_max_CHOL_ROH_distances,list_average_CHOL_ROH_distances,list_std_dev_CHOL_ROH_distances,list_CHOL_ROH_midpoint_distances,list_CHOL_ROH_percent_above_threshold,list_CHOL_ROH_percent_below_threshold,list_min_remaining_headgroup_distances,list_max_remaining_headgroup_distances,list_average_remaining_headgroup_distances,list_std_dev_remaining_headgroup_distances,list_remaining_headgroup_midpoint_distances,list_remaining_headgroup_percent_above_threshold,list_remaining_headgroup_percent_below_threshold,PPCH_threshold):
