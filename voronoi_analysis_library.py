@@ -7,6 +7,8 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib.patches import Rectangle
 import sys; sys.path.append('/sansom/sc2/bioc1009/github_projects/spherical_Voronoi/py_sphere_Voronoi')
 import voronoi_utility
+sys.path.append('/sansom/sc2/bioc1009/python_scripts/matplotlib_scripts')
+import multicore_vesicle_virion_analysis
 
 def sum_Voronoi_cell_surface_areas(start_index,end_index,dictionary_voronoi_polygon_surface_areas):
     sum_protein_Voronoi_cell_surface_areas = 0
@@ -422,4 +424,19 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
         return (list_frame_numbers,list_percent_surface_area_reconstitution_from_lipids_only,list_percent_surface_area_reconstitution_from_proteins_only,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet,dictionary_headgroup_data)
     else:
         return (list_frame_numbers,list_percent_surface_area_reconstitution,list_percent_surface_area_reconstitution_inner_leaflet,dictionary_headgroup_data)
+
+
+def produce_universe_object_on_remote_engine(data_path_1 = None,data_path_2 = None,limit_1=None,limit_2=None,limit_3=None,limit_4 = None,coordinate_filepath=None,traj_data_extension=None):
+    '''For loading MDA universe object on a remote engine.'''
+    import multicore_vesicle_virion_analysis
+    import MDAnalysis
+    import numpy
+    import scipy
+    import math 
+    #produce a list of trajectory files:
+    list_trajectories_compact_no_solvent = sorted(multicore_vesicle_virion_analysis.produce_list_trajectories(data_path_1,'*no_solvent*xtc'),key= lambda file_string: int(file_string[limit_1:limit_2].replace('_',''))) #sort by file name part number
+    if traj_data_extension: #extend the list of trajectories, if applicable
+        list_trajectories_compact_no_solvent.extend(sorted(multicore_vesicle_virion_analysis.produce_list_trajectories(data_path_2,'*no_solvent*xtc'),key= lambda file_string: int(file_string[limit_3:limit_4])))
+    universe_object = MDAnalysis.Universe(coordinate_filepath,list_trajectories_compact_no_solvent) 
+    return universe_object
 
