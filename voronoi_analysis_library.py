@@ -429,7 +429,7 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
         return (list_frame_numbers,list_percent_surface_area_reconstitution,list_percent_surface_area_reconstitution_inner_leaflet,dictionary_headgroup_data)
 
 
-def produce_universe_object_on_remote_engine(data_path_1 = None,data_path_2 = None,limit_1=None,limit_2=None,limit_3=None,limit_4 = None,coordinate_filepath=None,traj_data_extension=None):
+def produce_universe_object_on_remote_engine(data_path_1 = None,data_path_2 = None,limit_1=None,limit_2=None,limit_3=None,limit_4 = None,coordinate_filepath=None,traj_data_extension=None,traj_data_extension_with_replace=None):
     '''For loading MDA universe object on a remote engine.'''
     import multicore_vesicle_virion_analysis
     import MDAnalysis
@@ -440,6 +440,8 @@ def produce_universe_object_on_remote_engine(data_path_1 = None,data_path_2 = No
     list_trajectories_compact_no_solvent = sorted(multicore_vesicle_virion_analysis.produce_list_trajectories(data_path_1,'*no_solvent*xtc'),key= lambda file_string: int(file_string[limit_1:limit_2].replace('_',''))) #sort by file name part number
     if traj_data_extension: #extend the list of trajectories, if applicable
         list_trajectories_compact_no_solvent.extend(sorted(multicore_vesicle_virion_analysis.produce_list_trajectories(data_path_2,'*no_solvent*xtc'),key= lambda file_string: int(file_string[limit_3:limit_4])))
+    elif traj_data_extension_with_replace: #in some cases have to use the different format with replacement method
+        list_trajectories_compact_no_solvent.extend(sorted(multicore_vesicle_virion_analysis.produce_list_trajectories(data_path_2,'*no_solvent*xtc'),key= lambda file_string: int(file_string[limit_3:limit_4].replace('_',''))))
     universe_object = MDAnalysis.Universe(coordinate_filepath,list_trajectories_compact_no_solvent) 
     return universe_object
 
