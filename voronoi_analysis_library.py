@@ -445,3 +445,110 @@ def produce_universe_object_on_remote_engine(data_path_1 = None,data_path_2 = No
     universe_object = MDAnalysis.Universe(coordinate_filepath,list_trajectories_compact_no_solvent) 
     return universe_object
 
+def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_surface_area_reconstitution=None,list_percent_surface_area_reconstitution_inner_leaflet=None,protein_present=None,simulation_title=None,dictionary_headgroup_data=None,list_percent_surface_area_reconstitution_from_lipids_only=None,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet=None,list_percent_surface_area_reconstitution_from_proteins_only=None,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet=None):
+    if not protein_present:
+        ax = figure_object.add_subplot('131')
+        array_time_values = numpy.array(list_frame_numbers) / 10000. #microseconds
+        array_percent_surface_area_reconstitution = numpy.array(list_percent_surface_area_reconstitution)
+        ax.scatter(array_time_values,array_percent_surface_area_reconstitution,c='black',edgecolor='None',label='outer leaflet')
+        array_percent_surface_area_reconstitution_inner_leaflet = numpy.array(list_percent_surface_area_reconstitution_inner_leaflet)
+        ax.scatter(array_time_values,array_percent_surface_area_reconstitution_inner_leaflet,c='red',edgecolor='None',label='inner leaflet')
+        ax.set_ylim(90,101)
+        ax.set_xlim(0,5)
+        ax.legend(loc=4)
+        ax.set_ylabel('Percent surface area reconstitution\n from Voronoi cells')
+        ax.set_xlabel('Time ($\mu$s)')
+        ax.set_title(simulation_title)
+
+        ax2 = figure_object.add_subplot('132')
+        color_list = ['black','blue','green','red','purple','orange']
+        index = 0
+        for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
+            color = color_list[index]
+            array_voronoi_cell_areas = numpy.array(subdictionary['voronoi_cell_avg_values_list'])
+            array_voronoi_cell_std_dev = numpy.array(subdictionary['voronoi_cell_std_values_list'])
+            ax2.scatter(array_time_values,array_voronoi_cell_areas,label=residue_name,edgecolor='None',color=color)
+            #ax2.fill_between(array_frame_numbers,array_voronoi_cell_areas-array_voronoi_cell_std_dev,array_voronoi_cell_areas+array_voronoi_cell_std_dev,color=color,alpha=0.2) 
+            index += 1
+#ax2.legend(loc=4)
+        ax2.set_ylabel('Average area per lipid ($\AA^2$)')
+        ax2.set_xlim(0,5)
+        ax2.set_xlabel('Time ($\mu$s)')
+        ax2.set_title(simulation_title + ' outer leaflet')
+        ax2.set_ylim(34,54)
+
+        ax4 = figure_object.add_subplot('133')
+        index = 0
+        for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
+            color = color_list[index]
+            array_voronoi_cell_areas = numpy.array(subdictionary['voronoi_cell_avg_values_list_inner_leaflet'])
+            array_voronoi_cell_std_dev = numpy.array(subdictionary['voronoi_cell_std_values_list_inner_leaflet'])
+            ax4.scatter(array_time_values,array_voronoi_cell_areas,label=residue_name,edgecolor='None',color=color)
+            #ax2.fill_between(array_frame_numbers,array_voronoi_cell_areas-array_voronoi_cell_std_dev,array_voronoi_cell_areas+array_voronoi_cell_std_dev,color=color,alpha=0.2) 
+            index += 1
+        ax4.legend()
+        ax4.set_ylabel('Average area per lipid ($\AA^2$)')
+        ax4.set_xlim(0,5)
+        ax4.set_xlabel('Time ($\mu$s)')
+        ax4.set_title(simulation_title + ' inner leaflet')
+        ax4.set_ylim(34,54)
+
+        figure_object.set_size_inches(15,4)
+
+    else: #protein is present
+        ax_1 = figure_object.add_subplot('131')
+        array_time_values = numpy.array(list_frame_numbers) / 10000. #microseconds
+        array_percent_surface_area_reconstitution_lipid_outer_leaflet = numpy.array(list_percent_surface_area_reconstitution_from_lipids_only)
+        array_percent_surface_area_reconstitution_lipid_inner_leaflet = numpy.array(list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet)
+        array_percent_surface_area_reconstitution_protein_outer_leaflet = numpy.array(list_percent_surface_area_reconstitution_from_proteins_only)
+        array_percent_surface_area_reconstitution_protein_inner_leaflet = numpy.array(list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet)
+        combined_percent_reconstitution_array_outer_leaflet = array_percent_surface_area_reconstitution_lipid_outer_leaflet + array_percent_surface_area_reconstitution_protein_outer_leaflet
+        combined_percent_reconstitution_array_inner_leaflet = array_percent_surface_area_reconstitution_lipid_inner_leaflet + array_percent_surface_area_reconstitution_protein_inner_leaflet
+
+        ax_1.scatter(array_time_values,array_percent_surface_area_reconstitution_lipid_outer_leaflet,c='black',edgecolor='None',label='lipid outer',marker='o')
+        ax_1.scatter(array_time_values,array_percent_surface_area_reconstitution_protein_outer_leaflet,c='black',edgecolor='None',label='protein outer',marker='^')
+        ax_1.scatter(array_time_values,combined_percent_reconstitution_array_outer_leaflet,c='black',edgecolor='None',label='combined outer',marker='*',s=50)
+        ax_1.scatter(array_time_values,array_percent_surface_area_reconstitution_lipid_inner_leaflet,c='red',edgecolor='None',label='lipid inner',marker='o',alpha=0.5)
+        ax_1.scatter(array_time_values,array_percent_surface_area_reconstitution_protein_inner_leaflet,c='red',edgecolor='None',label='protein inner',marker='^',alpha=0.5)
+        ax_1.scatter(array_time_values,combined_percent_reconstitution_array_inner_leaflet,c='red',edgecolor='None',label='combined inner',marker='*',s=50,alpha=0.5)
+        ax_1.set_ylim(-10,110)
+        ax_1.set_xlim(0,5)
+        ax_1.set_ylabel('Percent surface area reconstitution\n from Voronoi cells')
+        ax_1.set_xlabel('Time ($\mu$s)')
+        ax_1.legend(loc=0,bbox_to_anchor=[1.0, 0.5],ncol=2,fontsize=8)
+        ax_1.set_title(simulation_title)
+
+        ax_2 = figure_object.add_subplot('132')
+        color_list = ['black','blue','green','red','purple','orange']
+        index = 0
+        for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
+            color = color_list[index]
+            array_voronoi_cell_areas = numpy.array(subdictionary['voronoi_cell_avg_values_list'])
+            array_voronoi_cell_std_dev = numpy.array(subdictionary['voronoi_cell_std_values_list'])
+            ax_2.scatter(array_time_values,array_voronoi_cell_areas,label=residue_name,edgecolor='None',color=color)
+            index += 1
+#ax_2.legend(loc=1)
+        ax_2.set_ylabel('Average area per molecule ($\AA^2$)')
+        ax_2.set_xlim(0,5)
+        ax_2.set_xlabel('Time ($\mu$s)')
+        ax_2.set_title(simulation_title + ' outer leaflet')
+        ax_2.set_ylim(20,200)
+#ax_2.set_ylim(34,54)
+
+        ax_4 = figure_object.add_subplot('133')
+        index = 0
+        for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
+            color = color_list[index]
+            array_voronoi_cell_areas = numpy.array(subdictionary['voronoi_cell_avg_values_list_inner_leaflet'])
+            array_voronoi_cell_std_dev = numpy.array(subdictionary['voronoi_cell_std_values_list_inner_leaflet'])
+            ax_4.scatter(array_time_values,array_voronoi_cell_areas,label=residue_name,edgecolor='None',color=color)
+            index += 1
+        ax_4.legend(loc=0)
+        ax_4.set_ylabel('Average area per molecule ($\AA^2$)')
+        ax_4.set_xlim(0,5)
+        ax_4.set_ylim(20,200)
+        ax_4.set_xlabel('Time ($\mu$s)')
+        ax_4.set_title(simulation_title + ' inner leaflet')
+#ax_4.set_ylim(34,54)
+
+        figure_object.set_size_inches(15,4)
