@@ -446,6 +446,7 @@ def produce_universe_object_on_remote_engine(data_path_1 = None,data_path_2 = No
     return universe_object
 
 def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_surface_area_reconstitution=None,list_percent_surface_area_reconstitution_inner_leaflet=None,protein_present=None,simulation_title=None,dictionary_headgroup_data=None,list_percent_surface_area_reconstitution_from_lipids_only=None,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet=None,list_percent_surface_area_reconstitution_from_proteins_only=None,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet=None):
+    color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange'}
     if not protein_present:
         ax = figure_object.add_subplot('131')
         array_time_values = numpy.array(list_frame_numbers) / 10000. #microseconds
@@ -464,7 +465,7 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         color_list = ['black','blue','green','red','purple','orange']
         index = 0
         for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
-            color = color_list[index]
+            color = color_dict[residue_name]
             array_voronoi_cell_areas = numpy.array(subdictionary['voronoi_cell_avg_values_list'])
             array_voronoi_cell_std_dev = numpy.array(subdictionary['voronoi_cell_std_values_list'])
             ax2.scatter(array_time_values,array_voronoi_cell_areas,label=residue_name,edgecolor='None',color=color)
@@ -480,7 +481,7 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         ax4 = figure_object.add_subplot('133')
         index = 0
         for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
-            color = color_list[index]
+            color = color_dict[residue_name]
             array_voronoi_cell_areas = numpy.array(subdictionary['voronoi_cell_avg_values_list_inner_leaflet'])
             array_voronoi_cell_std_dev = numpy.array(subdictionary['voronoi_cell_std_values_list_inner_leaflet'])
             ax4.scatter(array_time_values,array_voronoi_cell_areas,label=residue_name,edgecolor='None',color=color)
@@ -519,10 +520,9 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         ax_1.set_title(simulation_title)
 
         ax_2 = figure_object.add_subplot('132')
-        color_list = ['black','blue','green','red','purple','orange']
         index = 0
         for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
-            color = color_list[index]
+            color = color_dict[residue_name]
             array_voronoi_cell_areas = numpy.array(subdictionary['voronoi_cell_avg_values_list'])
             array_voronoi_cell_std_dev = numpy.array(subdictionary['voronoi_cell_std_values_list'])
             ax_2.scatter(array_time_values,array_voronoi_cell_areas,label=residue_name,edgecolor='None',color=color)
@@ -538,7 +538,7 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         ax_4 = figure_object.add_subplot('133')
         index = 0
         for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
-            color = color_list[index]
+            color = color_dict[residue_name]
             array_voronoi_cell_areas = numpy.array(subdictionary['voronoi_cell_avg_values_list_inner_leaflet'])
             array_voronoi_cell_std_dev = numpy.array(subdictionary['voronoi_cell_std_values_list_inner_leaflet'])
             ax_4.scatter(array_time_values,array_voronoi_cell_areas,label=residue_name,edgecolor='None',color=color)
