@@ -233,22 +233,24 @@ def TMD_particle_selector(input_array,molecule_type):
         output_array = input_array #this protein doesn't really have an ectodomain so I think it is quite acceptable to continue with usage of the overall COG
     return output_array
 
-def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value,PPCH_PO4_threshold=285,proteins_present='no'):
+def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value,PPCH_PO4_threshold=285,proteins_present='no',FORS_present='no'):
     '''Generalization of the large Voronoi analysis loop so that I can easily expand my ipynb analysis to include all flu simulation replicates / conditions.'''
-    #using very sparse (every 1000th frame) parsing because of poor speed / performance at the moment
-
     #selections:
     PPCH_PO4_selection = universe_object.selectAtoms('resname PPCH and name PO4')
+    FORS_AM2_selection = universe_object.selectAtoms('resname FORS and name AM2')
     PPCH_PO4_threshold = PPCH_PO4_threshold #28.5 nm cutoff for outer leaflet assignment (see above)
     CHOL_ROH_selection = universe_object.selectAtoms('resname CHOL and name ROH')
     DOPX_PO4_selection = universe_object.selectAtoms('resname DOPX and name PO4')
     DOPE_PO4_selection = universe_object.selectAtoms('resname DOPE and name PO4')
     POPS_PO4_selection = universe_object.selectAtoms('resname POPS and name PO4')
     combined_selection_DOPE_DOPX_POPS_PO4 = DOPX_PO4_selection + DOPE_PO4_selection + POPS_PO4_selection
-    all_lipid_selection = universe_object.selectAtoms('resname PPCH or resname CHOL or resname POPS or resname DOPX or resname DOPE')
+    all_lipid_selection = universe_object.selectAtoms('resname PPCH or resname CHOL or resname POPS or resname DOPX or resname DOPE or resname FORS')
     if proteins_present == 'yes':
         all_protein_selection = universe_object.selectAtoms('bynum 1:344388')
-        dictionary_headgroup_data = {'PPCH':{'selection':PPCH_PO4_selection},'CHOL':{'selection':CHOL_ROH_selection},'DOPX':{'selection':DOPX_PO4_selection},'DOPE':{'selection':DOPE_PO4_selection},'POPS':{'selection':POPS_PO4_selection},'protein':{'selection':all_protein_selection}}
+        if FORS_present == 'no':
+            dictionary_headgroup_data = {'PPCH':{'selection':PPCH_PO4_selection},'CHOL':{'selection':CHOL_ROH_selection},'DOPX':{'selection':DOPX_PO4_selection},'DOPE':{'selection':DOPE_PO4_selection},'POPS':{'selection':POPS_PO4_selection},'protein':{'selection':all_protein_selection}}
+        else:
+            dictionary_headgroup_data = {'PPCH':{'selection':PPCH_PO4_selection},'CHOL':{'selection':CHOL_ROH_selection},'DOPX':{'selection':DOPX_PO4_selection},'DOPE':{'selection':DOPE_PO4_selection},'POPS':{'selection':POPS_PO4_selection},'protein':{'selection':all_protein_selection},'FORS':{'selection':FORS_AM2_selection}}
         #for virion simulation I want to assess the amount of surface area occupied by protein and lipid separately (can always sum together later to get the overall total)
         list_percent_surface_area_reconstitution_from_lipids_only = [] #outer leaflet
         list_percent_surface_area_reconstitution_from_proteins_only = [] #outer leaflet
@@ -296,7 +298,7 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
             current_headgroup_coordinate_array -= lipid_centroid #center at origin
             current_headgroup_spherical_polar_coord_array = voronoi_utility.convert_cartesian_array_to_spherical_array(current_headgroup_coordinate_array)
             #perform the necessary filtering and projection based on residue type
-            if residue_name == 'PPCH':
+            if residue_name == 'PPCH' or residue_name == 'FORS':
                 outer_leaflet_spherical_coord_array = current_headgroup_spherical_polar_coord_array[current_headgroup_spherical_polar_coord_array[...,0] > PPCH_PO4_threshold]
                 outer_leaflet_spherical_coord_array[...,0] = outer_leaflet_projection_radius
                 inner_leaflet_spherical_coord_array = current_headgroup_spherical_polar_coord_array[current_headgroup_spherical_polar_coord_array[...,0] < PPCH_PO4_threshold]
@@ -446,7 +448,7 @@ def produce_universe_object_on_remote_engine(data_path_1 = None,data_path_2 = No
     return universe_object
 
 def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_surface_area_reconstitution=None,list_percent_surface_area_reconstitution_inner_leaflet=None,protein_present=None,simulation_title=None,dictionary_headgroup_data=None,list_percent_surface_area_reconstitution_from_lipids_only=None,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet=None,list_percent_surface_area_reconstitution_from_proteins_only=None,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet=None):
-    color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange'}
+    color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
     if not protein_present:
         ax = figure_object.add_subplot('131')
         array_time_values = numpy.array(list_frame_numbers) / 10000. #microseconds
@@ -462,7 +464,6 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         ax.set_title(simulation_title)
 
         ax2 = figure_object.add_subplot('132')
-        color_list = ['black','blue','green','red','purple','orange']
         index = 0
         for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
             color = color_dict[residue_name]
