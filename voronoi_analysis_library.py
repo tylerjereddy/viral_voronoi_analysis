@@ -114,6 +114,8 @@ class radial_distance_assessment:
         self.array_max_PPCH_PO4_radial_distances = numpy.array(list_max_PPCH_PO4_distances) / 10.0 #convert to nm
         self.array_average_PPCH_PO4_radial_distances = numpy.array(list_average_PPCH_PO4_distances) / 10.0 #convert to nm
         self.array_std_dev_PPCH_PO4_radial_distances = numpy.array(list_std_dev_PPCH_PO4_distances) / 10.0 #convert to nm
+        #debug -- there appear to be too many values in list_PPCH_percent_above_threshold when working with FORS-inclusive sims (#38/39)?
+        print 'len(list_PPCH_percent_above_threshold):', len(list_PPCH_percent_above_threshold)
         self.array_percent_PPCH_PO4_above_threshold = numpy.array(list_PPCH_percent_above_threshold)
         #CHOL data initialization:
         self.array_min_CHOL_ROH_radial_distances = numpy.array(list_min_CHOL_ROH_distances)/ 10.
@@ -151,6 +153,7 @@ class radial_distance_assessment:
         ax.set_ylim(20,45)
         ax.set_xlim(-900,50000)
         ax2 = self.matplotlib_figure_object.add_subplot('322')
+        print 'self.array_frame_numbers.shape:', self.array_frame_numbers.shape, 'self.array_percent_PPCH_PO4_above_threshold.shape:', self.array_percent_PPCH_PO4_above_threshold.shape #debug
         ax2.scatter(self.array_frame_numbers,self.array_percent_PPCH_PO4_above_threshold,color='orange',edgecolor='None')
         ax2.set_xlabel('Frame #')
         ax2.set_ylabel('Percent PPCH PO4 particles above cutoff\n radial distance threshold')
@@ -635,7 +638,7 @@ def precursor_radial_distance_analysis(universe_object,FORS_present=None):
             std_dev_FORS_AM2_radial_distance = numpy.std(spherical_polar_FORS_AM2_coordinates[...,0])
             number_of_FORS_AM2_radial_distances_above_threshold = (spherical_polar_FORS_AM2_coordinates[...,0] > threshold).sum()
             percent_FORS_AM2_above_treshold = float(number_of_FORS_AM2_radial_distances_above_threshold) / float(total_FORS_AM2_particles) * 100.
-            list_PPCH_percent_above_treshold.append(percent_FORS_AM2_above_treshold)
+            list_FORS_percent_above_treshold.append(percent_FORS_AM2_above_treshold)
             list_min_FORS_AM2_distances.append(minimum_FORS_AM2_radial_distance)
             list_max_FORS_AM2_distances.append(maximum_FORS_AM2_radial_distance)
             list_average_FORS_AM2_distances.append(average_FORS_AM2_radial_distance)
