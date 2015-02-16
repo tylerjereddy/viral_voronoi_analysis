@@ -553,3 +553,135 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
 #ax_4.set_ylim(34,54)
 
         figure_object.set_size_inches(15,4)
+
+def precursor_radial_distance_analysis(universe_object,FORS_present=None):
+    '''This function should parse out the necessary precursor data for the radial_distance_assessment class above. Ideally, should operate remotely on an IPython engine to allow for an asychronous parallel workflow with each replicate (universe object) analyzed simultaneously on a different core.'''
+    PPCH_PO4_selection = universe_object.selectAtoms('resname PPCH and name PO4')
+    FORS_AM2_selection = universe_object.selectAtoms('resname FORS and name AM2')
+    CHOL_ROH_selection = universe_object.selectAtoms('resname CHOL and name ROH')
+    remaining_headgroup_selection = universe_object.selectAtoms('(resname DOPE or resname DOPX or resname POPS) and name PO4')
+    total_PPCH_PO4_particles = PPCH_PO4_selection.numberOfAtoms()
+    total_FORS_AM2_particles = FORS_AM2_selection.numberOfAtoms()
+    total_CHOL_ROH_particles = CHOL_ROH_selection.numberOfAtoms()
+    total_remaining_particles = remaining_headgroup_selection.numberOfAtoms()
+    threshold = 285 #28.5 nm threshold for outer leaflet PPCH PO4 (currently testing)
+    all_lipid_selection = universe_object.selectAtoms('resname PPCH or resname CHOL or resname POPS or resname DOPX or resname DOPE or resname FORS')
+
+    list_min_PPCH_PO4_distances = []
+    list_max_PPCH_PO4_distances = []
+    list_average_PPCH_PO4_distances = []
+    list_std_dev_PPCH_PO4_distances = []
+    list_frame_numbers = []
+    list_PPCH_percent_above_treshold = []
+
+    list_min_FORS_AM2_distances = []
+    list_max_FORS_AM2_distances = []
+    list_average_FORS_AM2_distances = []
+    list_std_dev_FORS_AM2_distances = []
+    list_frame_numbers = []
+    list_FORS_percent_above_treshold = []
+
+    list_min_CHOL_ROH_distances = []
+    list_max_CHOL_ROH_distances = []
+    list_average_CHOL_ROH_distances = []
+    list_std_dev_CHOL_ROH_distances = []
+    list_CHOL_ROH_midpoint_distances = []
+    list_CHOL_ROH_percent_above_threshold = []
+    list_CHOL_ROH_percent_below_threshold = []
+
+    list_min_remaining_headgroup_distances = []
+    list_max_remaining_headgroup_distances = []
+    list_average_remaining_headgroup_distances = []
+    list_std_dev_remaining_headgroup_distances = []
+    list_remaining_headgroup_midpoint_distances = []
+    list_remaining_headgroup_percent_above_threshold = []
+    list_remaining_headgroup_percent_below_threshold = []
+
+    for ts in universe_object.trajectory[::100]: #every 100th frame (roughly every 10 ns)
+        PPCH_PO4_coordinates = PPCH_PO4_selection.coordinates()
+        if FORS_present:
+            FORS_AM2_coordinates = FORS_AM2_selection.coordinates()
+        CHOL_ROH_coordinates = CHOL_ROH_selection.coordinates()
+        remaining_headgroup_coordinates = remaining_headgroup_selection.coordinates()
+        all_lipid_centroid = all_lipid_selection.centroid()
+        PPCH_PO4_coordinates -= all_lipid_centroid #place the centroid of the vesicle at the origin
+        if FORS_present:
+            FORS_AM2_coordinates -= all_lipid_centroid
+        CHOL_ROH_coordinates -= all_lipid_centroid #place the centroid of the vesicle at the origin
+        remaining_headgroup_coordinates -= all_lipid_centroid
+        spherical_polar_PPCH_PO4_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(PPCH_PO4_coordinates)
+        if FORS_present:
+            spherical_polar_FORS_AM2_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(FORS_AM2_coordinates)
+        spherical_polar_CHOL_ROH_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(CHOL_ROH_coordinates)
+        spherical_polar_remaining_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(remaining_headgroup_coordinates)
+        #determine the minimum and maximum and average radial distance so I get an idea of leaflet distribution for PPCH PO4
+        minimum_PPCH_PO4_radial_distance = spherical_polar_PPCH_PO4_coordinates[...,0].min()
+        maximum_PPCH_PO4_radial_distance = spherical_polar_PPCH_PO4_coordinates[...,0].max()
+        average_PPCH_PO4_radial_distance = numpy.average(spherical_polar_PPCH_PO4_coordinates[...,0])
+        std_dev_PPCH_PO4_radial_distance = numpy.std(spherical_polar_PPCH_PO4_coordinates[...,0])
+        number_of_PPCH_PO4_radial_distances_above_threshold = (spherical_polar_PPCH_PO4_coordinates[...,0] > threshold).sum()
+        percent_PPCH_PO4_above_treshold = float(number_of_PPCH_PO4_radial_distances_above_threshold) / float(total_PPCH_PO4_particles) * 100.
+        list_PPCH_percent_above_treshold.append(percent_PPCH_PO4_above_treshold)
+        list_min_PPCH_PO4_distances.append(minimum_PPCH_PO4_radial_distance)
+        list_max_PPCH_PO4_distances.append(maximum_PPCH_PO4_radial_distance)
+        list_average_PPCH_PO4_distances.append(average_PPCH_PO4_radial_distance)
+        list_std_dev_PPCH_PO4_distances.append(std_dev_PPCH_PO4_radial_distance)
+        #since I'm currently applying the same cutoff threshold for FORS in the analysis proper, treat FORS AM2 the same way as PPCH PO4 (I think this may actually be problematic, but check the results first)
+        #determine the minimum and maximum and average radial distance so I get an idea of leaflet distribution for PPCH PO4
+        if FORS_present:
+            minimum_FORS_AM2_radial_distance = spherical_polar_FORS_AM2_coordinates[...,0].min()
+            maximum_FORS_AM2_radial_distance = spherical_polar_FORS_AM2_coordinates[...,0].max()
+            average_FORS_AM2_radial_distance = numpy.average(spherical_polar_FORS_AM2_coordinates[...,0])
+            std_dev_FORS_AM2_radial_distance = numpy.std(spherical_polar_FORS_AM2_coordinates[...,0])
+            number_of_FORS_AM2_radial_distances_above_threshold = (spherical_polar_FORS_AM2_coordinates[...,0] > threshold).sum()
+            percent_FORS_AM2_above_treshold = float(number_of_FORS_AM2_radial_distances_above_threshold) / float(total_FORS_AM2_particles) * 100.
+            list_PPCH_percent_above_treshold.append(percent_FORS_AM2_above_treshold)
+            list_min_FORS_AM2_distances.append(minimum_FORS_AM2_radial_distance)
+            list_max_FORS_AM2_distances.append(maximum_FORS_AM2_radial_distance)
+            list_average_FORS_AM2_distances.append(average_FORS_AM2_radial_distance)
+            list_std_dev_FORS_AM2_distances.append(std_dev_FORS_AM2_radial_distance)
+        #similarly for CHOL ROH
+        minimum_CHOL_ROH_radial_distance = spherical_polar_CHOL_ROH_coordinates[...,0].min()
+        #maximum_CHOL_ROH_radial_distance = spherical_polar_CHOL_ROH_coordinates[...,0].max()
+        maximum_CHOL_ROH_radial_distance = numpy.sort(spherical_polar_CHOL_ROH_coordinates[...,0])[-2] #it seems we have a CHOL floater for part of the simulation so avoid that one
+        midpoint_CHOL_ROH_radial_distance = numpy.average(numpy.array([minimum_CHOL_ROH_radial_distance,maximum_CHOL_ROH_radial_distance])) #unbiased midpoint for CHOL for upper / lower leaflet cutoff
+        average_CHOL_ROH_radial_distance = numpy.average(spherical_polar_CHOL_ROH_coordinates[...,0])
+        std_dev_CHOL_ROH_radial_distance = numpy.std(spherical_polar_CHOL_ROH_coordinates[...,0])
+        list_min_CHOL_ROH_distances.append(minimum_CHOL_ROH_radial_distance)
+        list_max_CHOL_ROH_distances.append(maximum_CHOL_ROH_radial_distance)
+        list_average_CHOL_ROH_distances.append(average_CHOL_ROH_radial_distance)
+        list_std_dev_CHOL_ROH_distances.append(std_dev_CHOL_ROH_radial_distance)
+        list_CHOL_ROH_midpoint_distances.append(midpoint_CHOL_ROH_radial_distance)
+        #for CHOL the threshold will be the unbiased midpoint
+        number_of_CHOL_ROH_radial_distances_above_threshold = (spherical_polar_CHOL_ROH_coordinates[...,0] > midpoint_CHOL_ROH_radial_distance).sum()
+        number_of_CHOL_ROH_radial_distances_below_threshold = (spherical_polar_CHOL_ROH_coordinates[...,0] < midpoint_CHOL_ROH_radial_distance).sum()
+        percent_CHOL_ROH_above_treshold = float(number_of_CHOL_ROH_radial_distances_above_threshold) / float(total_CHOL_ROH_particles) * 100.
+        percent_CHOL_ROH_below_treshold = float(number_of_CHOL_ROH_radial_distances_below_threshold) / float(total_CHOL_ROH_particles) * 100.
+        list_CHOL_ROH_percent_above_threshold.append(percent_CHOL_ROH_above_treshold)
+        list_CHOL_ROH_percent_below_threshold.append(percent_CHOL_ROH_below_treshold)
+        #similarly for the remaining headgroup particles (for DOPE/X and POPS)
+        minimum_remaining_headgroup_radial_distance = spherical_polar_remaining_coordinates[...,0].min()
+        maximum_remaining_headgroup_radial_distance = numpy.sort(spherical_polar_remaining_coordinates[...,0])[-2] #dealing with floater(s)
+        midpoint_remaining_headgroup_radial_distance = numpy.average(numpy.array([minimum_remaining_headgroup_radial_distance,maximum_remaining_headgroup_radial_distance])) #unbiased midpoint for upper / lower leaflet cutoff
+        average_remaining_headgroup_radial_distance = numpy.average(spherical_polar_remaining_coordinates[...,0])
+        std_dev_remaining_headgroup_radial_distance = numpy.std(spherical_polar_remaining_coordinates[...,0])
+        number_of_remaining_headgroup_radial_distances_above_threshold = (spherical_polar_remaining_coordinates[...,0] > midpoint_remaining_headgroup_radial_distance).sum()
+        number_of_remaining_headgroup_radial_distances_below_threshold = (spherical_polar_remaining_coordinates[...,0] < midpoint_remaining_headgroup_radial_distance).sum()
+        percent_remaining_headgroup_above_threshold = float(number_of_remaining_headgroup_radial_distances_above_threshold) / float(total_remaining_particles) * 100.
+        percent_remaining_headgroup_below_threshold = float(number_of_remaining_headgroup_radial_distances_below_threshold) / float(total_remaining_particles) * 100.
+        list_min_remaining_headgroup_distances.append(minimum_remaining_headgroup_radial_distance)
+        list_max_remaining_headgroup_distances.append(maximum_remaining_headgroup_radial_distance)
+        list_average_remaining_headgroup_distances.append(average_remaining_headgroup_radial_distance)
+        list_std_dev_remaining_headgroup_distances.append(std_dev_remaining_headgroup_radial_distance)
+        list_remaining_headgroup_midpoint_distances.append(midpoint_remaining_headgroup_radial_distance)
+        list_remaining_headgroup_percent_above_threshold.append(percent_remaining_headgroup_above_threshold)
+        list_remaining_headgroup_percent_below_threshold.append(percent_remaining_headgroup_below_threshold)
+        
+        
+        frame_number = ts.frame
+        list_frame_numbers.append(frame_number)
+
+    if not FORS_present:
+        return (list_min_PPCH_PO4_distances,list_max_PPCH_PO4_distances,list_average_PPCH_PO4_distances,list_std_dev_PPCH_PO4_distances,list_frame_numbers,list_PPCH_percent_above_treshold,list_min_CHOL_ROH_distances,list_max_CHOL_ROH_distances,list_average_CHOL_ROH_distances,list_std_dev_CHOL_ROH_distances,list_CHOL_ROH_midpoint_distances,list_CHOL_ROH_percent_above_threshold,list_CHOL_ROH_percent_below_threshold,list_min_remaining_headgroup_distances,list_max_remaining_headgroup_distances,list_average_remaining_headgroup_distances,list_std_dev_remaining_headgroup_distances,list_remaining_headgroup_midpoint_distances,list_remaining_headgroup_percent_above_threshold,list_remaining_headgroup_percent_below_threshold,threshold)
+    else:
+        return (list_min_FORS_AM2_distances,list_max_FORS_AM2_distances,list_average_FORS_AM2_distances,list_std_dev_FORS_AM2_distances,list_frame_numbers,list_FORS_percent_above_treshold,list_min_PPCH_PO4_distances,list_max_PPCH_PO4_distances,list_average_PPCH_PO4_distances,list_std_dev_PPCH_PO4_distances,list_PPCH_percent_above_treshold,list_min_CHOL_ROH_distances,list_max_CHOL_ROH_distances,list_average_CHOL_ROH_distances,list_std_dev_CHOL_ROH_distances,list_CHOL_ROH_midpoint_distances,list_CHOL_ROH_percent_above_threshold,list_CHOL_ROH_percent_below_threshold,list_min_remaining_headgroup_distances,list_max_remaining_headgroup_distances,list_average_remaining_headgroup_distances,list_std_dev_remaining_headgroup_distances,list_remaining_headgroup_midpoint_distances,list_remaining_headgroup_percent_above_threshold,list_remaining_headgroup_percent_below_threshold,threshold)
