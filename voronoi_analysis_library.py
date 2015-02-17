@@ -105,18 +105,24 @@ def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indi
 
 class radial_distance_assessment:
 
-    def __init__(self,matplotlib_figure_object,list_min_PPCH_PO4_distances,list_max_PPCH_PO4_distances,list_average_PPCH_PO4_distances,list_std_dev_PPCH_PO4_distances,list_frame_numbers,list_PPCH_percent_above_threshold,list_min_CHOL_ROH_distances,list_max_CHOL_ROH_distances,list_average_CHOL_ROH_distances,list_std_dev_CHOL_ROH_distances,list_CHOL_ROH_midpoint_distances,list_CHOL_ROH_percent_above_threshold,list_CHOL_ROH_percent_below_threshold,list_min_remaining_headgroup_distances,list_max_remaining_headgroup_distances,list_average_remaining_headgroup_distances,list_std_dev_remaining_headgroup_distances,list_remaining_headgroup_midpoint_distances,list_remaining_headgroup_percent_above_threshold,list_remaining_headgroup_percent_below_threshold,PPCH_threshold):
+    def __init__(self,matplotlib_figure_object,list_min_PPCH_PO4_distances,list_max_PPCH_PO4_distances,list_average_PPCH_PO4_distances,list_std_dev_PPCH_PO4_distances,list_frame_numbers,list_PPCH_percent_above_threshold,list_min_CHOL_ROH_distances,list_max_CHOL_ROH_distances,list_average_CHOL_ROH_distances,list_std_dev_CHOL_ROH_distances,list_CHOL_ROH_midpoint_distances,list_CHOL_ROH_percent_above_threshold,list_CHOL_ROH_percent_below_threshold,list_min_remaining_headgroup_distances,list_max_remaining_headgroup_distances,list_average_remaining_headgroup_distances,list_std_dev_remaining_headgroup_distances,list_remaining_headgroup_midpoint_distances,list_remaining_headgroup_percent_above_threshold,list_remaining_headgroup_percent_below_threshold,PPCH_threshold,list_min_FORS_AM2_distances=None,list_max_FORS_AM2_distances=None,list_average_FORS_AM2_distances=None,list_std_dev_FORS_AM2_distances=None,list_FORS_percent_above_treshold=None,FORS_present=None):
 
         self.matplotlib_figure_object = matplotlib_figure_object
         self.threshold = PPCH_threshold
+        self.FORS_present = FORS_present
         #PPCH data initialization:
         self.array_min_PPCH_PO4_radial_distances = numpy.array(list_min_PPCH_PO4_distances) / 10.0 #convert to nm
         self.array_max_PPCH_PO4_radial_distances = numpy.array(list_max_PPCH_PO4_distances) / 10.0 #convert to nm
         self.array_average_PPCH_PO4_radial_distances = numpy.array(list_average_PPCH_PO4_distances) / 10.0 #convert to nm
         self.array_std_dev_PPCH_PO4_radial_distances = numpy.array(list_std_dev_PPCH_PO4_distances) / 10.0 #convert to nm
-        #debug -- there appear to be too many values in list_PPCH_percent_above_threshold when working with FORS-inclusive sims (#38/39)?
-        print 'len(list_PPCH_percent_above_threshold):', len(list_PPCH_percent_above_threshold)
         self.array_percent_PPCH_PO4_above_threshold = numpy.array(list_PPCH_percent_above_threshold)
+        if self.FORS_present:
+            #FORS data initialization:
+            self.array_min_FORS_AM2_radial_distances = numpy.array(list_min_FORS_AM2_distances) / 10.0 #convert to nm
+            self.array_max_FORS_AM2_radial_distances = numpy.array(list_max_FORS_AM2_distances) / 10.0 #convert to nm
+            self.array_average_FORS_AM2_radial_distances = numpy.array(list_average_FORS_AM2_distances) / 10.0 #convert to nm
+            self.array_std_dev_FORS_AM2_radial_distances = numpy.array(list_std_dev_FORS_AM2_distances) / 10.0 #convert to nm
+            self.array_percent_FORS_AM2_above_threshold = numpy.array(list_FORS_percent_above_treshold)
         #CHOL data initialization:
         self.array_min_CHOL_ROH_radial_distances = numpy.array(list_min_CHOL_ROH_distances)/ 10.
         self.array_max_CHOL_ROH_radial_distances = numpy.array(list_max_CHOL_ROH_distances)/ 10.
@@ -138,7 +144,7 @@ class radial_distance_assessment:
 
     def plot(self,title_string,equil_line=None):
         '''Plot the radial distance assessment data.'''
-        ax = self.matplotlib_figure_object.add_subplot('321')
+        ax = self.matplotlib_figure_object.add_subplot('421')
         ax.scatter(self.array_frame_numbers,self.array_min_PPCH_PO4_radial_distances,label='min PPCH PO4 radial distance',c='black',edgecolor='None')
         ax.scatter(self.array_frame_numbers,self.array_max_PPCH_PO4_radial_distances,label='max PPCH PO4 radial distance',c='red',edgecolor='None')
         ax.scatter(self.array_frame_numbers,self.array_average_PPCH_PO4_radial_distances,label='average PPCH PO4 radial distance',c='blue',edgecolor='None')
@@ -152,8 +158,8 @@ class radial_distance_assessment:
 #now, use a second plot to track the % of PPCH PO4 particles that fall above the assigned radial distance threshold
         ax.set_ylim(20,45)
         ax.set_xlim(-900,50000)
-        ax2 = self.matplotlib_figure_object.add_subplot('322')
-        print 'self.array_frame_numbers.shape:', self.array_frame_numbers.shape, 'self.array_percent_PPCH_PO4_above_threshold.shape:', self.array_percent_PPCH_PO4_above_threshold.shape #debug
+        ax2 = self.matplotlib_figure_object.add_subplot('422')
+        #print 'self.array_frame_numbers.shape:', self.array_frame_numbers.shape, 'self.array_percent_PPCH_PO4_above_threshold.shape:', self.array_percent_PPCH_PO4_above_threshold.shape #debug
         ax2.scatter(self.array_frame_numbers,self.array_percent_PPCH_PO4_above_threshold,color='orange',edgecolor='None')
         ax2.set_xlabel('Frame #')
         ax2.set_ylabel('Percent PPCH PO4 particles above cutoff\n radial distance threshold')
@@ -165,7 +171,7 @@ class radial_distance_assessment:
 
 #now, CHOL-related plots in the second row
 
-        ax3 = self.matplotlib_figure_object.add_subplot('323')
+        ax3 = self.matplotlib_figure_object.add_subplot('423')
         ax3.scatter(self.array_frame_numbers,self.array_min_CHOL_ROH_radial_distances,label='min CHOL ROH radial distance',c='black',edgecolor='None')
         ax3.scatter(self.array_frame_numbers,self.array_max_CHOL_ROH_radial_distances,label='max CHOL ROH radial distance',c='red',edgecolor='None')
         ax3.scatter(self.array_frame_numbers,self.array_average_CHOL_ROH_radial_distances,label='average CHOL ROH radial distance',c='blue',edgecolor='None')
@@ -178,7 +184,7 @@ class radial_distance_assessment:
         ax3.set_xlabel('Frame #')
         ax3.set_ylabel('Radial distance from vesicle centroid (nm)')
         ax3.legend()
-        ax4 = self.matplotlib_figure_object.add_subplot('324')
+        ax4 = self.matplotlib_figure_object.add_subplot('424')
         ax4.scatter(self.array_frame_numbers,self.array_CHOL_ROH_percent_above_midpoint_threshold,label='above midpoint',color='orange')
         ax4.scatter(self.array_frame_numbers,self.array_CHOL_ROH_percent_below_midpoint_threshold,label='below midpoint',color='blue')
         if equil_line:
@@ -189,7 +195,7 @@ class radial_distance_assessment:
         ax4.legend()
 
 
-        ax5 = self.matplotlib_figure_object.add_subplot('325')
+        ax5 = self.matplotlib_figure_object.add_subplot('425')
         ax5.scatter(self.array_frame_numbers,self.array_min_remaining_headgroup_radial_distances,label='min [DOPE/X, POPS] PO4 radial distance',c='black',edgecolor='None')
         ax5.scatter(self.array_frame_numbers,self.array_max_remaining_headgroup_radial_distances,label='max [DOPE/X, POPS] PO4 radial distance',c='red',edgecolor='None')
         ax5.scatter(self.array_frame_numbers,self.array_average_remaining_headgroup_radial_distances,label='average [DOPE/X, POPS] PO4 radial distance',c='blue',edgecolor='None')
@@ -202,7 +208,7 @@ class radial_distance_assessment:
             ax5.axvline(x=3000,ymin=0,ymax=1,c='green') #300 ns (3000 frame) equilibration line -- where the holes have sealed and the OD is stable
         ax5.legend()
         ax5.set_ylim(20,45)
-        ax6 = self.matplotlib_figure_object.add_subplot('326')
+        ax6 = self.matplotlib_figure_object.add_subplot('426')
         ax6.scatter(self.array_frame_numbers,self.array_remaining_headgroup_percent_above_midpoint_threshold,label='above midpoint',color='orange')
         ax6.scatter(self.array_frame_numbers,self.array_remaining_headgroup_percent_below_midpoint_threshold,label='below midpoint',color='blue')
         ax6.set_ylabel('Percent [DOPE/X, POPS] PO4 particles above\n or below midpoint')
@@ -212,7 +218,35 @@ class radial_distance_assessment:
             ax6.axvline(x=3000,ymin=0,ymax=1,c='green') #300 ns (3000 frame) equilibration line -- where the holes have sealed and the OD is stable
         ax6.legend()
 
-        for axis in [ax,ax2,ax3,ax4,ax5,ax6]:
+        #plot FORS data, if applicable:
+        if self.FORS_present:
+            ax7 = self.matplotlib_figure_object.add_subplot('427')
+            ax7.scatter(self.array_frame_numbers,self.array_min_FORS_AM2_radial_distances,label='min FORS AM2 radial distance',c='black',edgecolor='None')
+            ax7.scatter(self.array_frame_numbers,self.array_max_FORS_AM2_radial_distances,label='max FORS AM2 radial distance',c='red',edgecolor='None')
+            ax7.scatter(self.array_frame_numbers,self.array_average_FORS_AM2_radial_distances,label='average FORS AM2 radial distance',c='blue',edgecolor='None')
+            ax7.fill_between(self.array_frame_numbers,self.array_average_FORS_AM2_radial_distances-self.array_std_dev_FORS_AM2_radial_distances,self.array_average_FORS_AM2_radial_distances+self.array_std_dev_FORS_AM2_radial_distances,color='blue',alpha=0.2) #show the standard deviation about the mean FORS AM2 OD values
+            ax7.set_xlabel('Frame #')
+            ax7.set_ylabel('Radial distance from vesicle centroid (nm)')
+            ax7.legend()
+            ax7.axhline(y=self.threshold/10.,xmin=0,xmax=50000,c='green') #radial distance values above this threshold should capture most of the FORS AM2 particles (within 1 std dev of the mean)
+#now, use a second plot to track the % of FORS AM2 particles that fall above the assigned radial distance threshold
+            ax7.set_ylim(20,45)
+            ax7.set_xlim(-900,50000)
+            ax8 = self.matplotlib_figure_object.add_subplot('428')
+            #print 'self.array_frame_numbers.shape:', self.array_frame_numbers.shape, 'self.array_percent_FORS_AM2_above_threshold.shape:', self.array_percent_FORS_AM2_above_threshold.shape #debug
+            ax8.scatter(self.array_frame_numbers,self.array_percent_FORS_AM2_above_threshold,color='orange',edgecolor='None')
+            ax8.set_xlabel('Frame #')
+            ax8.set_ylabel('Percent FORS AM2 particles above cutoff\n radial distance threshold')
+            ax8.axhline(y=98.0,xmin=0,xmax=50000,c='purple',lw=6,alpha=0.4) #98% of FORS AM2 particles
+            ax8.set_ylim(0,100.0)
+            ax8.set_xlim(-900,50000)
+
+        if self.FORS_present:
+            axis_list = [ax,ax2,ax3,ax4,ax5,ax6,ax7,ax8]
+        else:
+            axis_list = [ax,ax2,ax3,ax4,ax5,ax6]
+
+        for axis in axis_list:
             axis.set_title(title_string)
 
         self.matplotlib_figure_object.set_size_inches(16,24)
