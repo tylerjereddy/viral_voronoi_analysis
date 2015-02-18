@@ -238,7 +238,7 @@ class radial_distance_assessment:
             ax8.set_xlabel('Frame #')
             ax8.set_ylabel('Percent FORS AM2 particles above cutoff\n radial distance threshold')
             ax8.axhline(y=98.0,xmin=0,xmax=50000,c='purple',lw=6,alpha=0.4) #98% of FORS AM2 particles
-            ax8.set_ylim(0,100.0)
+            ax8.set_ylim(80,100.0)
             ax8.set_xlim(-900,50000)
 
         if self.FORS_present:
@@ -601,7 +601,10 @@ def precursor_radial_distance_analysis(universe_object,FORS_present=None):
     total_FORS_AM2_particles = FORS_AM2_selection.numberOfAtoms()
     total_CHOL_ROH_particles = CHOL_ROH_selection.numberOfAtoms()
     total_remaining_particles = remaining_headgroup_selection.numberOfAtoms()
-    threshold = 285 #28.5 nm threshold for outer leaflet PPCH PO4 (currently testing)
+    if FORS_present:
+        threshold = 275 #smaller threshold in presence of FORS virions (which are smaller)
+    else:
+        threshold = 285 #28.5 nm threshold for outer leaflet PPCH PO4 (currently testing)
     all_lipid_selection = universe_object.selectAtoms('resname PPCH or resname CHOL or resname POPS or resname DOPX or resname DOPE or resname FORS')
 
     list_min_PPCH_PO4_distances = []
