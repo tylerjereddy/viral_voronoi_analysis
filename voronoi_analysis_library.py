@@ -40,7 +40,7 @@ def calculate_surface_area_sphere(radius):
 
 def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data):
     plot_number = 1
-    color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange'}
+    color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
     for current_voronoi_index in list_Voronoi_indices:
         ax = matplotlib_figure_object.add_subplot(1,4,plot_number,projection='3d')
         index = 0
@@ -68,7 +68,7 @@ def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,d
 
 def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data):
     plot_number = 1
-    color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange'}
+    color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
     for current_voronoi_index in list_Voronoi_indices:
         ax = matplotlib_figure_object.add_subplot(1,4,plot_number,projection='3d')
         index = 0
