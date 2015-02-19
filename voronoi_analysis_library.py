@@ -484,6 +484,17 @@ def produce_universe_object_on_remote_engine(data_path_1 = None,data_path_2 = No
     universe_object = MDAnalysis.Universe(coordinate_filepath,list_trajectories_compact_no_solvent) 
     return universe_object
 
+def produce_universe_object_on_remote_engine_dengue(coordinate_file_path):
+    '''Produce MDA Universe object on a remote IPython engine for dengue simulation [sim126 extended].'''
+    import dengue_utility_functions
+    import MDAnalysis
+    import numpy
+    import scipy
+    import math 
+    list_xtc_file_paths = dengue_utility_functions.generate_ordered_list_processed_xtc_file_paths_sim126_extended()
+    universe_object = MDAnalysis.Universe(coordinate_file_path,list_xtc_file_paths)
+    return universe_object
+
 def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_surface_area_reconstitution=None,list_percent_surface_area_reconstitution_inner_leaflet=None,protein_present=None,simulation_title=None,dictionary_headgroup_data=None,list_percent_surface_area_reconstitution_from_lipids_only=None,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet=None,list_percent_surface_area_reconstitution_from_proteins_only=None,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet=None):
     color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
     if not protein_present:
