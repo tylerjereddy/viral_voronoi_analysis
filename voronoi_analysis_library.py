@@ -602,6 +602,64 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
 
         figure_object.set_size_inches(15,4)
 
+def precursor_radial_distance_analysis_dengue(universe_object):
+    '''Modified version of precursor_radial_distance_analysis() intended for analysis of dengue virion simulation. I think all dengue lipids should be assessed in the same manner because a symmetrical lipid species distribution (ER-derived) was assumed during the construction process.'''
+    POPC_PO4_selection = universe_object.selectAtoms('resname POPC and name PO4')
+    PPCE_PO4_selection = universe_object.selectAtoms('resname PPCE and name PO4')
+    DPPE_PO4_selection = universe_object.selectAtoms('resname DPPE and name PO4')
+    CER_AM2_selection = universe_object.selectAtoms('resname CER and name AM2') #may have to treat ceramide differently without PO4 in headgroup region?
+    DUPC_PO4_selection = universe_object.selectAtoms('resname DUPC and name PO4')
+    DOPS_PO4_selection = universe_object.selectAtoms('resname DOPS and name PO4')
+    PPCS_PO4_selection = universe_object.selectAtoms('resname PPCS and name PO4')
+    combined_dengue_lipid_selection = POPC_PO4_selection + PPCE_PO4_selection + DPPE_PO4_selection + CER_AM2_selection + DUPC_PO4_selection + DOPS_PO4_selection + PPCS_PO4_selection
+    total_dengue_particles_assessed = combined_dengue_lipid_selection.numberOfAtoms()
+    threshold = 275 #adjust as needed to split leaflet populations appropriately
+    all_lipid_selection = universe_object.selectAtoms('resname POPC or resname PPCE or resname DPPE or resname CER or resname DUPC or resname DOPS or resname PPCS')
+   
+    list_min_dengue_lipid_headgroup_distances = []
+    list_max_dengue_lipid_headgroup_distances = []
+    list_average_dengue_lipid_headgroup_distances = []
+    list_std_dev_dengue_lipid_headgroup_distances = []
+    list_dengue_lipid_headgroup_midpoint_distances = []
+    list_dengue_lipid_headgroup_percent_above_threshold = []
+    list_dengue_lipid_headgroup_percent_below_threshold = []
+    list_frame_numbers = []
+
+    for ts in universe_object.trajectory[::10]: #every 10th frame (roughly every 10 ns for skip-10-filtered dengue trajectory)
+        dengue_lipid_headgroup_coordinates = combined_dengue_lipid_selection.coordinates()
+        all_lipid_centroid = all_lipid_selection.centroid()
+        #place the centroid of the system at the origin
+        dengue_lipid_headgroup_coordinates -= all_lipid_centroid
+        spherical_polar_dengue_lipid_headgroup_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(dengue_lipid_headgroup_coordinates)
+        #assess the positions of the dengue lipid headgroup particles
+        minimum_dengue_lipid_headgroup_radial_distance = spherical_polar_dengue_lipid_headgroup_coordinates[...,0].min()
+        maximum_dengue_lipid_headgroup_radial_distance = spherical_polar_dengue_lipid_headgroup_coordinates[...,0].max()
+        midpoint_dengue_lipid_headgroup_radial_distance = numpy.average(numpy.array([minimum_dengue_lipid_headgroup_radial_distance,maximum_dengue_lipid_headgroup_radial_distance])) #unbiased midpoint for upper / lower leaflet cutoff
+        average_dengue_lipid_headgroup_radial_distance = numpy.average(spherical_polar_dengue_lipid_headgroup_coordinates[...,0])
+        std_dev_dengue_lipid_headgroup_radial_distance = numpy.std(spherical_polar_dengue_lipid_headgroup_coordinates[...,0])
+        number_of_dengue_lipid_headgroup_radial_distances_above_threshold = (spherical_polar_dengue_lipid_headgroup_coordinates[...,0] > midpoint_dengue_lipid_headgroup_radial_distance).sum()
+        number_of_dengue_lipid_headgroup_radial_distances_below_threshold = (spherical_polar_dengue_lipid_headgroup_coordinates[...,0] < midpoint_dengue_lipid_headgroup_radial_distance).sum()
+        percent_dengue_lipid_headgroup_above_threshold = float(number_of_dengue_lipid_headgroup_radial_distances_above_threshold) / float(total_dengue_particles_assessed) * 100.
+        percent_dengue_lipid_headgroup_below_threshold = float(number_of_dengue_lipid_headgroup_radial_distances_below_threshold) / float(total_dengue_particles_assessed) * 100.
+        list_min_dengue_lipid_headgroup_distances.append(minimum_dengue_lipid_headgroup_radial_distance)
+        list_max_dengue_lipid_headgroup_distances.append(maximum_dengue_lipid_headgroup_radial_distance)
+        list_average_dengue_lipid_headgroup_distances.append(average_dengue_lipid_headgroup_radial_distance)
+        list_std_dev_dengue_lipid_headgroup_distances.append(std_dev_dengue_lipid_headgroup_radial_distance)
+        list_dengue_lipid_headgroup_midpoint_distances.append(midpoint_dengue_lipid_headgroup_radial_distance)
+        list_dengue_lipid_headgroup_percent_above_threshold.append(percent_dengue_lipid_headgroup_above_threshold)
+        list_dengue_lipid_headgroup_percent_below_threshold.append(percent_dengue_lipid_headgroup_below_threshold)
+
+        frame_number = ts.frame
+        list_frame_numbers.append(frame_number)
+
+    return (list_min_dengue_lipid_headgroup_distances,list_max_dengue_lipid_headgroup_distances,list_average_dengue_lipid_headgroup_distances,list_std_dev_dengue_lipid_headgroup_distances,list_frame_numbers,list_dengue_lipid_headgroup_percent_above_threshold,list_dengue_lipid_headgroup_percent_below_threshold,list_dengue_lipid_headgroup_midpoint_distances)
+
+
+
+    
+
+
+
 def precursor_radial_distance_analysis(universe_object,FORS_present=None):
     '''This function should parse out the necessary precursor data for the radial_distance_assessment class above. Ideally, should operate remotely on an IPython engine to allow for an asychronous parallel workflow with each replicate (universe object) analyzed simultaneously on a different core.'''
     PPCH_PO4_selection = universe_object.selectAtoms('resname PPCH and name PO4')
