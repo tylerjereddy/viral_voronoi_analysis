@@ -667,6 +667,7 @@ def precursor_radial_distance_analysis_dengue(universe_object):
     list_dengue_lipid_headgroup_percent_above_threshold = []
     list_dengue_lipid_headgroup_percent_below_threshold = []
     list_frame_numbers = []
+    #debug_coords_written = 0
 
     for ts in universe_object.trajectory[::10]: #every 10th frame (roughly every 10 ns for skip-10-filtered dengue trajectory)
         dengue_lipid_headgroup_coordinates = combined_dengue_lipid_selection.coordinates()
@@ -676,7 +677,13 @@ def precursor_radial_distance_analysis_dengue(universe_object):
         spherical_polar_dengue_lipid_headgroup_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(dengue_lipid_headgroup_coordinates)
         #assess the positions of the dengue lipid headgroup particles
         minimum_dengue_lipid_headgroup_radial_distance = spherical_polar_dengue_lipid_headgroup_coordinates[...,0].min()
-        maximum_dengue_lipid_headgroup_radial_distance = spherical_polar_dengue_lipid_headgroup_coordinates[...,0].max()
+        maximum_dengue_lipid_headgroup_radial_distance = numpy.sort(spherical_polar_dengue_lipid_headgroup_coordinates[...,0])[-20] #looks like we have a DUPC floater, based on visual inspection of debug coords printed below
+        #debug possible floater(s) at unusually large radial distances:
+        #if debug_coords_written < 1 and maximum_dengue_lipid_headgroup_radial_distance > 310:
+            #import MDAnalysis.coordinates.GRO
+            #writer_instance = MDAnalysis.coordinates.GRO.GROWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/dengue_large_radial_distance_debug.gro')
+            #writer_instance.write(combined_dengue_lipid_selection)
+            #debug_coords_written += 1 #only want one debug coord set for now
         midpoint_dengue_lipid_headgroup_radial_distance = numpy.average(numpy.array([minimum_dengue_lipid_headgroup_radial_distance,maximum_dengue_lipid_headgroup_radial_distance])) #unbiased midpoint for upper / lower leaflet cutoff
         average_dengue_lipid_headgroup_radial_distance = numpy.average(spherical_polar_dengue_lipid_headgroup_coordinates[...,0])
         std_dev_dengue_lipid_headgroup_radial_distance = numpy.std(spherical_polar_dengue_lipid_headgroup_coordinates[...,0])
