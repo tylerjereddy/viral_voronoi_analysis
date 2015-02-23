@@ -677,7 +677,7 @@ def precursor_radial_distance_analysis_dengue(universe_object):
         spherical_polar_dengue_lipid_headgroup_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(dengue_lipid_headgroup_coordinates)
         #assess the positions of the dengue lipid headgroup particles
         minimum_dengue_lipid_headgroup_radial_distance = spherical_polar_dengue_lipid_headgroup_coordinates[...,0].min()
-        maximum_dengue_lipid_headgroup_radial_distance = numpy.sort(spherical_polar_dengue_lipid_headgroup_coordinates[...,0])[-20] #looks like we have a DUPC floater, based on visual inspection of debug coords printed below
+        maximum_dengue_lipid_headgroup_radial_distance = numpy.sort(spherical_polar_dengue_lipid_headgroup_coordinates[...,0])[-1] #looks like we have a DUPC floater, based on visual inspection of debug coords printed below
         #debug possible floater(s) at unusually large radial distances:
         #if debug_coords_written < 1 and maximum_dengue_lipid_headgroup_radial_distance > 310:
             #import MDAnalysis.coordinates.GRO
@@ -844,3 +844,46 @@ def precursor_radial_distance_analysis(universe_object,FORS_present=None):
         return (list_min_PPCH_PO4_distances,list_max_PPCH_PO4_distances,list_average_PPCH_PO4_distances,list_std_dev_PPCH_PO4_distances,list_frame_numbers,list_PPCH_percent_above_treshold,list_min_CHOL_ROH_distances,list_max_CHOL_ROH_distances,list_average_CHOL_ROH_distances,list_std_dev_CHOL_ROH_distances,list_CHOL_ROH_midpoint_distances,list_CHOL_ROH_percent_above_threshold,list_CHOL_ROH_percent_below_threshold,list_min_remaining_headgroup_distances,list_max_remaining_headgroup_distances,list_average_remaining_headgroup_distances,list_std_dev_remaining_headgroup_distances,list_remaining_headgroup_midpoint_distances,list_remaining_headgroup_percent_above_threshold,list_remaining_headgroup_percent_below_threshold,threshold)
     else:
         return (list_min_FORS_AM2_distances,list_max_FORS_AM2_distances,list_average_FORS_AM2_distances,list_std_dev_FORS_AM2_distances,list_frame_numbers,list_FORS_percent_above_treshold,list_min_PPCH_PO4_distances,list_max_PPCH_PO4_distances,list_average_PPCH_PO4_distances,list_std_dev_PPCH_PO4_distances,list_PPCH_percent_above_treshold,list_min_CHOL_ROH_distances,list_max_CHOL_ROH_distances,list_average_CHOL_ROH_distances,list_std_dev_CHOL_ROH_distances,list_CHOL_ROH_midpoint_distances,list_CHOL_ROH_percent_above_threshold,list_CHOL_ROH_percent_below_threshold,list_min_remaining_headgroup_distances,list_max_remaining_headgroup_distances,list_average_remaining_headgroup_distances,list_std_dev_remaining_headgroup_distances,list_remaining_headgroup_midpoint_distances,list_remaining_headgroup_percent_above_threshold,list_remaining_headgroup_percent_below_threshold,threshold)
+
+def create_dengue_trajectory_movie(universe_object):
+    '''Create movie of dengue simulation trajectory on remote IPython engine. Aim is to assess the proposed presence of 'floater' lipids outside the virion proper, which appear to be causing radial distance spikes.'''
+    import moviepy
+    import moviepy.editor
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+    import moviepy.video.io.bindings
+    import time
+    start_time = time.time()
+
+    POPC_PO4_selection = universe_object.selectAtoms('resname POPC and name PO4')
+    PPCE_PO4_selection = universe_object.selectAtoms('resname PPCE and name PO4')
+    DPPE_PO4_selection = universe_object.selectAtoms('resname DPPE and name PO4')
+    CER_AM2_selection = universe_object.selectAtoms('resname CER and name AM2') #may have to treat ceramide differently without PO4 in headgroup region?
+    DUPC_PO4_selection = universe_object.selectAtoms('resname DUPC and name PO4')
+    DOPS_PO4_selection = universe_object.selectAtoms('resname DOPS and name PO4')
+    PPCS_PO4_selection = universe_object.selectAtoms('resname PPCS and name PO4')
+    combined_dengue_lipid_selection = POPC_PO4_selection + PPCE_PO4_selection + DPPE_PO4_selection + CER_AM2_selection + DUPC_PO4_selection + DOPS_PO4_selection + PPCS_PO4_selection
+    fig = plt.figure()
+
+    def make_frame(t):
+        '''Make frame at time t. Must return numpy data array. Need to use a separate variable for counting frames (I think, because moviepy just calls this function at t values corresponding to seconds, using fractions of seconds for fps increase). I suppose this means that 24 fps would be 24 calls to this function per second, so I want the frame number to increment 24 times as well.'''
+        fig.clf() #trying to clear the figure each iteration instead of creating a new object (seeing if this is faster)
+        #move to next frame of trajectory:
+        universe_object.trajectory.next() #I think this should ensure that there's a new trajectory frame produced for each call by moviepy
+        frame_number = universe_object.trajectory.frame
+        dengue_lipid_headgroup_coordinates = combined_dengue_lipid_selection.coordinates()
+        ax = fig.add_subplot('111',projection='3d')
+        ax.scatter(dengue_lipid_headgroup_coordinates[...,0],dengue_lipid_headgroup_coordinates[...,1],dengue_lipid_headgroup_coordinates[...,2])
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        ax.set_zlabel('z')
+        ax.text(100.0,-50.0,-90.0,"frame number = {frame_number}".format(frame_number = frame_number),fontsize=12)
+        elapsed_time = time.time() - start_time
+        elapsed_time_minutes_string = '%.2f' % (elapsed_time / 60.)
+        ax.text(200.0,-50.0,850.0,"video processing time = {elapsed_time} (minutes)".format(elapsed_time = elapsed_time_minutes_string),fontsize=12)
+        return moviepy.video.io.bindings.mplfig_to_npimage(fig) #RGB image of the matplotlib figure object
+
+    clip = moviepy.editor.VideoClip(make_frame,duration=60) #60-second clip
+    clip.write_videofile("/sansom/n22/bioc1009/spherical_Voronoi_virus_work/dengue_assess_lipid_headgroups.mp4", fps=83) # export as video
+    universe_object.trajectory.rewind() #rewind the trajectory before function exits
+        
