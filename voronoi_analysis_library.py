@@ -534,8 +534,8 @@ def produce_universe_object_on_remote_engine_dengue(coordinate_file_path):
     import numpy
     import scipy
     import math 
-    list_xtc_file_paths = dengue_utility_functions.generate_ordered_list_processed_xtc_file_paths_sim126_extended()
-    universe_object = MDAnalysis.Universe(coordinate_file_path,list_xtc_file_paths)
+    #list_xtc_file_paths = dengue_utility_functions.generate_ordered_list_processed_xtc_file_paths_sim126_extended()
+    universe_object = MDAnalysis.Universe(coordinate_file_path,'/sansom/n22/bioc1009/sim126_extended/sim126_insect_dengue_323K_extended_skip_10_compact.xtc')
     return universe_object
 
 def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_surface_area_reconstitution=None,list_percent_surface_area_reconstitution_inner_leaflet=None,protein_present=None,simulation_title=None,dictionary_headgroup_data=None,list_percent_surface_area_reconstitution_from_lipids_only=None,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet=None,list_percent_surface_area_reconstitution_from_proteins_only=None,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet=None):
@@ -853,6 +853,7 @@ def create_dengue_trajectory_movie(universe_object):
     from mpl_toolkits.mplot3d import Axes3D
     import moviepy.video.io.bindings
     import time
+    universe_object.trajectory.rewind() #rewind the trajectory 
     start_time = time.time()
 
     POPC_PO4_selection = universe_object.selectAtoms('resname POPC and name PO4')
@@ -884,6 +885,6 @@ def create_dengue_trajectory_movie(universe_object):
         return moviepy.video.io.bindings.mplfig_to_npimage(fig) #RGB image of the matplotlib figure object
 
     clip = moviepy.editor.VideoClip(make_frame,duration=60) #60-second clip
-    clip.write_videofile("/sansom/n22/bioc1009/spherical_Voronoi_virus_work/dengue_assess_lipid_headgroups.mp4", fps=83) # export as video
+    clip.write_videofile("/sansom/n22/bioc1009/spherical_Voronoi_virus_work/dengue_assess_lipid_headgroups.mp4", fps=80) # export as video
     universe_object.trajectory.rewind() #rewind the trajectory before function exits
         
