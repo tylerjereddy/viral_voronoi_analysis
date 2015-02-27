@@ -105,12 +105,14 @@ def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indi
 
 class radial_distance_assessment_dengue:
 
-    def __init__(self,matplotlib_figure_object,list_frame_numbers_dengue,list_min_dengue_lipid_headgroup_distances,list_max_dengue_lipid_headgroup_distances,list_average_dengue_lipid_headgroup_distances,list_std_dev_dengue_lipid_headgroup_distances,list_dengue_lipid_headgroup_midpoint_distances,list_dengue_lipid_headgroup_percent_above_threshold,list_dengue_lipid_headgroup_percent_below_threshold):
+    def __init__(self,matplotlib_figure_object,list_frame_numbers_dengue,list_min_dengue_lipid_headgroup_distances,list_max_dengue_lipid_headgroup_distances,list_average_dengue_lipid_headgroup_distances,list_std_dev_dengue_lipid_headgroup_distances,list_dengue_lipid_headgroup_midpoint_distances,list_dengue_lipid_headgroup_percent_above_threshold,list_dengue_lipid_headgroup_percent_below_threshold,list_min_MDA_distances,list_max_MDA_distances):
 
         self.matplotlib_figure_object = matplotlib_figure_object
         #dengue data structure initialization:
         self.array_min_dengue_lipid_headgroup_radial_distances = numpy.array(list_min_dengue_lipid_headgroup_distances)/ 10.
         self.array_max_dengue_lipid_headgroup_radial_distances = numpy.array(list_max_dengue_lipid_headgroup_distances)/ 10.
+        self.array_min_MDA_distances = numpy.array(list_min_MDA_distances) / 10.
+        self.array_max_MDA_distances = numpy.array(list_max_MDA_distances) / 10.
         self.array_average_dengue_lipid_headgroup_radial_distances = numpy.array(list_average_dengue_lipid_headgroup_distances)/ 10.
         self.array_std_dev_dengue_lipid_headgroup_radial_distances = numpy.array(list_std_dev_dengue_lipid_headgroup_distances)/ 10.
         self.array_dengue_lipid_headgroup_unbiased_midpoint_distances = numpy.array(list_dengue_lipid_headgroup_midpoint_distances) / 10.
@@ -122,6 +124,8 @@ class radial_distance_assessment_dengue:
         '''Plot the dengue radial distance assessment data.'''
         ax = self.matplotlib_figure_object.add_subplot('121')
         ax.scatter(self.array_frame_numbers,self.array_min_dengue_lipid_headgroup_radial_distances,label='min dengue lipid headgroup radial distance',c='black',edgecolor='None')
+        ax.scatter(self.array_frame_numbers,self.array_min_MDA_distances,label='min MDA PBC distances',c='grey',edgecolor='None')
+        ax.scatter(self.array_frame_numbers,self.array_max_MDA_distances,label='max MDA PBC distances',c='green',edgecolor='None')
         ax.scatter(self.array_frame_numbers,self.array_max_dengue_lipid_headgroup_radial_distances,label='max dengue lipid headgroup radial distance',c='red',edgecolor='None')
         ax.scatter(self.array_frame_numbers,self.array_average_dengue_lipid_headgroup_radial_distances,label='average dengue lipid headgroup radial distance',c='blue',edgecolor='None')
         ax.fill_between(self.array_frame_numbers,self.array_average_dengue_lipid_headgroup_radial_distances-self.array_std_dev_dengue_lipid_headgroup_radial_distances,self.array_average_dengue_lipid_headgroup_radial_distances+self.array_std_dev_dengue_lipid_headgroup_radial_distances,color='blue',alpha=0.2) #show the standard deviation about the mean dengue lipid headgroup OD values
@@ -647,6 +651,7 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
 
 def precursor_radial_distance_analysis_dengue(universe_object):
     '''Modified version of precursor_radial_distance_analysis() intended for analysis of dengue virion simulation. I think all dengue lipids should be assessed in the same manner because a symmetrical lipid species distribution (ER-derived) was assumed during the construction process.'''
+    import MDAnalysis.core.distances
     POPC_PO4_selection = universe_object.selectAtoms('resname POPC and name PO4')
     PPCE_PO4_selection = universe_object.selectAtoms('resname PPCE and name PO4')
     DPPE_PO4_selection = universe_object.selectAtoms('resname DPPE and name PO4')
@@ -659,6 +664,8 @@ def precursor_radial_distance_analysis_dengue(universe_object):
     threshold = 275 #adjust as needed to split leaflet populations appropriately
     all_lipid_selection = universe_object.selectAtoms('resname POPC or resname PPCE or resname DPPE or resname CER or resname DUPC or resname DOPS or resname PPCS')
    
+    list_min_MDA_distances = []
+    list_max_MDA_distances = []
     list_min_dengue_lipid_headgroup_distances = []
     list_max_dengue_lipid_headgroup_distances = []
     list_average_dengue_lipid_headgroup_distances = []
@@ -672,6 +679,10 @@ def precursor_radial_distance_analysis_dengue(universe_object):
     for ts in universe_object.trajectory[::10]: #every 10th frame (roughly every 10 ns for skip-10-filtered dengue trajectory)
         dengue_lipid_headgroup_coordinates = combined_dengue_lipid_selection.coordinates()
         all_lipid_centroid = all_lipid_selection.centroid()
+        #do an additional calculation to test MDA treatment of rhombic dodecahedron PBC conditions (which are causing issues in my conventional calculations)
+        MDA_distance_array = MDAnalysis.core.distances.distance_array(all_lipid_centroid,dengue_lipid_headgroup_coordinates,universe_object.dimensions)
+        min_MDA_radial_distance = MDA_distance_array.min()
+        max_MDA_radial_distance = MDA_distance_array.max()
         #place the centroid of the system at the origin
         dengue_lipid_headgroup_coordinates -= all_lipid_centroid
         spherical_polar_dengue_lipid_headgroup_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(dengue_lipid_headgroup_coordinates)
@@ -698,11 +709,13 @@ def precursor_radial_distance_analysis_dengue(universe_object):
         list_dengue_lipid_headgroup_midpoint_distances.append(midpoint_dengue_lipid_headgroup_radial_distance)
         list_dengue_lipid_headgroup_percent_above_threshold.append(percent_dengue_lipid_headgroup_above_threshold)
         list_dengue_lipid_headgroup_percent_below_threshold.append(percent_dengue_lipid_headgroup_below_threshold)
+        list_min_MDA_distances.append(min_MDA_radial_distance)
+        list_max_MDA_distances.append(max_MDA_radial_distance)
 
         frame_number = ts.frame
         list_frame_numbers.append(frame_number)
 
-    return (list_min_dengue_lipid_headgroup_distances,list_max_dengue_lipid_headgroup_distances,list_average_dengue_lipid_headgroup_distances,list_std_dev_dengue_lipid_headgroup_distances,list_frame_numbers,list_dengue_lipid_headgroup_percent_above_threshold,list_dengue_lipid_headgroup_percent_below_threshold,list_dengue_lipid_headgroup_midpoint_distances)
+    return (list_min_dengue_lipid_headgroup_distances,list_max_dengue_lipid_headgroup_distances,list_average_dengue_lipid_headgroup_distances,list_std_dev_dengue_lipid_headgroup_distances,list_frame_numbers,list_dengue_lipid_headgroup_percent_above_threshold,list_dengue_lipid_headgroup_percent_below_threshold,list_dengue_lipid_headgroup_midpoint_distances,list_min_MDA_distances,list_max_MDA_distances)
 
 
 
@@ -864,27 +877,119 @@ def create_dengue_trajectory_movie(universe_object):
     DOPS_PO4_selection = universe_object.selectAtoms('resname DOPS and name PO4')
     PPCS_PO4_selection = universe_object.selectAtoms('resname PPCS and name PO4')
     combined_dengue_lipid_selection = POPC_PO4_selection + PPCE_PO4_selection + DPPE_PO4_selection + CER_AM2_selection + DUPC_PO4_selection + DOPS_PO4_selection + PPCS_PO4_selection
+    protein_selection = universe_object.selectAtoms('bynum 1:221040')
+    
+    #set up base figure:
     fig = plt.figure()
+    fig.set_size_inches(14,7)
+    ax = fig.add_subplot('121',projection='3d')
+    ax2 = fig.add_subplot('122',projection='3d') #proteins and lipids in this one, to get more information about PBC situation
+    scatter_1 = ax.scatter([],[],[],color='blue',label='lipid headgroups only')
+    scatter_2 = ax2.scatter([],[],[],color='blue',label='lipid headgroups')
+    scatter_3 = ax2.scatter([],[],[],color='red',label='protein')
+    for axis in [ax,ax2]:
+        axis.set_xlabel('x')
+        axis.set_ylabel('y')
+        axis.set_zlabel('z')
+        axis.set_xlim(0,800)
+        axis.set_ylim(0,800)
+        axis.set_zlim(-200,600)
+        axis.legend(loc=2)
+    ax_frame_text = ax.text(100.0,-50.0,-90.0,'',fontsize=12)
+    ax2_frame_text = ax2.text(100.0,-50.0,-90.0,'',fontsize=12)
+    ax_video_text = ax.text(200.0,-50.0,850.0,"",fontsize=12)
+    ax2_video_text = ax2.text(200.0,-50.0,850.0,"",fontsize=12)
 
     def make_frame(t):
         '''Make frame at time t. Must return numpy data array. Need to use a separate variable for counting frames (I think, because moviepy just calls this function at t values corresponding to seconds, using fractions of seconds for fps increase). I suppose this means that 24 fps would be 24 calls to this function per second, so I want the frame number to increment 24 times as well.'''
-        fig.clf() #trying to clear the figure each iteration instead of creating a new object (seeing if this is faster)
+        #fig.clf() #trying to clear the figure each iteration instead of creating a new object (seeing if this is faster)
         #move to next frame of trajectory:
         universe_object.trajectory.next() #I think this should ensure that there's a new trajectory frame produced for each call by moviepy
         frame_number = universe_object.trajectory.frame
         dengue_lipid_headgroup_coordinates = combined_dengue_lipid_selection.coordinates()
-        ax = fig.add_subplot('111',projection='3d')
-        ax.scatter(dengue_lipid_headgroup_coordinates[...,0],dengue_lipid_headgroup_coordinates[...,1],dengue_lipid_headgroup_coordinates[...,2])
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
-        ax.set_zlabel('z')
-        ax.text(100.0,-50.0,-90.0,"frame number = {frame_number}".format(frame_number = frame_number),fontsize=12)
+        dengue_protein_coordinates = protein_selection.coordinates()
+        scatter_1._offsets3d = (dengue_lipid_headgroup_coordinates[...,0],dengue_lipid_headgroup_coordinates[...,1],dengue_lipid_headgroup_coordinates[...,2])
+        scatter_2._offsets3d = (dengue_lipid_headgroup_coordinates[...,0],dengue_lipid_headgroup_coordinates[...,1],dengue_lipid_headgroup_coordinates[...,2])
+        scatter_3._offsets3d = (dengue_protein_coordinates[...,0],dengue_protein_coordinates[...,1],dengue_protein_coordinates[...,2])
+        ax_frame_text.set_text("frame number = {frame_number}".format(frame_number = frame_number))
+        ax2_frame_text.set_text("frame number = {frame_number}".format(frame_number = frame_number))
         elapsed_time = time.time() - start_time
         elapsed_time_minutes_string = '%.2f' % (elapsed_time / 60.)
-        ax.text(200.0,-50.0,850.0,"video processing time = {elapsed_time} (minutes)".format(elapsed_time = elapsed_time_minutes_string),fontsize=12)
+        ax_video_text.set_text("video processing time = {elapsed_time} (minutes)".format(elapsed_time = elapsed_time_minutes_string))
+        ax2_video_text.set_text("video processing time = {elapsed_time} (minutes)".format(elapsed_time = elapsed_time_minutes_string))
+
         return moviepy.video.io.bindings.mplfig_to_npimage(fig) #RGB image of the matplotlib figure object
 
-    clip = moviepy.editor.VideoClip(make_frame,duration=60) #60-second clip
-    clip.write_videofile("/sansom/n22/bioc1009/spherical_Voronoi_virus_work/dengue_assess_lipid_headgroups.mp4", fps=80) # export as video
+    clip = moviepy.editor.VideoClip(make_frame,duration=6) #6-second clip
+    clip.write_videofile("/sansom/n22/bioc1009/spherical_Voronoi_virus_work/dengue_assess_lipid_headgroups.mp4", fps=1) # export as video
+    #clip = moviepy.editor.VideoClip(make_frame,duration=60) #60-second clip
+    #clip.write_videofile("/sansom/n22/bioc1009/spherical_Voronoi_virus_work/dengue_assess_lipid_headgroups.mp4", fps=80) # export as video
     universe_object.trajectory.rewind() #rewind the trajectory before function exits
         
+def create_control_universe_data(flu_coordinate_file_path):
+    '''Take a flu simulation coordinate file as input and output two different control xtc files for my ipynb Voronoi analysis (area per lipid) workflow. Will probably set the two control xtc files to have lipid densities (and therefore average area per lipid values) that differ by a factor of two. Will assume the input flu simulation data does NOT include FORS.'''
+    import MDAnalysis.coordinates.XTC
+    import scipy
+    import scipy.spatial.distance
+    input_flu_coordinate_file_universe_object = MDAnalysis.Universe(flu_coordinate_file_path)
+    dict_lipid_residue_data = {'DOPX':{'sel_string':'resname DOPX and name PO4'},'DOPE':{'sel_string':'resname DOPE and name PO4'},'POPS':{'sel_string':'resname POPS and name PO4'},'CHOL':{'sel_string':'resname CHOL and name ROH'},'PPCH':{'sel_string':'resname PPCH and name PO4'}}
+    total_residue_headgroup_coordinates_inner_leaflet = 0
+    total_residue_headgroup_coordinates_outer_leaflet = 0
+    for residue_name, residue_subdictionary in dict_lipid_residue_data.iteritems():
+        sel_string = residue_subdictionary['sel_string']
+        selection = input_flu_coordinate_file_universe_object.selectAtoms(sel_string)
+        residue_subdictionary['selection'] = selection
+        if residue_name in ['DOPX','DOPE','POPS']:
+            total_residue_headgroup_coordinates_inner_leaflet += residue_subdictionary['selection'].numberOfAtoms()
+        else: 
+            total_residue_headgroup_coordinates_outer_leaflet += residue_subdictionary['selection'].numberOfAtoms()
+    #now, I want to generate a pseudo random distribution of points on two spheres (leaflets) of different radii -- the number of points should match up nicely with the number of residue headgroup coords above [though I will make a second data set that removes about half the points I think]
+    prng = numpy.random.RandomState(117) 
+    inner_radius = 500
+    outer_radius = 700
+    inner_leaflet_coord_array = voronoi_utility.generate_random_array_spherical_generators(total_residue_headgroup_coordinates_inner_leaflet,inner_radius,prng)
+    outer_leaflet_coord_array = voronoi_utility.generate_random_array_spherical_generators(total_residue_headgroup_coordinates_outer_leaflet,outer_radius,prng)
+    #ensure that none of the points are pathologically close
+    inner_dist_array = scipy.spatial.distance.pdist(inner_leaflet_coord_array)
+    outer_dist_array = scipy.spatial.distance.pdist(outer_leaflet_coord_array)
+    assert inner_dist_array.min() > 0.01, "Random sphere generators are pathologically close."
+    assert outer_dist_array.min() > 0.01, "Random sphere generators are pathologically close."
+    #split up the inner and outer random coordinate arrays and set the corresponding AtomGroup coords to these random positions
+    inner_leaflet_particle_counter = 0
+    outer_leaflet_particle_counter = 0
+    for residue_name, residue_subdictionary in dict_lipid_residue_data.iteritems():
+        if residue_name in ['DOPX','DOPE','POPS']:
+            num_atoms = residue_subdictionary['selection'].numberOfAtoms()
+            residue_subdictionary['selection'].set_positions(inner_leaflet_coord_array[inner_leaflet_particle_counter:inner_leaflet_particle_counter + num_atoms,...])
+            inner_leaflet_particle_counter += num_atoms
+        else: #outer leaflet
+            num_atoms = residue_subdictionary['selection'].numberOfAtoms()
+            residue_subdictionary['selection'].set_positions(outer_leaflet_coord_array[outer_leaflet_particle_counter:outer_leaflet_particle_counter + num_atoms,...])
+            outer_leaflet_particle_counter += num_atoms
+    #now write the first control xtc file with the above random positions on sphere surface
+    xtc_writer_instace_1 = MDAnalysis.coordinates.XTC.XTCWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_1.xtc',total_residue_headgroup_coordinates_outer_leaflet + total_residue_headgroup_coordinates_inner_leaflet)
+    frames_to_write = 5000
+    while frames_to_write > 0:
+        xtc_writer_instace_1.write(input_flu_coordinate_file_universe_object.selectAtoms('(resname DOPX and name PO4) or (resname DOPE and name PO4) or (resname POPS and name PO4) or (resname CHOL and name ROH) or (resname PPCH and name PO4)')) #5000 frames with the same custom random coordinates
+        frames_to_write -= 1
+    #now, set up for writing a second control xtc file, with about half as many total coordinates in each leaflet
+    merged_halved_atom_groups = None
+    for residue_name, residue_subdictionary in dict_lipid_residue_data.iteritems():
+        full_selection_current_residue_type = residue_subdictionary['selection']
+        num_atoms_current_residue_type = full_selection_current_residue_type.numberOfAtoms()
+        approx_half_num_atoms_current_residue_type = int(float(num_atoms_current_residue_type)/2.)
+        halved_atomgroup_current_residue_type = full_selection_current_residue_type[0:approx_half_num_atoms_current_residue_type]
+        if not merged_halved_atom_groups:
+            merged_halved_atom_groups = halved_atomgroup_current_residue_type
+        else: #start concatenating once initialized
+            merged_halved_atom_groups += halved_atomgroup_current_residue_type
+    #now write the second control xtc file with approx. half as many coordinates in each leaflet
+    xtc_writer_instace_2 = MDAnalysis.coordinates.XTC.XTCWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_2.xtc',merged_halved_atom_groups.numberOfAtoms())
+    frames_to_write = 5000
+    while frames_to_write > 0:
+        xtc_writer_instace_2.write(merged_halved_atom_groups) #5000 frames with the same custom random coordinates
+        frames_to_write -= 1
+
+
+
+
