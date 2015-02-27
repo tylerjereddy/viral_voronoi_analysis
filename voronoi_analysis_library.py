@@ -866,7 +866,8 @@ def create_dengue_trajectory_movie(universe_object):
     from mpl_toolkits.mplot3d import Axes3D
     import moviepy.video.io.bindings
     import time
-    universe_object.trajectory.rewind() #rewind the trajectory 
+    trajectory = universe_object.trajectory
+    trajectory.rewind() #rewind the trajectory 
     start_time = time.time()
 
     POPC_PO4_selection = universe_object.selectAtoms('resname POPC and name PO4')
@@ -884,9 +885,9 @@ def create_dengue_trajectory_movie(universe_object):
     fig.set_size_inches(14,7)
     ax = fig.add_subplot('121',projection='3d')
     ax2 = fig.add_subplot('122',projection='3d') #proteins and lipids in this one, to get more information about PBC situation
-    scatter_1 = ax.scatter([],[],[],color='blue',label='lipid headgroups only')
-    scatter_2 = ax2.scatter([],[],[],color='blue',label='lipid headgroups')
-    scatter_3 = ax2.scatter([],[],[],color='red',label='protein')
+    plot_1, = ax.plot([],[],[],color='blue',label='lipid headgroups only',marker='.',linestyle='')
+    plot_2, = ax2.plot([],[],[],color='blue',label='lipid headgroups',marker='.',linestyle='')
+    plot_3, = ax2.plot([],[],[],color='red',label='protein',marker='.',linestyle='')
     for axis in [ax,ax2]:
         axis.set_xlabel('x')
         axis.set_ylabel('y')
@@ -904,13 +905,16 @@ def create_dengue_trajectory_movie(universe_object):
         '''Make frame at time t. Must return numpy data array. Need to use a separate variable for counting frames (I think, because moviepy just calls this function at t values corresponding to seconds, using fractions of seconds for fps increase). I suppose this means that 24 fps would be 24 calls to this function per second, so I want the frame number to increment 24 times as well.'''
         #fig.clf() #trying to clear the figure each iteration instead of creating a new object (seeing if this is faster)
         #move to next frame of trajectory:
-        universe_object.trajectory.next() #I think this should ensure that there's a new trajectory frame produced for each call by moviepy
-        frame_number = universe_object.trajectory.frame
+        trajectory.next() #I think this should ensure that there's a new trajectory frame produced for each call by moviepy
+        frame_number = trajectory.frame
         dengue_lipid_headgroup_coordinates = combined_dengue_lipid_selection.coordinates()
         dengue_protein_coordinates = protein_selection.coordinates()
-        scatter_1._offsets3d = (dengue_lipid_headgroup_coordinates[...,0],dengue_lipid_headgroup_coordinates[...,1],dengue_lipid_headgroup_coordinates[...,2])
-        scatter_2._offsets3d = (dengue_lipid_headgroup_coordinates[...,0],dengue_lipid_headgroup_coordinates[...,1],dengue_lipid_headgroup_coordinates[...,2])
-        scatter_3._offsets3d = (dengue_protein_coordinates[...,0],dengue_protein_coordinates[...,1],dengue_protein_coordinates[...,2])
+        plot_1.set_data(dengue_lipid_headgroup_coordinates[...,0],dengue_lipid_headgroup_coordinates[...,1])
+        plot_1.set_3d_properties(dengue_lipid_headgroup_coordinates[...,2])
+        plot_2.set_data(dengue_lipid_headgroup_coordinates[...,0],dengue_lipid_headgroup_coordinates[...,1])
+        plot_2.set_3d_properties(dengue_lipid_headgroup_coordinates[...,2])
+        plot_3.set_data(dengue_protein_coordinates[...,0],dengue_protein_coordinates[...,1])
+        plot_3.set_3d_properties(dengue_protein_coordinates[...,2])
         ax_frame_text.set_text("frame number = {frame_number}".format(frame_number = frame_number))
         ax2_frame_text.set_text("frame number = {frame_number}".format(frame_number = frame_number))
         elapsed_time = time.time() - start_time
@@ -924,7 +928,7 @@ def create_dengue_trajectory_movie(universe_object):
     clip.write_videofile("/sansom/n22/bioc1009/spherical_Voronoi_virus_work/dengue_assess_lipid_headgroups.mp4", fps=1) # export as video
     #clip = moviepy.editor.VideoClip(make_frame,duration=60) #60-second clip
     #clip.write_videofile("/sansom/n22/bioc1009/spherical_Voronoi_virus_work/dengue_assess_lipid_headgroups.mp4", fps=80) # export as video
-    universe_object.trajectory.rewind() #rewind the trajectory before function exits
+    trajectory.rewind() #rewind the trajectory before function exits
         
 def create_control_universe_data(flu_coordinate_file_path):
     '''Take a flu simulation coordinate file as input and output two different control xtc files for my ipynb Voronoi analysis (area per lipid) workflow. Will probably set the two control xtc files to have lipid densities (and therefore average area per lipid values) that differ by a factor of two. Will assume the input flu simulation data does NOT include FORS.'''
