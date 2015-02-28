@@ -680,7 +680,7 @@ def precursor_radial_distance_analysis_dengue(universe_object):
         dengue_lipid_headgroup_coordinates = combined_dengue_lipid_selection.coordinates()
         all_lipid_centroid = all_lipid_selection.centroid()
         #do an additional calculation to test MDA treatment of rhombic dodecahedron PBC conditions (which are causing issues in my conventional calculations)
-        MDA_distance_array = MDAnalysis.core.distances.distance_array(all_lipid_centroid,dengue_lipid_headgroup_coordinates,universe_object.dimensions)
+        MDA_distance_array = MDAnalysis.core.distances.distance_array(all_lipid_centroid.astype(numpy.float32)[numpy.newaxis,:],dengue_lipid_headgroup_coordinates.astype(numpy.float32),universe_object.dimensions)
         min_MDA_radial_distance = MDA_distance_array.min()
         max_MDA_radial_distance = MDA_distance_array.max()
         #place the centroid of the system at the origin
