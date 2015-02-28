@@ -152,7 +152,7 @@ class radial_distance_assessment_dengue:
 
 class radial_distance_assessment:
 
-    def __init__(self,matplotlib_figure_object,list_min_PPCH_PO4_distances,list_max_PPCH_PO4_distances,list_average_PPCH_PO4_distances,list_std_dev_PPCH_PO4_distances,list_frame_numbers,list_PPCH_percent_above_threshold,list_min_CHOL_ROH_distances,list_max_CHOL_ROH_distances,list_average_CHOL_ROH_distances,list_std_dev_CHOL_ROH_distances,list_CHOL_ROH_midpoint_distances,list_CHOL_ROH_percent_above_threshold,list_CHOL_ROH_percent_below_threshold,list_min_remaining_headgroup_distances,list_max_remaining_headgroup_distances,list_average_remaining_headgroup_distances,list_std_dev_remaining_headgroup_distances,list_remaining_headgroup_midpoint_distances,list_remaining_headgroup_percent_above_threshold,list_remaining_headgroup_percent_below_threshold,PPCH_threshold,list_min_FORS_AM2_distances=None,list_max_FORS_AM2_distances=None,list_average_FORS_AM2_distances=None,list_std_dev_FORS_AM2_distances=None,list_FORS_percent_above_treshold=None,FORS_present=None):
+    def __init__(self,matplotlib_figure_object,list_min_PPCH_PO4_distances,list_max_PPCH_PO4_distances,list_average_PPCH_PO4_distances,list_std_dev_PPCH_PO4_distances,list_frame_numbers,list_PPCH_percent_above_threshold,list_min_CHOL_ROH_distances,list_max_CHOL_ROH_distances,list_average_CHOL_ROH_distances,list_std_dev_CHOL_ROH_distances,list_CHOL_ROH_midpoint_distances,list_CHOL_ROH_percent_above_threshold,list_CHOL_ROH_percent_below_threshold,list_min_remaining_headgroup_distances,list_max_remaining_headgroup_distances,list_average_remaining_headgroup_distances,list_std_dev_remaining_headgroup_distances,list_remaining_headgroup_midpoint_distances,list_remaining_headgroup_percent_above_threshold,list_remaining_headgroup_percent_below_threshold,PPCH_threshold,list_min_FORS_AM2_distances=None,list_max_FORS_AM2_distances=None,list_average_FORS_AM2_distances=None,list_std_dev_FORS_AM2_distances=None,list_FORS_percent_above_treshold=None,FORS_present=None,control_condition=None):
 
         self.matplotlib_figure_object = matplotlib_figure_object
         self.threshold = PPCH_threshold
@@ -188,6 +188,7 @@ class radial_distance_assessment:
         self.array_remaining_headgroup_percent_below_midpoint_threshold = numpy.array(list_remaining_headgroup_percent_below_threshold)
 
         self.array_frame_numbers = numpy.array(list_frame_numbers)
+        self.control_condition = control_condition
 
     def plot(self,title_string,equil_line=None):
         '''Plot the radial distance assessment data.'''
@@ -203,8 +204,12 @@ class radial_distance_assessment:
         if equil_line:
             ax.axvline(x=3000,ymin=0,ymax=1,c='green') #300 ns (3000 frame) equilibration line -- where the holes have sealed and the OD is stable
 #now, use a second plot to track the % of PPCH PO4 particles that fall above the assigned radial distance threshold
-        ax.set_ylim(20,45)
-        ax.set_xlim(-900,50000)
+        if not self.control_condition:
+            ax.set_ylim(20,45)
+            ax.set_xlim(-900,50000)
+        else:
+            #ax.set_ylim(20,45)
+            ax.set_xlim(-90,5000)
         ax2 = self.matplotlib_figure_object.add_subplot('422')
         #print 'self.array_frame_numbers.shape:', self.array_frame_numbers.shape, 'self.array_percent_PPCH_PO4_above_threshold.shape:', self.array_percent_PPCH_PO4_above_threshold.shape #debug
         ax2.scatter(self.array_frame_numbers,self.array_percent_PPCH_PO4_above_threshold,color='orange',edgecolor='None')
@@ -213,8 +218,13 @@ class radial_distance_assessment:
         ax2.axhline(y=98.0,xmin=0,xmax=50000,c='purple',lw=6,alpha=0.4) #98% of PPCH PO4 particles
         if equil_line:
             ax2.axvline(x=3000,ymin=0,ymax=1,c='green') #300 ns (3000 frame) equilibration line -- where the holes have sealed and the OD is stable
-        ax2.set_ylim(80,100.0)
-        ax2.set_xlim(-900,50000)
+        if not self.control_condition:
+            ax2.set_ylim(80,100.0)
+            ax2.set_xlim(-900,50000)
+        else:
+            ax2.set_ylim(80,105.0)
+            ax2.set_xlim(-90,5000)
+
 
 #now, CHOL-related plots in the second row
 
@@ -226,8 +236,12 @@ class radial_distance_assessment:
         ax3.scatter(self.array_frame_numbers,self.array_CHOL_ROH_unbiased_midpoint_distances,label='unbiased CHOL ROH radial midpoints',c='yellow',edgecolor='None')
         if equil_line:
             ax3.axvline(x=3000,ymin=0,ymax=1,c='green') #300 ns (3000 frame) equilibration line -- where the holes have sealed and the OD is stable
-        ax3.set_xlim(-900,50000)
-        ax3.set_ylim(20,45)
+        if not self.control_condition:
+            ax3.set_xlim(-900,50000)
+            ax3.set_ylim(20,45)
+        else: 
+            ax3.set_xlim(-90,5000)
+            #ax3.set_ylim(20,45)
         ax3.set_xlabel('Frame #')
         ax3.set_ylabel('Radial distance from vesicle centroid (nm)')
         ax3.legend()
@@ -238,7 +252,10 @@ class radial_distance_assessment:
             ax4.axvline(x=3000,ymin=0,ymax=1,c='green') #300 ns (3000 frame) equilibration line -- where the holes have sealed and the OD is stable
         ax4.set_ylabel('Percent CHOL ROH particles above\n or below midpoint')
         ax4.set_xlabel('Frame #')
-        ax4.set_xlim(-900,50000)
+        if not self.control_condition:
+            ax4.set_xlim(-900,50000)
+        else:
+            ax4.set_xlim(-90,5000)
         ax4.legend()
 
 
@@ -249,18 +266,25 @@ class radial_distance_assessment:
         ax5.fill_between(self.array_frame_numbers,self.array_average_remaining_headgroup_radial_distances-self.array_std_dev_remaining_headgroup_radial_distances,self.array_average_remaining_headgroup_radial_distances+self.array_std_dev_remaining_headgroup_radial_distances,color='blue',alpha=0.2) 
         ax5.scatter(self.array_frame_numbers,self.array_remaining_headgroup_unbiased_midpoint_distances,label='unbiased [DOPE/X, POPS] PO4 radial midpoints',c='yellow',edgecolor='None')
         ax5.set_ylabel('Radial distance from vesicle centroid (nm)')
-        ax5.set_xlim(-900,50000)
+        if not self.control_condition:
+            ax5.set_xlim(-900,50000)
+            ax5.set_ylim(20,45)
+        else: 
+            ax5.set_xlim(-90,5000)
+            #ax5.set_ylim(20,45)
         ax5.set_xlabel('Frame #')
         if equil_line:
             ax5.axvline(x=3000,ymin=0,ymax=1,c='green') #300 ns (3000 frame) equilibration line -- where the holes have sealed and the OD is stable
         ax5.legend()
-        ax5.set_ylim(20,45)
         ax6 = self.matplotlib_figure_object.add_subplot('426')
         ax6.scatter(self.array_frame_numbers,self.array_remaining_headgroup_percent_above_midpoint_threshold,label='above midpoint',color='orange')
         ax6.scatter(self.array_frame_numbers,self.array_remaining_headgroup_percent_below_midpoint_threshold,label='below midpoint',color='blue')
         ax6.set_ylabel('Percent [DOPE/X, POPS] PO4 particles above\n or below midpoint')
         ax6.set_xlabel('Frame #')
-        ax6.set_xlim(-900,50000)
+        if not self.control_condition:
+            ax6.set_xlim(-900,50000)
+        else:
+            ax6.set_xlim(-90,5000)
         if equil_line: #300 ns equil line
             ax6.axvline(x=3000,ymin=0,ymax=1,c='green') #300 ns (3000 frame) equilibration line -- where the holes have sealed and the OD is stable
         ax6.legend()
