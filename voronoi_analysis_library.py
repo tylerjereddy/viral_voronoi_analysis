@@ -994,4 +994,60 @@ def create_control_universe_data(flu_coordinate_file_path):
 
 
 
-
+def create_control_universe_coord_data(flu_coordinate_file_path):
+    '''Produce the .gro coordinate files that correspond to the .xtc files produced by the similarly-named function. This should eventually be merged into the matching xtc producer function, but writing this so I don't have to rerun that slow code for now'''
+    import MDAnalysis.coordinates.GRO
+    import scipy
+    import scipy.spatial.distance
+    input_flu_coordinate_file_universe_object = MDAnalysis.Universe(flu_coordinate_file_path)
+    dict_lipid_residue_data = {'DOPX':{'sel_string':'resname DOPX and name PO4'},'DOPE':{'sel_string':'resname DOPE and name PO4'},'POPS':{'sel_string':'resname POPS and name PO4'},'CHOL':{'sel_string':'resname CHOL and name ROH'},'PPCH':{'sel_string':'resname PPCH and name PO4'}}
+    total_residue_headgroup_coordinates_inner_leaflet = 0
+    total_residue_headgroup_coordinates_outer_leaflet = 0
+    for residue_name, residue_subdictionary in dict_lipid_residue_data.iteritems():
+        sel_string = residue_subdictionary['sel_string']
+        selection = input_flu_coordinate_file_universe_object.selectAtoms(sel_string)
+        residue_subdictionary['selection'] = selection
+        if residue_name in ['DOPX','DOPE','POPS']:
+            total_residue_headgroup_coordinates_inner_leaflet += residue_subdictionary['selection'].numberOfAtoms()
+        else: 
+            total_residue_headgroup_coordinates_outer_leaflet += residue_subdictionary['selection'].numberOfAtoms()
+    #now, I want to generate a pseudo random distribution of points on two spheres (leaflets) of different radii -- the number of points should match up nicely with the number of residue headgroup coords above [though I will make a second data set that removes about half the points I think]
+    prng = numpy.random.RandomState(117) 
+    inner_radius = 500
+    outer_radius = 700
+    inner_leaflet_coord_array = voronoi_utility.generate_random_array_spherical_generators(total_residue_headgroup_coordinates_inner_leaflet,inner_radius,prng)
+    outer_leaflet_coord_array = voronoi_utility.generate_random_array_spherical_generators(total_residue_headgroup_coordinates_outer_leaflet,outer_radius,prng)
+    #ensure that none of the points are pathologically close
+    inner_dist_array = scipy.spatial.distance.pdist(inner_leaflet_coord_array)
+    outer_dist_array = scipy.spatial.distance.pdist(outer_leaflet_coord_array)
+    assert inner_dist_array.min() > 0.01, "Random sphere generators are pathologically close."
+    assert outer_dist_array.min() > 0.01, "Random sphere generators are pathologically close."
+    #split up the inner and outer random coordinate arrays and set the corresponding AtomGroup coords to these random positions
+    inner_leaflet_particle_counter = 0
+    outer_leaflet_particle_counter = 0
+    for residue_name, residue_subdictionary in dict_lipid_residue_data.iteritems():
+        if residue_name in ['DOPX','DOPE','POPS']:
+            num_atoms = residue_subdictionary['selection'].numberOfAtoms()
+            residue_subdictionary['selection'].set_positions(inner_leaflet_coord_array[inner_leaflet_particle_counter:inner_leaflet_particle_counter + num_atoms,...])
+            inner_leaflet_particle_counter += num_atoms
+        else: #outer leaflet
+            num_atoms = residue_subdictionary['selection'].numberOfAtoms()
+            residue_subdictionary['selection'].set_positions(outer_leaflet_coord_array[outer_leaflet_particle_counter:outer_leaflet_particle_counter + num_atoms,...])
+            outer_leaflet_particle_counter += num_atoms
+    #now write the first control gro file with the above random positions on sphere surface
+    gro_writer_instace_1 = MDAnalysis.coordinates.GRO.GROWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_1.gro')
+    gro_writer_instace_1.write(input_flu_coordinate_file_universe_object.selectAtoms('(resname DOPX and name PO4) or (resname DOPE and name PO4) or (resname POPS and name PO4) or (resname CHOL and name ROH) or (resname PPCH and name PO4)')) 
+    #now, set up for writing a second control gro file, with about half as many total coordinates in each leaflet
+    merged_halved_atom_groups = None
+    for residue_name, residue_subdictionary in dict_lipid_residue_data.iteritems():
+        full_selection_current_residue_type = residue_subdictionary['selection']
+        num_atoms_current_residue_type = full_selection_current_residue_type.numberOfAtoms()
+        approx_half_num_atoms_current_residue_type = int(float(num_atoms_current_residue_type)/2.)
+        halved_atomgroup_current_residue_type = full_selection_current_residue_type[0:approx_half_num_atoms_current_residue_type]
+        if not merged_halved_atom_groups:
+            merged_halved_atom_groups = halved_atomgroup_current_residue_type
+        else: #start concatenating once initialized
+            merged_halved_atom_groups += halved_atomgroup_current_residue_type
+    #now write the second control gro file with approx. half as many coordinates in each leaflet
+    gro_writer_instace_2 = MDAnalysis.coordinates.GRO.GROWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_2.gro')
+    gro_writer_instace_2.write(merged_halved_atom_groups) 
