@@ -924,10 +924,8 @@ def create_dengue_trajectory_movie(universe_object):
 
         return moviepy.video.io.bindings.mplfig_to_npimage(fig) #RGB image of the matplotlib figure object
 
-    clip = moviepy.editor.VideoClip(make_frame,duration=6) #6-second clip
-    clip.write_videofile("/sansom/n22/bioc1009/spherical_Voronoi_virus_work/dengue_assess_lipid_headgroups.mp4", fps=1) # export as video
-    #clip = moviepy.editor.VideoClip(make_frame,duration=60) #60-second clip
-    #clip.write_videofile("/sansom/n22/bioc1009/spherical_Voronoi_virus_work/dengue_assess_lipid_headgroups.mp4", fps=80) # export as video
+    clip = moviepy.editor.VideoClip(make_frame,duration=60) #60-second clip
+    clip.write_videofile("/sansom/n22/bioc1009/spherical_Voronoi_virus_work/dengue_assess_lipid_headgroups.mp4", fps=80) # export as video
     trajectory.rewind() #rewind the trajectory before function exits
         
 def create_control_universe_data(flu_coordinate_file_path):
