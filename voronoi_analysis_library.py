@@ -250,17 +250,20 @@ class radial_distance_assessment:
         ax3.set_xlabel('Frame #')
         ax3.set_ylabel('Radial distance from vesicle centroid (nm)')
         ax4 = self.matplotlib_figure_object.add_subplot('424')
-        ax4.scatter(self.array_frame_numbers,self.array_CHOL_ROH_percent_above_midpoint_threshold,label='above midpoint',color='orange')
-        ax4.scatter(self.array_frame_numbers,self.array_CHOL_ROH_percent_below_midpoint_threshold,label='below midpoint',color='blue')
         if equil_line:
             ax4.axvline(x=3000,ymin=0,ymax=1,c='green') #300 ns (3000 frame) equilibration line -- where the holes have sealed and the OD is stable
-        ax4.set_ylabel('Percent CHOL ROH particles above\n or below midpoint')
         ax4.set_xlabel('Frame #')
         if not self.control_condition:
             ax4.set_xlim(-900,50000)
+            ax4.scatter(self.array_frame_numbers,self.array_CHOL_ROH_percent_above_midpoint_threshold,label='above midpoint',color='orange')
+            ax4.scatter(self.array_frame_numbers,self.array_CHOL_ROH_percent_below_midpoint_threshold,label='below midpoint',color='blue')
+            ax4.set_ylabel('Percent CHOL ROH particles above\n or below midpoint')
+            ax4.legend()
         else:
+            ax4.set_ylabel('Percent CHOL ROH particles above\nradial distance threshold')
+            ax4.scatter(self.array_frame_numbers,self.array_CHOL_ROH_percent_above_midpoint_threshold,color='orange')
             ax4.set_xlim(-90,5000)
-        ax4.legend()
+            ax4.set_ylim(-5,105)
 
 
         ax5 = self.matplotlib_figure_object.add_subplot('425')
@@ -284,17 +287,20 @@ class radial_distance_assessment:
         if equil_line:
             ax5.axvline(x=3000,ymin=0,ymax=1,c='green') #300 ns (3000 frame) equilibration line -- where the holes have sealed and the OD is stable
         ax6 = self.matplotlib_figure_object.add_subplot('426')
-        ax6.scatter(self.array_frame_numbers,self.array_remaining_headgroup_percent_above_midpoint_threshold,label='above midpoint',color='orange')
-        ax6.scatter(self.array_frame_numbers,self.array_remaining_headgroup_percent_below_midpoint_threshold,label='below midpoint',color='blue')
-        ax6.set_ylabel('Percent [DOPE/X, POPS] PO4 particles above\n or below midpoint')
         ax6.set_xlabel('Frame #')
         if not self.control_condition:
+            ax6.set_ylabel('Percent [DOPE/X, POPS] PO4 particles above\n or below midpoint')
             ax6.set_xlim(-900,50000)
+            ax6.scatter(self.array_frame_numbers,self.array_remaining_headgroup_percent_above_midpoint_threshold,label='above midpoint',color='orange')
+            ax6.scatter(self.array_frame_numbers,self.array_remaining_headgroup_percent_below_midpoint_threshold,label='below midpoint',color='blue')
+            ax6.legend()
         else:
+            ax6.set_ylabel('Percent [DOPE/X, POPS] PO4 particles above\n radial distance threshold')
+            ax6.scatter(self.array_frame_numbers,self.array_remaining_headgroup_percent_above_midpoint_threshold,color='orange')
             ax6.set_xlim(-90,5000)
+            ax6.set_ylim(-5,105)
         if equil_line: #300 ns equil line
             ax6.axvline(x=3000,ymin=0,ymax=1,c='green') #300 ns (3000 frame) equilibration line -- where the holes have sealed and the OD is stable
-        ax6.legend()
 
         #plot FORS data, if applicable:
         if self.FORS_present:
@@ -754,7 +760,7 @@ def precursor_radial_distance_analysis_dengue(universe_object):
 
 
 
-def precursor_radial_distance_analysis(universe_object,FORS_present=None):
+def precursor_radial_distance_analysis(universe_object,FORS_present=None,control_condition=None):
     '''This function should parse out the necessary precursor data for the radial_distance_assessment class above. Ideally, should operate remotely on an IPython engine to allow for an asychronous parallel workflow with each replicate (universe object) analyzed simultaneously on a different core.'''
     PPCH_PO4_selection = universe_object.selectAtoms('resname PPCH and name PO4')
     FORS_AM2_selection = universe_object.selectAtoms('resname FORS and name AM2')
@@ -766,6 +772,8 @@ def precursor_radial_distance_analysis(universe_object,FORS_present=None):
     total_remaining_particles = remaining_headgroup_selection.numberOfAtoms()
     if FORS_present:
         threshold = 275 #smaller threshold in presence of FORS virions (which are smaller)
+    elif control_condition:
+        threshold = 600 #60 nm threshold for control conditions
     else:
         threshold = 285 #28.5 nm threshold for outer leaflet PPCH PO4 (currently testing)
     all_lipid_selection = universe_object.selectAtoms('resname PPCH or resname CHOL or resname POPS or resname DOPX or resname DOPE or resname FORS')
@@ -855,9 +863,13 @@ def precursor_radial_distance_analysis(universe_object,FORS_present=None):
         list_average_CHOL_ROH_distances.append(average_CHOL_ROH_radial_distance)
         list_std_dev_CHOL_ROH_distances.append(std_dev_CHOL_ROH_radial_distance)
         list_CHOL_ROH_midpoint_distances.append(midpoint_CHOL_ROH_radial_distance)
-        #for CHOL the threshold will be the unbiased midpoint
-        number_of_CHOL_ROH_radial_distances_above_threshold = (spherical_polar_CHOL_ROH_coordinates[...,0] > midpoint_CHOL_ROH_radial_distance).sum()
-        number_of_CHOL_ROH_radial_distances_below_threshold = (spherical_polar_CHOL_ROH_coordinates[...,0] < midpoint_CHOL_ROH_radial_distance).sum()
+        #for CHOL the threshold will be the unbiased midpoint (except for control conditions, which have absolute lipid leaflet assignments)
+        if not control_condition:
+            number_of_CHOL_ROH_radial_distances_above_threshold = (spherical_polar_CHOL_ROH_coordinates[...,0] > midpoint_CHOL_ROH_radial_distance).sum()
+            number_of_CHOL_ROH_radial_distances_below_threshold = (spherical_polar_CHOL_ROH_coordinates[...,0] < midpoint_CHOL_ROH_radial_distance).sum()
+        else:
+            number_of_CHOL_ROH_radial_distances_above_threshold = (spherical_polar_CHOL_ROH_coordinates[...,0] > threshold).sum()
+            number_of_CHOL_ROH_radial_distances_below_threshold = (spherical_polar_CHOL_ROH_coordinates[...,0] < threshold).sum()
         percent_CHOL_ROH_above_treshold = float(number_of_CHOL_ROH_radial_distances_above_threshold) / float(total_CHOL_ROH_particles) * 100.
         percent_CHOL_ROH_below_treshold = float(number_of_CHOL_ROH_radial_distances_below_threshold) / float(total_CHOL_ROH_particles) * 100.
         list_CHOL_ROH_percent_above_threshold.append(percent_CHOL_ROH_above_treshold)
@@ -868,8 +880,13 @@ def precursor_radial_distance_analysis(universe_object,FORS_present=None):
         midpoint_remaining_headgroup_radial_distance = numpy.average(numpy.array([minimum_remaining_headgroup_radial_distance,maximum_remaining_headgroup_radial_distance])) #unbiased midpoint for upper / lower leaflet cutoff
         average_remaining_headgroup_radial_distance = numpy.average(spherical_polar_remaining_coordinates[...,0])
         std_dev_remaining_headgroup_radial_distance = numpy.std(spherical_polar_remaining_coordinates[...,0])
-        number_of_remaining_headgroup_radial_distances_above_threshold = (spherical_polar_remaining_coordinates[...,0] > midpoint_remaining_headgroup_radial_distance).sum()
-        number_of_remaining_headgroup_radial_distances_below_threshold = (spherical_polar_remaining_coordinates[...,0] < midpoint_remaining_headgroup_radial_distance).sum()
+
+        if not control_condition:
+            number_of_remaining_headgroup_radial_distances_above_threshold = (spherical_polar_remaining_coordinates[...,0] > midpoint_remaining_headgroup_radial_distance).sum()
+            number_of_remaining_headgroup_radial_distances_below_threshold = (spherical_polar_remaining_coordinates[...,0] < midpoint_remaining_headgroup_radial_distance).sum()
+        else:
+            number_of_remaining_headgroup_radial_distances_above_threshold = (spherical_polar_remaining_coordinates[...,0] > threshold).sum()
+            number_of_remaining_headgroup_radial_distances_below_threshold = (spherical_polar_remaining_coordinates[...,0] < threshold).sum()
         percent_remaining_headgroup_above_threshold = float(number_of_remaining_headgroup_radial_distances_above_threshold) / float(total_remaining_particles) * 100.
         percent_remaining_headgroup_below_threshold = float(number_of_remaining_headgroup_radial_distances_below_threshold) / float(total_remaining_particles) * 100.
         list_min_remaining_headgroup_distances.append(minimum_remaining_headgroup_radial_distance)
