@@ -199,17 +199,19 @@ class radial_distance_assessment:
         ax.fill_between(self.array_frame_numbers,self.array_average_PPCH_PO4_radial_distances-self.array_std_dev_PPCH_PO4_radial_distances,self.array_average_PPCH_PO4_radial_distances+self.array_std_dev_PPCH_PO4_radial_distances,color='blue',alpha=0.2) #show the standard deviation about the mean PPCH PO4 OD values
         ax.set_xlabel('Frame #')
         ax.set_ylabel('Radial distance from vesicle centroid (nm)')
-        ax.legend()
-        ax.axhline(y=self.threshold/10.,xmin=0,xmax=50000,c='green') #radial distance values above this threshold should capture most of the PPCH PO4 particles (within 1 std dev of the mean)
         if equil_line:
             ax.axvline(x=3000,ymin=0,ymax=1,c='green') #300 ns (3000 frame) equilibration line -- where the holes have sealed and the OD is stable
 #now, use a second plot to track the % of PPCH PO4 particles that fall above the assigned radial distance threshold
         if not self.control_condition:
+            ax.axhline(y=self.threshold/10.,xmin=0,xmax=50000,c='green') #radial distance values above this threshold should capture most of the PPCH PO4 particles (within 1 std dev of the mean)
             ax.set_ylim(20,45)
             ax.set_xlim(-900,50000)
+            ax.legend()
         else:
-            #ax.set_ylim(20,45)
+            ax.axhline(y=60,xmin=0,xmax=50000,c='green') #use 60 nm as the cutoff for control conditions, which use absolute leaflet assignments (1 species = 1 leaflet only)
+            ax.set_ylim(40,80)
             ax.set_xlim(-90,5000)
+            ax.legend(fontsize=8)
         ax2 = self.matplotlib_figure_object.add_subplot('422')
         #print 'self.array_frame_numbers.shape:', self.array_frame_numbers.shape, 'self.array_percent_PPCH_PO4_above_threshold.shape:', self.array_percent_PPCH_PO4_above_threshold.shape #debug
         ax2.scatter(self.array_frame_numbers,self.array_percent_PPCH_PO4_above_threshold,color='orange',edgecolor='None')
@@ -239,12 +241,14 @@ class radial_distance_assessment:
         if not self.control_condition:
             ax3.set_xlim(-900,50000)
             ax3.set_ylim(20,45)
+            ax3.legend()
         else: 
             ax3.set_xlim(-90,5000)
-            #ax3.set_ylim(20,45)
+            ax3.set_ylim(40,80)
+            ax3.axhline(y=60,xmin=0,xmax=50000,c='green') #use 60 nm as the cutoff for control conditions, which use absolute leaflet assignments (1 species = 1 leaflet only)
+            ax3.legend(fontsize=8)
         ax3.set_xlabel('Frame #')
         ax3.set_ylabel('Radial distance from vesicle centroid (nm)')
-        ax3.legend()
         ax4 = self.matplotlib_figure_object.add_subplot('424')
         ax4.scatter(self.array_frame_numbers,self.array_CHOL_ROH_percent_above_midpoint_threshold,label='above midpoint',color='orange')
         ax4.scatter(self.array_frame_numbers,self.array_CHOL_ROH_percent_below_midpoint_threshold,label='below midpoint',color='blue')
@@ -269,13 +273,16 @@ class radial_distance_assessment:
         if not self.control_condition:
             ax5.set_xlim(-900,50000)
             ax5.set_ylim(20,45)
+            ax5.legend()
         else: 
             ax5.set_xlim(-90,5000)
+            ax5.set_ylim(40,80)
+            ax5.axhline(y=60,xmin=0,xmax=50000,c='green') #use 60 nm as the cutoff for control conditions, which use absolute leaflet assignments (1 species = 1 leaflet only)
+            ax5.legend(fontsize=8)
             #ax5.set_ylim(20,45)
         ax5.set_xlabel('Frame #')
         if equil_line:
             ax5.axvline(x=3000,ymin=0,ymax=1,c='green') #300 ns (3000 frame) equilibration line -- where the holes have sealed and the OD is stable
-        ax5.legend()
         ax6 = self.matplotlib_figure_object.add_subplot('426')
         ax6.scatter(self.array_frame_numbers,self.array_remaining_headgroup_percent_above_midpoint_threshold,label='above midpoint',color='orange')
         ax6.scatter(self.array_frame_numbers,self.array_remaining_headgroup_percent_below_midpoint_threshold,label='below midpoint',color='blue')
