@@ -354,7 +354,7 @@ def TMD_particle_selector(input_array,molecule_type):
         output_array = input_array #this protein doesn't really have an ectodomain so I think it is quite acceptable to continue with usage of the overall COG
     return output_array
 
-def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value,PPCH_PO4_threshold=285,proteins_present='no',FORS_present='no'):
+def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value,PPCH_PO4_threshold=285,proteins_present='no',FORS_present='no',control_condition=None):
     '''Generalization of the large Voronoi analysis loop so that I can easily expand my ipynb analysis to include all flu simulation replicates / conditions.'''
     #selections:
     PPCH_PO4_selection = universe_object.selectAtoms('resname PPCH and name PO4')
@@ -401,7 +401,10 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
         lipid_centroid = all_lipid_selection.centroid()
         PPCH_PO4_coords = dictionary_headgroup_data['PPCH']['selection'].coordinates() - lipid_centroid
         PPCH_PO4_spherical_coords = voronoi_utility.convert_cartesian_array_to_spherical_array(PPCH_PO4_coords)
-        outer_leaflet_projection_radius = numpy.average(PPCH_PO4_spherical_coords[...,0])
+        if not control_condition:
+            outer_leaflet_projection_radius = numpy.average(PPCH_PO4_spherical_coords[...,0])
+        else:
+            outer_leaflet_projection_radius = 700.
         #use the same inner leaflet projection criterion that was used for sim33
         combined_DOPE_DOPX_POPS_PO4_coords = combined_selection_DOPE_DOPX_POPS_PO4.coordinates() - lipid_centroid
         combined_DOPE_DOPX_POPS_PO4_spherical_coords = voronoi_utility.convert_cartesian_array_to_spherical_array(combined_DOPE_DOPX_POPS_PO4_coords)
@@ -409,7 +412,10 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
         min_DOPE_DOPX_POPS_PO4_radial_distance = combined_DOPE_DOPX_POPS_PO4_spherical_coords[...,0].min()
         unbiased_midpoint_radial_distance_DOPE_DOPX_POPS_PO4 = (max_DOPE_DOPX_POPS_PO4_radial_distance + min_DOPE_DOPX_POPS_PO4_radial_distance) / 2.
         inner_leaflet_DOPE_DOPX_POPS_PO4_spherical_coords = combined_DOPE_DOPX_POPS_PO4_spherical_coords[combined_DOPE_DOPX_POPS_PO4_spherical_coords[...,0] < unbiased_midpoint_radial_distance_DOPE_DOPX_POPS_PO4]
-        inner_leaflet_projection_radius = numpy.average(inner_leaflet_DOPE_DOPX_POPS_PO4_spherical_coords[...,0])
+        if not control_condition:
+            inner_leaflet_projection_radius = numpy.average(inner_leaflet_DOPE_DOPX_POPS_PO4_spherical_coords[...,0])
+        else:
+            inner_leaflet_projection_radius = 500. 
         index_counter = 0
         inner_leaflet_index_counter = 0
         for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
@@ -420,6 +426,8 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
             current_headgroup_spherical_polar_coord_array = voronoi_utility.convert_cartesian_array_to_spherical_array(current_headgroup_coordinate_array)
             #perform the necessary filtering and projection based on residue type
             if residue_name == 'PPCH' or residue_name == 'FORS':
+                if control_condition:
+                    PPCH_PO4_threshold = 600.
                 outer_leaflet_spherical_coord_array = current_headgroup_spherical_polar_coord_array[current_headgroup_spherical_polar_coord_array[...,0] > PPCH_PO4_threshold]
                 outer_leaflet_spherical_coord_array[...,0] = outer_leaflet_projection_radius
                 inner_leaflet_spherical_coord_array = current_headgroup_spherical_polar_coord_array[current_headgroup_spherical_polar_coord_array[...,0] < PPCH_PO4_threshold]
@@ -452,6 +460,8 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
                 conservative_max_value = sorted_radial_distance_array[-2] #avoid floater
                 conservative_min_value = sorted_radial_distance_array[1] #avoid floater
                 midpoint_radial_distance = (conservative_min_value + conservative_max_value) / 2.
+                if control_condition:
+                    midpoint_radial_distance = 600.
                 outer_leaflet_spherical_coord_array = current_headgroup_spherical_polar_coord_array[current_headgroup_spherical_polar_coord_array[...,0] > midpoint_radial_distance]
                 outer_leaflet_spherical_coord_array[...,0] = outer_leaflet_projection_radius
                 inner_leaflet_spherical_coord_array = current_headgroup_spherical_polar_coord_array[current_headgroup_spherical_polar_coord_array[...,0] < midpoint_radial_distance]
@@ -579,11 +589,14 @@ def produce_universe_object_on_remote_engine_dengue(coordinate_file_path):
     universe_object = MDAnalysis.Universe(coordinate_file_path,'/sansom/n22/bioc1009/sim126_extended/sim126_insect_dengue_323K_extended_skip_10_compact.xtc')
     return universe_object
 
-def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_surface_area_reconstitution=None,list_percent_surface_area_reconstitution_inner_leaflet=None,protein_present=None,simulation_title=None,dictionary_headgroup_data=None,list_percent_surface_area_reconstitution_from_lipids_only=None,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet=None,list_percent_surface_area_reconstitution_from_proteins_only=None,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet=None):
+def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_surface_area_reconstitution=None,list_percent_surface_area_reconstitution_inner_leaflet=None,protein_present=None,simulation_title=None,dictionary_headgroup_data=None,list_percent_surface_area_reconstitution_from_lipids_only=None,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet=None,list_percent_surface_area_reconstitution_from_proteins_only=None,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet=None,control_condition=None):
     color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
     if not protein_present:
         ax = figure_object.add_subplot('131')
-        array_time_values = numpy.array(list_frame_numbers) / 10000. #microseconds
+        if not control_condition:
+            array_time_values = numpy.array(list_frame_numbers) / 10000. #microseconds
+        else:
+            array_time_values = numpy.array(list_frame_numbers) / 1000. #microseconds
         array_percent_surface_area_reconstitution = numpy.array(list_percent_surface_area_reconstitution)
         ax.scatter(array_time_values,array_percent_surface_area_reconstitution,c='black',edgecolor='None',label='outer leaflet')
         array_percent_surface_area_reconstitution_inner_leaflet = numpy.array(list_percent_surface_area_reconstitution_inner_leaflet)
@@ -609,7 +622,11 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         ax2.set_xlim(0,5)
         ax2.set_xlabel('Time ($\mu$s)')
         ax2.set_title(simulation_title + ' outer leaflet')
-        ax2.set_ylim(34,54)
+        if not control_condition:
+            ax2.set_ylim(34,54)
+        else:
+            ax2.set_ylim(180,550)
+            pass
 
         ax4 = figure_object.add_subplot('133')
         index = 0
@@ -625,7 +642,10 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         ax4.set_xlim(0,5)
         ax4.set_xlabel('Time ($\mu$s)')
         ax4.set_title(simulation_title + ' inner leaflet')
-        ax4.set_ylim(34,54)
+        if not control_condition:
+            ax4.set_ylim(34,54)
+        else:
+            ax4.set_ylim(180,550)
 
         figure_object.set_size_inches(15,4)
 
