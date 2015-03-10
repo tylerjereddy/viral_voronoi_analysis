@@ -586,7 +586,7 @@ def produce_universe_object_on_remote_engine_dengue(coordinate_file_path):
     import scipy
     import math 
     #list_xtc_file_paths = dengue_utility_functions.generate_ordered_list_processed_xtc_file_paths_sim126_extended()
-    universe_object = MDAnalysis.Universe(coordinate_file_path,'/sansom/n22/bioc1009/sim126_extended/sim126_insect_dengue_323K_extended_skip_10_compact.xtc')
+    universe_object = MDAnalysis.Universe(coordinate_file_path,'/sansom/n22/bioc1009/sim126_extended/translated_test.xtc')
     return universe_object
 
 def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_surface_area_reconstitution=None,list_percent_surface_area_reconstitution_inner_leaflet=None,protein_present=None,simulation_title=None,dictionary_headgroup_data=None,list_percent_surface_area_reconstitution_from_lipids_only=None,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet=None,list_percent_surface_area_reconstitution_from_proteins_only=None,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet=None,control_condition=None):
@@ -934,6 +934,8 @@ def create_dengue_trajectory_movie(universe_object):
     from mpl_toolkits.mplot3d import Axes3D
     import moviepy.video.io.bindings
     import time
+    import scipy
+    import scipy.spatial
     trajectory = universe_object.trajectory
     trajectory.rewind() #rewind the trajectory 
     start_time = time.time()
@@ -947,16 +949,20 @@ def create_dengue_trajectory_movie(universe_object):
     PPCS_PO4_selection = universe_object.selectAtoms('resname PPCS and name PO4')
     combined_dengue_lipid_selection = POPC_PO4_selection + PPCE_PO4_selection + DPPE_PO4_selection + CER_AM2_selection + DUPC_PO4_selection + DOPS_PO4_selection + PPCS_PO4_selection
     protein_selection = universe_object.selectAtoms('bynum 1:221040')
+    water_selection = universe_object.selectAtoms('resname W and name W')
     
     #set up base figure:
     fig = plt.figure()
-    fig.set_size_inches(14,7)
-    ax = fig.add_subplot('121',projection='3d')
-    ax2 = fig.add_subplot('122',projection='3d') #proteins and lipids in this one, to get more information about PBC situation
+    fig.set_size_inches(14,14)
+    ax = fig.add_subplot('221',projection='3d')
+    ax2 = fig.add_subplot('222',projection='3d') #proteins and lipids in this one, to get more information about PBC situation
     plot_1, = ax.plot([],[],[],color='blue',label='lipid headgroups only',marker='.',linestyle='')
     plot_2, = ax2.plot([],[],[],color='blue',label='lipid headgroups',marker='.',linestyle='')
     plot_3, = ax2.plot([],[],[],color='red',label='protein',marker='.',linestyle='')
-    for axis in [ax,ax2]:
+    ax3 = fig.add_subplot('223',projection='3d') #for protein and convex hull of solvent, to better assess relative positioning in simulation container
+    plot_4, = ax3.plot([],[],[],color='red',label='protein',marker='.',linestyle='')
+    plot_5, = ax3.plot([],[],[],color='black',label='solvent convex hull',marker='.',linestyle='')
+    for axis in [ax,ax2,ax3]:
         axis.set_xlabel('x')
         axis.set_ylabel('y')
         axis.set_zlabel('z')
@@ -977,12 +983,19 @@ def create_dengue_trajectory_movie(universe_object):
         frame_number = trajectory.frame
         dengue_lipid_headgroup_coordinates = combined_dengue_lipid_selection.coordinates()
         dengue_protein_coordinates = protein_selection.coordinates()
+        water_coords = water_selection.coordinates()
+        hull = scipy.spatial.ConvexHull(water_coords)
+        hull_vertices = hull.points[hull.vertices]
         plot_1.set_data(dengue_lipid_headgroup_coordinates[...,0],dengue_lipid_headgroup_coordinates[...,1])
         plot_1.set_3d_properties(dengue_lipid_headgroup_coordinates[...,2])
         plot_2.set_data(dengue_lipid_headgroup_coordinates[...,0],dengue_lipid_headgroup_coordinates[...,1])
         plot_2.set_3d_properties(dengue_lipid_headgroup_coordinates[...,2])
         plot_3.set_data(dengue_protein_coordinates[...,0],dengue_protein_coordinates[...,1])
         plot_3.set_3d_properties(dengue_protein_coordinates[...,2])
+        plot_4.set_data(dengue_protein_coordinates[...,0],dengue_protein_coordinates[...,1])
+        plot_4.set_3d_properties(dengue_protein_coordinates[...,2])
+        plot_5.set_data(hull_vertices[...,0],hull_vertices[...,1])
+        plot_5.set_3d_properties(hull_vertices[...,2])
         ax_frame_text.set_text("frame number = {frame_number}".format(frame_number = frame_number))
         ax2_frame_text.set_text("frame number = {frame_number}".format(frame_number = frame_number))
         elapsed_time = time.time() - start_time
