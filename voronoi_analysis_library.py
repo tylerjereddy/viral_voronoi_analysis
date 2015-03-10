@@ -105,14 +105,14 @@ def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indi
 
 class radial_distance_assessment_dengue:
 
-    def __init__(self,matplotlib_figure_object,list_frame_numbers_dengue,list_min_dengue_lipid_headgroup_distances,list_max_dengue_lipid_headgroup_distances,list_average_dengue_lipid_headgroup_distances,list_std_dev_dengue_lipid_headgroup_distances,list_dengue_lipid_headgroup_midpoint_distances,list_dengue_lipid_headgroup_percent_above_threshold,list_dengue_lipid_headgroup_percent_below_threshold,list_min_MDA_distances,list_max_MDA_distances):
+    def __init__(self,matplotlib_figure_object,list_frame_numbers_dengue,list_min_dengue_lipid_headgroup_distances,list_max_dengue_lipid_headgroup_distances,list_average_dengue_lipid_headgroup_distances,list_std_dev_dengue_lipid_headgroup_distances,list_dengue_lipid_headgroup_midpoint_distances,list_dengue_lipid_headgroup_percent_above_threshold,list_dengue_lipid_headgroup_percent_below_threshold,list_min_protein_distances,list_max_protein_distances):
 
         self.matplotlib_figure_object = matplotlib_figure_object
         #dengue data structure initialization:
         self.array_min_dengue_lipid_headgroup_radial_distances = numpy.array(list_min_dengue_lipid_headgroup_distances)/ 10.
         self.array_max_dengue_lipid_headgroup_radial_distances = numpy.array(list_max_dengue_lipid_headgroup_distances)/ 10.
-        self.array_min_MDA_distances = numpy.array(list_min_MDA_distances) / 10.
-        self.array_max_MDA_distances = numpy.array(list_max_MDA_distances) / 10.
+        self.array_min_protein_distances = numpy.array(list_min_protein_distances) / 10.
+        self.array_max_protein_distances = numpy.array(list_max_protein_distances) / 10.
         self.array_average_dengue_lipid_headgroup_radial_distances = numpy.array(list_average_dengue_lipid_headgroup_distances)/ 10.
         self.array_std_dev_dengue_lipid_headgroup_radial_distances = numpy.array(list_std_dev_dengue_lipid_headgroup_distances)/ 10.
         self.array_dengue_lipid_headgroup_unbiased_midpoint_distances = numpy.array(list_dengue_lipid_headgroup_midpoint_distances) / 10.
@@ -124,14 +124,14 @@ class radial_distance_assessment_dengue:
         '''Plot the dengue radial distance assessment data.'''
         ax = self.matplotlib_figure_object.add_subplot('121')
         ax.scatter(self.array_frame_numbers,self.array_min_dengue_lipid_headgroup_radial_distances,label='min dengue lipid headgroup radial distance',c='black',edgecolor='None')
-        ax.scatter(self.array_frame_numbers,self.array_min_MDA_distances,label='min MDA PBC distances',c='grey',edgecolor='None')
-        ax.scatter(self.array_frame_numbers,self.array_max_MDA_distances,label='max MDA PBC distances',c='green',edgecolor='None')
+        ax.scatter(self.array_frame_numbers,self.array_min_protein_distances,label='min protein distances',c='grey',edgecolor='None')
+        ax.scatter(self.array_frame_numbers,self.array_max_protein_distances,label='max protein distances',c='green',edgecolor='None')
         ax.scatter(self.array_frame_numbers,self.array_max_dengue_lipid_headgroup_radial_distances,label='max dengue lipid headgroup radial distance',c='red',edgecolor='None')
         ax.scatter(self.array_frame_numbers,self.array_average_dengue_lipid_headgroup_radial_distances,label='average dengue lipid headgroup radial distance',c='blue',edgecolor='None')
         ax.fill_between(self.array_frame_numbers,self.array_average_dengue_lipid_headgroup_radial_distances-self.array_std_dev_dengue_lipid_headgroup_radial_distances,self.array_average_dengue_lipid_headgroup_radial_distances+self.array_std_dev_dengue_lipid_headgroup_radial_distances,color='blue',alpha=0.2) #show the standard deviation about the mean dengue lipid headgroup OD values
         ax.scatter(self.array_frame_numbers,self.array_dengue_lipid_headgroup_unbiased_midpoint_distances,label='unbiased dengue lipid headgroup radial midpoints',c='yellow',edgecolor='None')
         ax.set_xlim(-100,5100)
-        #ax.set_ylim(20,45)
+        ax.set_ylim(10,70)
         ax.set_xlabel('Frame #')
         ax.set_ylabel('Radial distance from virion centroid (nm)')
         ax.legend(loc=2,fontsize=8)
@@ -717,12 +717,13 @@ def precursor_radial_distance_analysis_dengue(universe_object):
     DOPS_PO4_selection = universe_object.selectAtoms('resname DOPS and name PO4')
     PPCS_PO4_selection = universe_object.selectAtoms('resname PPCS and name PO4')
     combined_dengue_lipid_selection = POPC_PO4_selection + PPCE_PO4_selection + DPPE_PO4_selection + CER_AM2_selection + DUPC_PO4_selection + DOPS_PO4_selection + PPCS_PO4_selection
+    protein_selection = universe_object.selectAtoms('bynum 1:221040')
     total_dengue_particles_assessed = combined_dengue_lipid_selection.numberOfAtoms()
     threshold = 275 #adjust as needed to split leaflet populations appropriately
     all_lipid_selection = universe_object.selectAtoms('resname POPC or resname PPCE or resname DPPE or resname CER or resname DUPC or resname DOPS or resname PPCS')
    
-    list_min_MDA_distances = []
-    list_max_MDA_distances = []
+    list_min_protein_distances = []
+    list_max_protein_distances = []
     list_min_dengue_lipid_headgroup_distances = []
     list_max_dengue_lipid_headgroup_distances = []
     list_average_dengue_lipid_headgroup_distances = []
@@ -735,17 +736,18 @@ def precursor_radial_distance_analysis_dengue(universe_object):
 
     for ts in universe_object.trajectory[::10]: #every 10th frame (roughly every 10 ns for skip-10-filtered dengue trajectory)
         dengue_lipid_headgroup_coordinates = combined_dengue_lipid_selection.coordinates()
+        dengue_protein_coordinates = protein_selection.coordinates()
         all_lipid_centroid = all_lipid_selection.centroid()
-        #do an additional calculation to test MDA treatment of rhombic dodecahedron PBC conditions (which are causing issues in my conventional calculations)
-        MDA_distance_array = MDAnalysis.core.distances.distance_array(all_lipid_centroid.astype(numpy.float32)[numpy.newaxis,:],dengue_lipid_headgroup_coordinates.astype(numpy.float32),universe_object.dimensions)
-        min_MDA_radial_distance = MDA_distance_array.min()
-        max_MDA_radial_distance = MDA_distance_array.max()
         #place the centroid of the system at the origin
         dengue_lipid_headgroup_coordinates -= all_lipid_centroid
+        dengue_protein_coordinates -= all_lipid_centroid
         spherical_polar_dengue_lipid_headgroup_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(dengue_lipid_headgroup_coordinates)
+        spherical_polar_dengue_protein_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(dengue_protein_coordinates)
         #assess the positions of the dengue lipid headgroup particles
         minimum_dengue_lipid_headgroup_radial_distance = spherical_polar_dengue_lipid_headgroup_coordinates[...,0].min()
         maximum_dengue_lipid_headgroup_radial_distance = numpy.sort(spherical_polar_dengue_lipid_headgroup_coordinates[...,0])[-1] #looks like we have a DUPC floater, based on visual inspection of debug coords printed below
+        min_protein_distance = spherical_polar_dengue_protein_coordinates[...,0].min()
+        max_protein_distance = spherical_polar_dengue_protein_coordinates[...,0].max()
         #debug possible floater(s) at unusually large radial distances:
         #if debug_coords_written < 1 and maximum_dengue_lipid_headgroup_radial_distance > 310:
             #import MDAnalysis.coordinates.GRO
@@ -766,13 +768,13 @@ def precursor_radial_distance_analysis_dengue(universe_object):
         list_dengue_lipid_headgroup_midpoint_distances.append(midpoint_dengue_lipid_headgroup_radial_distance)
         list_dengue_lipid_headgroup_percent_above_threshold.append(percent_dengue_lipid_headgroup_above_threshold)
         list_dengue_lipid_headgroup_percent_below_threshold.append(percent_dengue_lipid_headgroup_below_threshold)
-        list_min_MDA_distances.append(min_MDA_radial_distance)
-        list_max_MDA_distances.append(max_MDA_radial_distance)
+        list_min_protein_distances.append(min_protein_distance)
+        list_max_protein_distances.append(max_protein_distance)
 
         frame_number = ts.frame
         list_frame_numbers.append(frame_number)
 
-    return (list_min_dengue_lipid_headgroup_distances,list_max_dengue_lipid_headgroup_distances,list_average_dengue_lipid_headgroup_distances,list_std_dev_dengue_lipid_headgroup_distances,list_frame_numbers,list_dengue_lipid_headgroup_percent_above_threshold,list_dengue_lipid_headgroup_percent_below_threshold,list_dengue_lipid_headgroup_midpoint_distances,list_min_MDA_distances,list_max_MDA_distances)
+    return (list_min_dengue_lipid_headgroup_distances,list_max_dengue_lipid_headgroup_distances,list_average_dengue_lipid_headgroup_distances,list_std_dev_dengue_lipid_headgroup_distances,list_frame_numbers,list_dengue_lipid_headgroup_percent_above_threshold,list_dengue_lipid_headgroup_percent_below_threshold,list_dengue_lipid_headgroup_midpoint_distances,list_min_protein_distances,list_max_protein_distances)
 
 
 
