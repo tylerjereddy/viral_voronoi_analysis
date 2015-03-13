@@ -354,33 +354,51 @@ def TMD_particle_selector(input_array,molecule_type):
         output_array = input_array #this protein doesn't really have an ectodomain so I think it is quite acceptable to continue with usage of the overall COG
     return output_array
 
-def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value,PPCH_PO4_threshold=285,proteins_present='no',FORS_present='no',control_condition=None):
+def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value,PPCH_PO4_threshold=285,proteins_present='no',FORS_present='no',control_condition=None,dengue_condition=None):
     '''Generalization of the large Voronoi analysis loop so that I can easily expand my ipynb analysis to include all flu simulation replicates / conditions.'''
     #selections:
-    PPCH_PO4_selection = universe_object.selectAtoms('resname PPCH and name PO4')
-    FORS_AM2_selection = universe_object.selectAtoms('resname FORS and name AM2')
-    PPCH_PO4_threshold = PPCH_PO4_threshold #28.5 nm cutoff for outer leaflet assignment (see above)
-    CHOL_ROH_selection = universe_object.selectAtoms('resname CHOL and name ROH')
-    DOPX_PO4_selection = universe_object.selectAtoms('resname DOPX and name PO4')
-    DOPE_PO4_selection = universe_object.selectAtoms('resname DOPE and name PO4')
-    POPS_PO4_selection = universe_object.selectAtoms('resname POPS and name PO4')
-    combined_selection_DOPE_DOPX_POPS_PO4 = DOPX_PO4_selection + DOPE_PO4_selection + POPS_PO4_selection
-    all_lipid_selection = universe_object.selectAtoms('resname PPCH or resname CHOL or resname POPS or resname DOPX or resname DOPE or resname FORS')
-    if proteins_present == 'yes':
-        all_protein_selection = universe_object.selectAtoms('bynum 1:344388')
-        if FORS_present == 'no':
-            dictionary_headgroup_data = {'PPCH':{'selection':PPCH_PO4_selection},'CHOL':{'selection':CHOL_ROH_selection},'DOPX':{'selection':DOPX_PO4_selection},'DOPE':{'selection':DOPE_PO4_selection},'POPS':{'selection':POPS_PO4_selection},'protein':{'selection':all_protein_selection}}
+    if not dengue_condition:
+        PPCH_PO4_selection = universe_object.selectAtoms('resname PPCH and name PO4')
+        FORS_AM2_selection = universe_object.selectAtoms('resname FORS and name AM2')
+        PPCH_PO4_threshold = PPCH_PO4_threshold #28.5 nm cutoff for outer leaflet assignment (see above)
+        CHOL_ROH_selection = universe_object.selectAtoms('resname CHOL and name ROH')
+        DOPX_PO4_selection = universe_object.selectAtoms('resname DOPX and name PO4')
+        DOPE_PO4_selection = universe_object.selectAtoms('resname DOPE and name PO4')
+        POPS_PO4_selection = universe_object.selectAtoms('resname POPS and name PO4')
+        combined_selection_DOPE_DOPX_POPS_PO4 = DOPX_PO4_selection + DOPE_PO4_selection + POPS_PO4_selection
+        all_lipid_selection = universe_object.selectAtoms('resname PPCH or resname CHOL or resname POPS or resname DOPX or resname DOPE or resname FORS')
+
+        if proteins_present == 'yes':
+            all_protein_selection = universe_object.selectAtoms('bynum 1:344388')
+            if FORS_present == 'no':
+                dictionary_headgroup_data = {'PPCH':{'selection':PPCH_PO4_selection},'CHOL':{'selection':CHOL_ROH_selection},'DOPX':{'selection':DOPX_PO4_selection},'DOPE':{'selection':DOPE_PO4_selection},'POPS':{'selection':POPS_PO4_selection},'protein':{'selection':all_protein_selection}}
+            else:
+                dictionary_headgroup_data = {'PPCH':{'selection':PPCH_PO4_selection},'CHOL':{'selection':CHOL_ROH_selection},'DOPX':{'selection':DOPX_PO4_selection},'DOPE':{'selection':DOPE_PO4_selection},'POPS':{'selection':POPS_PO4_selection},'protein':{'selection':all_protein_selection},'FORS':{'selection':FORS_AM2_selection}}
+            #for virion simulation I want to assess the amount of surface area occupied by protein and lipid separately (can always sum together later to get the overall total)
+            list_percent_surface_area_reconstitution_from_lipids_only = [] #outer leaflet
+            list_percent_surface_area_reconstitution_from_proteins_only = [] #outer leaflet
+            list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet = []
+            list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet = []
         else:
-            dictionary_headgroup_data = {'PPCH':{'selection':PPCH_PO4_selection},'CHOL':{'selection':CHOL_ROH_selection},'DOPX':{'selection':DOPX_PO4_selection},'DOPE':{'selection':DOPE_PO4_selection},'POPS':{'selection':POPS_PO4_selection},'protein':{'selection':all_protein_selection},'FORS':{'selection':FORS_AM2_selection}}
-        #for virion simulation I want to assess the amount of surface area occupied by protein and lipid separately (can always sum together later to get the overall total)
+            dictionary_headgroup_data = {'PPCH':{'selection':PPCH_PO4_selection},'CHOL':{'selection':CHOL_ROH_selection},'DOPX':{'selection':DOPX_PO4_selection},'DOPE':{'selection':DOPE_PO4_selection},'POPS':{'selection':POPS_PO4_selection}}
+            list_percent_surface_area_reconstitution = []
+            list_percent_surface_area_reconstitution_inner_leaflet = []
+    else: #selections and initial data structures for dengue case
+        POPC_PO4_selection = universe_object.selectAtoms('resname POPC and name PO4')
+        PPCE_PO4_selection = universe_object.selectAtoms('resname PPCE and name PO4')
+        DPPE_PO4_selection = universe_object.selectAtoms('resname DPPE and name PO4')
+        CER_AM2_selection = universe_object.selectAtoms('resname CER and name AM2') #may have to treat ceramide differently without PO4 in headgroup region?
+        DUPC_PO4_selection = universe_object.selectAtoms('resname DUPC and name PO4')
+        DOPS_PO4_selection = universe_object.selectAtoms('resname DOPS and name PO4')
+        PPCS_PO4_selection = universe_object.selectAtoms('resname PPCS and name PO4')
+        combined_dengue_lipid_headgroup_selection = POPC_PO4_selection + PPCE_PO4_selection + DPPE_PO4_selection + CER_AM2_selection + DUPC_PO4_selection + DOPS_PO4_selection + PPCS_PO4_selection
+        all_lipid_selection = universe_object.selectAtoms('resname POPC or resname PPCE or resname DPPE or resname CER or resname DUPC or resname DOPS or resname PPCS')
+        all_protein_selection = universe_object.selectAtoms('bynum 1:221040') #I think I'm actually going to need to select the TMDs separately (I should have some previous code written for this task -- may be able to split into TMD selections downstream, or may be easier to do it here-we'll see)
+        dictionary_headgroup_data = {'POPC':{'selection':POPC_PO4_selection},'PPCE':{'selection':PPCE_PO4_selection},'DPPE':{'selection':DPPE_PO4_selection},'CER':{'selection':CER_AM2_selection},'DUPC':{'selection':DUPC_PO4_selection},'DOPS':{'selection':DOPS_PO4_selection},'PPCS':{'selection':PPCS_PO4_selection},'protein':{'selection':all_protein_selection}}
         list_percent_surface_area_reconstitution_from_lipids_only = [] #outer leaflet
         list_percent_surface_area_reconstitution_from_proteins_only = [] #outer leaflet
         list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet = []
         list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet = []
-    else:
-        dictionary_headgroup_data = {'PPCH':{'selection':PPCH_PO4_selection},'CHOL':{'selection':CHOL_ROH_selection},'DOPX':{'selection':DOPX_PO4_selection},'DOPE':{'selection':DOPE_PO4_selection},'POPS':{'selection':POPS_PO4_selection}}
-        list_percent_surface_area_reconstitution = []
-        list_percent_surface_area_reconstitution_inner_leaflet = []
 
     #set up preliminary data structures
     for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
@@ -399,21 +417,29 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
         end_frame = int(simulation_trajectory_object.numframes)
     for ts in simulation_trajectory_object[start_frame:end_frame:skip_frame_value]: 
         lipid_centroid = all_lipid_selection.centroid()
-        PPCH_PO4_coords = dictionary_headgroup_data['PPCH']['selection'].coordinates() - lipid_centroid
-        PPCH_PO4_spherical_coords = voronoi_utility.convert_cartesian_array_to_spherical_array(PPCH_PO4_coords)
-        if not control_condition:
+        if not dengue_condition:
+            PPCH_PO4_coords = dictionary_headgroup_data['PPCH']['selection'].coordinates() - lipid_centroid
+            PPCH_PO4_spherical_coords = voronoi_utility.convert_cartesian_array_to_spherical_array(PPCH_PO4_coords)
+        if not control_condition and not dengue_condition:
             outer_leaflet_projection_radius = numpy.average(PPCH_PO4_spherical_coords[...,0])
+        elif dengue_condition:
+            outer_leaflet_projection_radius = 214.6 #I calculated this as the average max dengue radial lipid headgroup distance (across all simulation frames)
         else:
             outer_leaflet_projection_radius = 700.
-        #use the same inner leaflet projection criterion that was used for sim33
-        combined_DOPE_DOPX_POPS_PO4_coords = combined_selection_DOPE_DOPX_POPS_PO4.coordinates() - lipid_centroid
-        combined_DOPE_DOPX_POPS_PO4_spherical_coords = voronoi_utility.convert_cartesian_array_to_spherical_array(combined_DOPE_DOPX_POPS_PO4_coords)
-        max_DOPE_DOPX_POPS_PO4_radial_distance = numpy.sort(combined_DOPE_DOPX_POPS_PO4_spherical_coords[...,0])[-2]
-        min_DOPE_DOPX_POPS_PO4_radial_distance = combined_DOPE_DOPX_POPS_PO4_spherical_coords[...,0].min()
-        unbiased_midpoint_radial_distance_DOPE_DOPX_POPS_PO4 = (max_DOPE_DOPX_POPS_PO4_radial_distance + min_DOPE_DOPX_POPS_PO4_radial_distance) / 2.
-        inner_leaflet_DOPE_DOPX_POPS_PO4_spherical_coords = combined_DOPE_DOPX_POPS_PO4_spherical_coords[combined_DOPE_DOPX_POPS_PO4_spherical_coords[...,0] < unbiased_midpoint_radial_distance_DOPE_DOPX_POPS_PO4]
-        if not control_condition:
+
+        if not dengue_condition:
+            #use the same inner leaflet projection criterion that was used for sim33
+            combined_DOPE_DOPX_POPS_PO4_coords = combined_selection_DOPE_DOPX_POPS_PO4.coordinates() - lipid_centroid
+            combined_DOPE_DOPX_POPS_PO4_spherical_coords = voronoi_utility.convert_cartesian_array_to_spherical_array(combined_DOPE_DOPX_POPS_PO4_coords)
+            max_DOPE_DOPX_POPS_PO4_radial_distance = numpy.sort(combined_DOPE_DOPX_POPS_PO4_spherical_coords[...,0])[-2]
+            min_DOPE_DOPX_POPS_PO4_radial_distance = combined_DOPE_DOPX_POPS_PO4_spherical_coords[...,0].min()
+            unbiased_midpoint_radial_distance_DOPE_DOPX_POPS_PO4 = (max_DOPE_DOPX_POPS_PO4_radial_distance + min_DOPE_DOPX_POPS_PO4_radial_distance) / 2.
+            inner_leaflet_DOPE_DOPX_POPS_PO4_spherical_coords = combined_DOPE_DOPX_POPS_PO4_spherical_coords[combined_DOPE_DOPX_POPS_PO4_spherical_coords[...,0] < unbiased_midpoint_radial_distance_DOPE_DOPX_POPS_PO4]
+
+        if not control_condition and not dengue_condition:
             inner_leaflet_projection_radius = numpy.average(inner_leaflet_DOPE_DOPX_POPS_PO4_spherical_coords[...,0])
+        elif dengue_condition:
+            inner_leaflet_projection_radius = 145.7 #calculated as the average minimum lipid headgroup radial distance across all dengue simulation frames
         else:
             inner_leaflet_projection_radius = 500. 
         index_counter = 0
@@ -425,14 +451,14 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
             current_headgroup_coordinate_array -= lipid_centroid #center at origin
             current_headgroup_spherical_polar_coord_array = voronoi_utility.convert_cartesian_array_to_spherical_array(current_headgroup_coordinate_array)
             #perform the necessary filtering and projection based on residue type
-            if residue_name == 'PPCH' or residue_name == 'FORS':
+            if residue_name == 'PPCH' or residue_name == 'FORS' and not dengue_condition:
                 if control_condition:
                     PPCH_PO4_threshold = 600.
                 outer_leaflet_spherical_coord_array = current_headgroup_spherical_polar_coord_array[current_headgroup_spherical_polar_coord_array[...,0] > PPCH_PO4_threshold]
                 outer_leaflet_spherical_coord_array[...,0] = outer_leaflet_projection_radius
                 inner_leaflet_spherical_coord_array = current_headgroup_spherical_polar_coord_array[current_headgroup_spherical_polar_coord_array[...,0] < PPCH_PO4_threshold]
                 inner_leaflet_spherical_coord_array[...,0] = inner_leaflet_projection_radius
-            elif residue_name == 'protein': #now trying a strategy that isolates the protein TMDs for projection
+            elif residue_name == 'protein' and not dengue_condition: #now trying a strategy that isolates the protein TMDs for projection
                 HA_all_particles_coord_array = current_headgroup_coordinate_array[0:289680,...]
                 NA_all_particles_coord_array = current_headgroup_coordinate_array[289680:338808,...]
                 M2_all_particles_coord_array = current_headgroup_coordinate_array[338808:344388,...]
@@ -455,7 +481,22 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
                 outer_leaflet_spherical_coord_array[...,0] = outer_leaflet_projection_radius
                 inner_leaflet_spherical_coord_array = numpy.copy(current_headgroup_spherical_polar_coord_array)
                 inner_leaflet_spherical_coord_array[...,0] = inner_leaflet_projection_radius
-            else: #all other residues use a midpoint filtering method
+            elif residue_name == 'protein' and dengue_condition: #isolate dengue protein TMD centroids most likely
+                list_asymmetric_unit_coordinate_arrays = numpy.split(current_headgroup_coordinate_array,60) #split into the 60 asymmetric units
+                list_asymmetric_unit_EM_TMD_centroid_lists = [TMD_particle_selector_dengue(asym_unit_coords) for asym_unit_coords in list_asymmetric_unit_coordinate_arrays]
+                list_EM_TMD_centroids_combined = []
+                for EM_TMD_centroid_list in list_asymmetric_unit_EM_TMD_centroid_lists:
+                    list_EM_TMD_centroids_combined.extend(EM_TMD_centroid_list[0])
+                    list_EM_TMD_centroids_combined.extend(EM_TMD_centroid_list[1])
+                current_headgroup_coordinate_array = numpy.array(list_EM_TMD_centroids_combined)
+                assert current_headgroup_coordinate_array.shape == (720,3), "The dengue virion should have 720 TMD centroids."
+                #crudely project the TMD centroids to both leaflets
+                current_headgroup_spherical_polar_coord_array = voronoi_utility.convert_cartesian_array_to_spherical_array(current_headgroup_coordinate_array)
+                outer_leaflet_spherical_coord_array = numpy.copy(current_headgroup_spherical_polar_coord_array)
+                outer_leaflet_spherical_coord_array[...,0] = outer_leaflet_projection_radius
+                inner_leaflet_spherical_coord_array = numpy.copy(current_headgroup_spherical_polar_coord_array)
+                inner_leaflet_spherical_coord_array[...,0] = inner_leaflet_projection_radius
+            else: #all other residues use a midpoint filtering method (I think I can use as-is for dengue as well?!)
                 sorted_radial_distance_array = numpy.sort(current_headgroup_spherical_polar_coord_array[...,0])
                 conservative_max_value = sorted_radial_distance_array[-2] #avoid floater
                 conservative_min_value = sorted_radial_distance_array[1] #avoid floater
@@ -1146,3 +1187,24 @@ def produce_orthogonalization_matrix(a,b,c,alpha,beta,gamma):
                                                [0, b * math.sin(math.radians(gamma)), c * (math.cos(math.radians(alpha))-math.cos(math.radians(beta)) * math.cos(math.radians(gamma))) / math.sin(math.radians(gamma))],\
                                                [0, 0, volume / (a * b * math.sin(math.radians(gamma)))]])
     return orthogononlization_matrix
+
+#copy in a useful function (I previously wrote) that pulls out the coordinates of asymmetric unit TMDs and modify as needed:
+def TMD_particle_selector_dengue(asymmetric_unit_input_array):
+    '''Selects the TMD coordinate elements from the asymmetric_unit_input_array and combines to simplified new numpy arrays with TMD particle coordinates only for E and M proteins, respectively.
+    The asymmetric_unit_input_array should be a single numpy array of coordinates for a given asymmetric unit. This function assumes an asymmetric unit topology of 3 x E followed by 3 x M. Now
+    modifying the function to return the centroids of the individual TMDs.'''
+    E_TMD_1_coordinate_array = asymmetric_unit_input_array[977:1013,...]
+    E_TMD_2_coordinate_array = asymmetric_unit_input_array[2047:2083,...]
+    E_TMD_3_coordinate_array = asymmetric_unit_input_array[3117:3153,...]
+    E_TMD_4_coordinate_array = asymmetric_unit_input_array[1027:1061,...]
+    E_TMD_5_coordinate_array = asymmetric_unit_input_array[2097:2131,...]
+    E_TMD_6_coordinate_array = asymmetric_unit_input_array[3167:3201,...]
+    M_TMD_1_coordinate_array = asymmetric_unit_input_array[3299:3327,...]
+    M_TMD_2_coordinate_array = asymmetric_unit_input_array[3457:3485,...]
+    M_TMD_3_coordinate_array = asymmetric_unit_input_array[3615:3643,...]
+    M_TMD_4_coordinate_array = asymmetric_unit_input_array[3336:3363,...]
+    M_TMD_5_coordinate_array = asymmetric_unit_input_array[3494:3521,...]
+    M_TMD_6_coordinate_array = asymmetric_unit_input_array[3652:3679,...]
+    list_E_TMD_centroids = [numpy.average(E_TMD_array,axis=0) for E_TMD_array in [E_TMD_1_coordinate_array,E_TMD_2_coordinate_array,E_TMD_3_coordinate_array,E_TMD_4_coordinate_array,E_TMD_5_coordinate_array,E_TMD_6_coordinate_array]]
+    list_M_TMD_centroids = [numpy.average(M_TMD_array,axis=0) for M_TMD_array in [M_TMD_1_coordinate_array,M_TMD_2_coordinate_array,M_TMD_3_coordinate_array,M_TMD_4_coordinate_array,M_TMD_5_coordinate_array,M_TMD_6_coordinate_array]]
+    return [list_E_TMD_centroids,list_M_TMD_centroids]
