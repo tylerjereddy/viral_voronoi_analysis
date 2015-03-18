@@ -38,9 +38,14 @@ def calculate_surface_area_sphere(radius):
     surface_area = math.pi * 4 * (radius ** 2)
     return surface_area 
 
-def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data):
+def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data,dengue_condition=None):
     plot_number = 1
-    color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
+
+    if not dengue_condition:
+        color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
+    else:
+        color_dict = {'POPC':'black','PPCE':'blue','DPPE':'green','CER':'red','DUPC':'purple','protein':'orange','DOPS':'brown','PPCS':'pink'} 
+
     for current_voronoi_index in list_Voronoi_indices:
         ax = matplotlib_figure_object.add_subplot(1,4,plot_number,projection='3d')
         index = 0
@@ -57,7 +62,10 @@ def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,d
         ax.set_title('~{time} $\mu$s ({title})'.format(time=plot_number,title=plot_title))
         ax.auto_scale_xyz
         ax.legend()
-        ax.set_xlim(-40,40);ax.set_ylim(-40,40);ax.set_zlim(-40,40);
+        if not dengue_condition:
+            ax.set_xlim(-40,40);ax.set_ylim(-40,40);ax.set_zlim(-40,40);
+        else:
+            ax.set_xlim(-25,25);ax.set_ylim(-25,25);ax.set_zlim(-25,25);
         ax.set_xlabel('x (nm)')
         ax.set_ylabel('y (nm)')
         ax.set_zlabel('z (nm)')
