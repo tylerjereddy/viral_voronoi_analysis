@@ -38,11 +38,11 @@ def calculate_surface_area_sphere(radius):
     surface_area = math.pi * 4 * (radius ** 2)
     return surface_area 
 
-def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data,dengue_condition=None):
+def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data,dengue_condition=None,control_condition=None):
     plot_number = 1
 
     if not dengue_condition:
-        color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
+        color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'} #this should be fine for control, which simply lacks protein
     else:
         color_dict = {'POPC':'black','PPCE':'blue','DPPE':'green','CER':'red','DUPC':'purple','protein':'orange','DOPS':'brown','PPCS':'pink'} 
 
@@ -53,7 +53,8 @@ def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,d
         for residue_name, subdictionary in dict_data.iteritems():
             list_Voronoi_cell_vertex_arrays = subdictionary[dict_key_Voronoi_data][current_voronoi_index]
             color = color_dict[residue_name]
-            for vertex_array in list_Voronoi_cell_vertex_arrays:
+            for vertex_array in list_Voronoi_cell_vertex_arrays: #control condition debug -- indexing 0:10 produces some tiny polygons, 0:100 causes a straight kernel crash
+                #ax.plot(vertex_array[...,0]/10.,vertex_array[...,1]/10.,vertex_array[...,2]/10.,c=color,linestyle='',marker='.',markeredgecolor='none') #debug scatter for control condition
                 polygon = Poly3DCollection([vertex_array/10.],alpha=1.0) #convert to nm
                 polygon.set_color(color)
                 ax.add_collection3d(polygon)
@@ -63,7 +64,10 @@ def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,d
         ax.auto_scale_xyz
         ax.legend()
         if not dengue_condition:
-            ax.set_xlim(-40,40);ax.set_ylim(-40,40);ax.set_zlim(-40,40);
+            if not control_condition:
+                ax.set_xlim(-40,40);ax.set_ylim(-40,40);ax.set_zlim(-40,40);
+            else: #the control condition
+                ax.set_xlim(-80,80);ax.set_ylim(-80,80);ax.set_zlim(-80,80);
         else:
             ax.set_xlim(-25,25);ax.set_ylim(-25,25);ax.set_zlim(-25,25);
         ax.set_xlabel('x (nm)')
@@ -1225,3 +1229,51 @@ def TMD_particle_selector_dengue(asymmetric_unit_input_array):
     list_E_TMD_centroids = [numpy.average(E_TMD_array,axis=0) for E_TMD_array in [E_TMD_1_coordinate_array,E_TMD_2_coordinate_array,E_TMD_3_coordinate_array,E_TMD_4_coordinate_array,E_TMD_5_coordinate_array,E_TMD_6_coordinate_array]]
     list_M_TMD_centroids = [numpy.average(M_TMD_array,axis=0) for M_TMD_array in [M_TMD_1_coordinate_array,M_TMD_2_coordinate_array,M_TMD_3_coordinate_array,M_TMD_4_coordinate_array,M_TMD_5_coordinate_array,M_TMD_6_coordinate_array]]
     return [list_E_TMD_centroids,list_M_TMD_centroids]
+
+def area_per_molecule_plotting_sysL_figures(figure_object_1,figure_object_2,figure_name_1,figure_name_2,list_frame_numbers,list_percent_surface_area_reconstitution=None,list_percent_surface_area_reconstitution_inner_leaflet=None,protein_present=None,simulation_title=None,dictionary_headgroup_data=None,list_percent_surface_area_reconstitution_from_lipids_only=None,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet=None,list_percent_surface_area_reconstitution_from_proteins_only=None,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet=None,control_condition=None,dengue_condition=None):
+    if not dengue_condition:
+        color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
+        array_time_values = numpy.array(list_frame_numbers) / 10000. #microseconds
+    else: #dengue has a very different lipid profile
+        color_dict = {'POPC':'black','PPCE':'blue','DPPE':'green','CER':'red','DUPC':'purple','protein':'orange','DOPS':'brown','PPCS':'pink'}
+        array_time_values = numpy.array(list_frame_numbers) / 1000. #microseconds
+
+    ax2 = figure_object_1.add_subplot('111')
+    index = 0
+    for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
+        color = color_dict[residue_name]
+        array_voronoi_cell_areas = numpy.array(subdictionary['voronoi_cell_avg_values_list'])
+        array_voronoi_cell_std_dev = numpy.array(subdictionary['voronoi_cell_std_values_list'])
+        ax2.scatter(array_time_values,array_voronoi_cell_areas,label=residue_name,edgecolor='None',color=color)
+        #ax2.fill_between(array_frame_numbers,array_voronoi_cell_areas-array_voronoi_cell_std_dev,array_voronoi_cell_areas+array_voronoi_cell_std_dev,color=color,alpha=0.2) 
+        index += 1
+#ax2.legend(loc=4)
+    ax2.set_ylabel('Avg area / molecule ($\AA^2$)')
+    ax2.set_xlim(0,5)
+    ax2.set_xlabel('Time ($\mu$s)')
+    #ax2.set_title(simulation_title + ' outer leaflet')
+    ax2.set_ylim(20,160)
+
+    ax4 = figure_object_2.add_subplot('111')
+    index = 0
+    for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
+        color = color_dict[residue_name]
+        array_voronoi_cell_areas = numpy.array(subdictionary['voronoi_cell_avg_values_list_inner_leaflet'])
+        array_voronoi_cell_std_dev = numpy.array(subdictionary['voronoi_cell_std_values_list_inner_leaflet'])
+        ax4.scatter(array_time_values,array_voronoi_cell_areas,label=residue_name,edgecolor='None',color=color)
+        #ax2.fill_between(array_frame_numbers,array_voronoi_cell_areas-array_voronoi_cell_std_dev,array_voronoi_cell_areas+array_voronoi_cell_std_dev,color=color,alpha=0.2) 
+        index += 1
+    #ax4.legend()
+    ax4.set_ylabel('Avg area / molecule ($\AA^2$)')
+    ax4.set_xlim(0,5)
+    ax4.set_xlabel('Time ($\mu$s)')
+    #ax4.set_title(simulation_title + ' inner leaflet')
+    ax4.set_ylim(20,160)
+
+    figure_object_1.set_size_inches(2,2)
+    figure_object_2.set_size_inches(2,2)
+    for fig in [figure_object_1,figure_object_2]:
+        fig.subplots_adjust(left=0.3,bottom=0.22)
+
+    figure_object_1.savefig(figure_name_1,dpi=300)
+    figure_object_2.savefig(figure_name_2,dpi=300)
