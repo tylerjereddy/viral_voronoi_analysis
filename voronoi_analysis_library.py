@@ -78,12 +78,16 @@ def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,d
         plot_number += 1
     matplotlib_figure_object.set_size_inches(24,6)
 
-def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data,dengue_condition=None):
+def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data,dengue_condition=None,debug_generators=None,generator_array=None):
     plot_number = 1
     if not dengue_condition:
         color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
     else:
         color_dict = {'POPC':'black','PPCE':'blue','DPPE':'green','CER':'red','DUPC':'purple','protein':'orange','DOPS':'brown','PPCS':'pink'} 
+    if debug_generators:
+        alpha_value = 0.5
+    else:
+        alpha_value = 1.0
     for current_voronoi_index in list_Voronoi_indices:
         ax = matplotlib_figure_object.add_subplot(1,4,plot_number,projection='3d')
         index = 0
@@ -96,7 +100,7 @@ def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indi
                     continue
                 if vertex_array[...,0].max() < 0: #filter beyond zoom limit
                     continue
-                polygon = Poly3DCollection([vertex_array/10.],alpha=1.0) #convert to nm
+                polygon = Poly3DCollection([vertex_array/10.],alpha=alpha_value) #convert to nm
                 polygon.set_color(color)
                 polygon.set_edgecolor('black')
                 ax.add_collection3d(polygon)
@@ -115,6 +119,12 @@ def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indi
         ax.w_xaxis.set_ticklabels([''])
         ax.azim = 0
         ax.elev = 0
+        if debug_generators:
+            if 'outer' in plot_title:
+                filtered_generator_array = generator_array[(generator_array[...,0] > 650) & (numpy.abs(generator_array[...,1]) <= 99) & (numpy.abs(generator_array[...,2]) <= 99)]
+            else:
+                filtered_generator_array = generator_array[(generator_array[...,0] < 600) & (generator_array[...,0] > 0) & (numpy.abs(generator_array[...,1]) <= 99) & (numpy.abs(generator_array[...,2]) <= 99)]
+            ax.plot(filtered_generator_array[...,0]/10.,filtered_generator_array[...,1]/10.,filtered_generator_array[...,2]/10.,c='k',marker='.',linestyle='')
         plot_number += 1
     matplotlib_figure_object.set_size_inches(24,6)
 
