@@ -365,18 +365,18 @@ def TMD_particle_selector(input_array,molecule_type):
     if molecule_type == 'lipid':
         output_array = input_array #still using the COG of the entire lipid
     elif molecule_type == 'HA': #the index numbers are based on study of topology combined with Danny's DPhil thesis
-        HA_1_TMD_numpy_array = input_array[1110:1174] 
-        HA_2_TMD_numpy_array = input_array[2305:2369]
-        HA_3_TMD_numpy_array = input_array[3500:3564]
+        HA_1_TMD_numpy_array = numpy.reshape(numpy.average(input_array[1110:1174],axis=0),(1,3))
+        HA_2_TMD_numpy_array = numpy.reshape(numpy.average(input_array[2305:2369],axis=0),(1,3))
+        HA_3_TMD_numpy_array = numpy.reshape(numpy.average(input_array[3500:3564],axis=0),(1,3))
         output_array = numpy.concatenate((HA_1_TMD_numpy_array,HA_2_TMD_numpy_array,HA_3_TMD_numpy_array))
     elif molecule_type == 'NA':
-        NA_1_TMD_numpy_array = input_array[13:70]
-        NA_2_TMD_numpy_array = input_array[1037:1094]
-        NA_3_TMD_numpy_array = input_array[2059:2116]
-        NA_4_TMD_numpy_array = input_array[3083:3140]
+        NA_1_TMD_numpy_array = numpy.reshape(numpy.average(input_array[13:70],axis=0),(1,3))
+        NA_2_TMD_numpy_array = numpy.reshape(numpy.average(input_array[1037:1094],axis=0),(1,3))
+        NA_3_TMD_numpy_array = numpy.reshape(numpy.average(input_array[2059:2116],axis=0),(1,3))
+        NA_4_TMD_numpy_array = numpy.reshape(numpy.average(input_array[3083:3140],axis=0),(1,3))
         output_array = numpy.concatenate((NA_1_TMD_numpy_array,NA_2_TMD_numpy_array,NA_3_TMD_numpy_array,NA_4_TMD_numpy_array))
     elif molecule_type == 'M2':
-        output_array = input_array #this protein doesn't really have an ectodomain so I think it is quite acceptable to continue with usage of the overall COG
+        output_array = numpy.reshape(numpy.average(input_array,axis=0),(1,3)) #this protein doesn't really have an ectodomain so I think it is quite acceptable to continue with usage of the overall COG
     return output_array
 
 def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value,PPCH_PO4_threshold=285,proteins_present='no',FORS_present='no',control_condition=None,dengue_condition=None):
@@ -493,13 +493,23 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
                 list_HA_TMD_coordinate_arrays = [TMD_particle_selector(HA_coord_array,'HA') for HA_coord_array in list_individual_HA_protein_coordinate_arrays]
                 list_NA_TMD_coordinate_arrays = [TMD_particle_selector(NA_coord_array,'NA') for NA_coord_array in list_individual_NA_protein_coordinate_arrays]
                 list_M2_TMD_coordinate_arrays = [TMD_particle_selector(M2_coord_array,'M2') for M2_coord_array in list_individual_M2_protein_coordinate_arrays] 
-                #simplify to a single centroid per protein assembly (1 per HA trimer, 1 per NA tetramer, etc.)
-                array_HA_TMD_centroids = numpy.array([numpy.average(HA_TMD_array,axis=0) for HA_TMD_array in list_HA_TMD_coordinate_arrays])
-                array_NA_TMD_centroids = numpy.array([numpy.average(NA_TMD_array,axis=0) for NA_TMD_array in list_NA_TMD_coordinate_arrays])
-                array_M2_TMD_centroids = numpy.array([numpy.average(M2_TMD_array,axis=0) for M2_TMD_array in list_M2_TMD_coordinate_arrays])
+                debug_array_HA = numpy.array(list_HA_TMD_coordinate_arrays)
+                array_HA_TMD_centroids = list_HA_TMD_coordinate_arrays[0]
+                for HA_TMD_array in list_HA_TMD_coordinate_arrays[1:]:
+                    array_HA_TMD_centroids = numpy.concatenate((array_HA_TMD_centroids,HA_TMD_array))
+                assert array_HA_TMD_centroids.shape == (240,3), "There should be 240 HA TMD controids, from 80 HA x 3 TMD per trimer, but got shape {shape} and debug array shape {debug_shape}.".format(shape=array_HA_TMD_centroids.shape, debug_shape = debug_array_HA.shape)
+                array_NA_TMD_centroids = list_NA_TMD_coordinate_arrays[0]
+                for NA_TMD_array in list_NA_TMD_coordinate_arrays[1:]:
+                    array_NA_TMD_centroids = numpy.concatenate((array_NA_TMD_centroids,NA_TMD_array))
+                assert array_NA_TMD_centroids.shape == (48,3), "There should be 48 NA TMD controids, from 12 NA x 4 TMD per tetramer., but got shape {shape}".format(shape = array_NA_TMD_centroids.shape)
+                #using overall centroid for M2, not individual TMD centroids -- at least not yet...
+                array_M2_TMD_centroids = list_M2_TMD_coordinate_arrays[0]
+                for M2_TMD_array in list_M2_TMD_coordinate_arrays[1:]:
+                    array_M2_TMD_centroids = numpy.concatenate((array_M2_TMD_centroids,M2_TMD_array))
+                assert array_M2_TMD_centroids.shape == (15,3), "There should be 15 M2 centroids, but got shape {shape}.".format(shape = array_M2_TMD_centroids.shape)
                 #concatenate HA, NA, M2 TMD centroid coords to a single array (using previous nomenclature)
                 current_headgroup_coordinate_array = numpy.concatenate((array_HA_TMD_centroids,array_NA_TMD_centroids,array_M2_TMD_centroids))
-                assert current_headgroup_coordinate_array.shape == (107,3), "There should be 107 centroids for 107 proteins in 3 dimensions."
+                assert current_headgroup_coordinate_array.shape == (303,3), "There should be 303 centroids for HA, NA and M2 TMDs in 3 dimensions." #note: note use M2 TMD centroids just yet (still using overall protein centroid for M2 at the moment)
                 current_headgroup_spherical_polar_coord_array = voronoi_utility.convert_cartesian_array_to_spherical_array(current_headgroup_coordinate_array)
                 #crudely project the TMD centroid particles both up AND down to fill in proteins spaces in both leaflets (how 'bad' is this for area approximation in Voronoi diagram?!)
                 outer_leaflet_spherical_coord_array = numpy.copy(current_headgroup_spherical_polar_coord_array)
