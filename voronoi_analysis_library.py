@@ -673,23 +673,25 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
     else: #dengue has a very different lipid profile
         color_dict = {'POPC':'black','PPCE':'blue','DPPE':'green','CER':'red','DUPC':'purple','protein':'orange','DOPS':'brown','PPCS':'pink'}
     if not protein_present:
-        ax = figure_object.add_subplot('131')
+        ax_inner = figure_object.add_subplot('141')
+        ax_outer = figure_object.add_subplot('142')
         if not control_condition:
             array_time_values = numpy.array(list_frame_numbers) / 10000. #microseconds
         else:
             array_time_values = numpy.array(list_frame_numbers) / 1000. #microseconds
         array_percent_surface_area_reconstitution = numpy.array(list_percent_surface_area_reconstitution)
-        ax.scatter(array_time_values,array_percent_surface_area_reconstitution,c='black',edgecolor='None',label='outer leaflet')
+        ax_outer.scatter(array_time_values,array_percent_surface_area_reconstitution,c='black',edgecolor='None',label='outer leaflet')
         array_percent_surface_area_reconstitution_inner_leaflet = numpy.array(list_percent_surface_area_reconstitution_inner_leaflet)
-        ax.scatter(array_time_values,array_percent_surface_area_reconstitution_inner_leaflet,c='red',edgecolor='None',label='inner leaflet')
-        ax.set_ylim(90,101)
-        ax.set_xlim(0,5)
-        ax.legend(loc=4)
-        ax.set_ylabel('Percent surface area reconstitution\n from Voronoi cells')
-        ax.set_xlabel('Time ($\mu$s)')
-        ax.set_title(simulation_title)
+        ax_inner.scatter(array_time_values,array_percent_surface_area_reconstitution_inner_leaflet,c='red',edgecolor='None',label='inner leaflet')
+        for axis in [ax_outer,ax_inner]:
+            axis.set_ylim(90,101)
+            axis.set_xlim(0,5)
+            axis.legend(loc=4)
+            axis.set_ylabel('Percent surface area reconstitution\n from Voronoi cells')
+            axis.set_xlabel('Time ($\mu$s)')
+            axis.set_title(simulation_title)
 
-        ax2 = figure_object.add_subplot('132')
+        ax2 = figure_object.add_subplot('143')
         index = 0
         for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
             color = color_dict[residue_name]
@@ -709,7 +711,7 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
             ax2.set_ylim(180,550)
             pass
 
-        ax4 = figure_object.add_subplot('133')
+        ax4 = figure_object.add_subplot('144')
         index = 0
         for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
             color = color_dict[residue_name]
@@ -728,10 +730,10 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         else:
             ax4.set_ylim(180,550)
 
-        figure_object.set_size_inches(15,4)
 
     else: #protein is present
-        ax_1 = figure_object.add_subplot('131')
+        ax_1_inner = figure_object.add_subplot('141')
+        ax_1_outer = figure_object.add_subplot('142')
         if not dengue_condition:
             array_time_values = numpy.array(list_frame_numbers) / 10000. #microseconds
         else:
@@ -743,20 +745,21 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         combined_percent_reconstitution_array_outer_leaflet = array_percent_surface_area_reconstitution_lipid_outer_leaflet + array_percent_surface_area_reconstitution_protein_outer_leaflet
         combined_percent_reconstitution_array_inner_leaflet = array_percent_surface_area_reconstitution_lipid_inner_leaflet + array_percent_surface_area_reconstitution_protein_inner_leaflet
 
-        ax_1.scatter(array_time_values,array_percent_surface_area_reconstitution_lipid_outer_leaflet,c='black',edgecolor='None',label='lipid outer',marker='o')
-        ax_1.scatter(array_time_values,array_percent_surface_area_reconstitution_protein_outer_leaflet,c='black',edgecolor='None',label='protein outer',marker='^')
-        ax_1.scatter(array_time_values,combined_percent_reconstitution_array_outer_leaflet,c='black',edgecolor='None',label='combined outer',marker='*',s=50)
-        ax_1.scatter(array_time_values,array_percent_surface_area_reconstitution_lipid_inner_leaflet,c='red',edgecolor='None',label='lipid inner',marker='o',alpha=0.5)
-        ax_1.scatter(array_time_values,array_percent_surface_area_reconstitution_protein_inner_leaflet,c='red',edgecolor='None',label='protein inner',marker='^',alpha=0.5)
-        ax_1.scatter(array_time_values,combined_percent_reconstitution_array_inner_leaflet,c='red',edgecolor='None',label='combined inner',marker='*',s=50,alpha=0.5)
-        ax_1.set_ylim(-10,110)
-        ax_1.set_xlim(0,5)
-        ax_1.set_ylabel('Percent surface area reconstitution\n from Voronoi cells')
-        ax_1.set_xlabel('Time ($\mu$s)')
-        ax_1.legend(loc=0,bbox_to_anchor=[1.0, 0.5],ncol=2,fontsize=8)
-        ax_1.set_title(simulation_title)
+        ax_1_outer.scatter(array_time_values,array_percent_surface_area_reconstitution_lipid_outer_leaflet,c='black',edgecolor='None',label='lipid outer',marker='o')
+        ax_1_outer.scatter(array_time_values,array_percent_surface_area_reconstitution_protein_outer_leaflet,c='black',edgecolor='None',label='protein outer',marker='^')
+        ax_1_outer.scatter(array_time_values,combined_percent_reconstitution_array_outer_leaflet,c='black',edgecolor='None',label='combined outer',marker='*',s=50)
+        ax_1_inner.scatter(array_time_values,array_percent_surface_area_reconstitution_lipid_inner_leaflet,c='red',edgecolor='None',label='lipid inner',marker='o',alpha=0.5)
+        ax_1_inner.scatter(array_time_values,array_percent_surface_area_reconstitution_protein_inner_leaflet,c='red',edgecolor='None',label='protein inner',marker='^',alpha=0.5)
+        ax_1_inner.scatter(array_time_values,combined_percent_reconstitution_array_inner_leaflet,c='red',edgecolor='None',label='combined inner',marker='*',s=50,alpha=0.5)
+        for axis in [ax_1_outer, ax_1_inner]:
+            axis.set_ylim(-10,110)
+            axis.set_xlim(0,5)
+            axis.set_ylabel('Percent surface area reconstitution\n from Voronoi cells')
+            axis.set_xlabel('Time ($\mu$s)')
+            axis.legend(loc=0,bbox_to_anchor=[1.0, 0.5],ncol=2,fontsize=8)
+            axis.set_title(simulation_title)
 
-        ax_2 = figure_object.add_subplot('132')
+        ax_2 = figure_object.add_subplot('143')
         index = 0
         for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
             color = color_dict[residue_name]
@@ -772,7 +775,7 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         ax_2.set_ylim(20,200)
 #ax_2.set_ylim(34,54)
 
-        ax_4 = figure_object.add_subplot('133')
+        ax_4 = figure_object.add_subplot('144')
         index = 0
         for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
             color = color_dict[residue_name]
@@ -788,7 +791,7 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         ax_4.set_title(simulation_title + ' inner leaflet')
 #ax_4.set_ylim(34,54)
 
-        figure_object.set_size_inches(15,4)
+    figure_object.set_size_inches(25,4)
 
 def precursor_radial_distance_analysis_dengue(universe_object):
     '''Modified version of precursor_radial_distance_analysis() intended for analysis of dengue virion simulation. I think all dengue lipids should be assessed in the same manner because a symmetrical lipid species distribution (ER-derived) was assumed during the construction process.'''
