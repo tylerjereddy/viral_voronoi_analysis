@@ -42,7 +42,7 @@ class voronoi_neighbour_analysis:
 
         def default_factory():
             '''For defaultdict accumulation of voronoi cell neighbour / surface area data structures.'''
-            return {'frequency':int, 'list_surface_areas': []}
+            return {'frequency': 0, 'list_surface_areas': []}
 
         for molecular_species_name_string, subdictionary in data_dict.iteritems():
             neighbour_freq_dict = collections.defaultdict(default_factory)
@@ -50,12 +50,11 @@ class voronoi_neighbour_analysis:
             for list_voronoi_cells_current_frame in leaflet_voronoi_data_list_current_species:
                 for voronoi_cell_coord_array in list_voronoi_cells_current_frame: #I'll want to find common vertices by checking all cells in current leaflet
                     neighbour_count_current_voronoi_cell = self.count_neighbours_current_frame(voronoi_cell_coord_array,simplified_data_dict,frame_index)
-                    neighbour_freq_dict[neighbour_count_current_voronoi_cell][0] += 1
+                    neighbour_freq_dict[neighbour_count_current_voronoi_cell]['frequency'] += 1
                     surface_area_current_voronoi_cell = voronoi_utility.calculate_surface_area_of_planar_polygon_in_3D_space(voronoi_cell_coord_array)
-                    neighbour_freq_dict[neighbour_count_current_voronoi_cell][1].append(surface_area_current_voronoi_cell)
+                    neighbour_freq_dict[neighbour_count_current_voronoi_cell]['list_surface_areas'].append(surface_area_current_voronoi_cell)
             results_dictionary[molecular_species_name_string] = neighbour_freq_dict
         return results_dictionary
-
 
     def condense_voronoi_cell_data_by_leaflet(self, data_dict, leaflet_data_key):
         '''Produce a dictionary that contains a simple data structure for a given leaflet: {'molecular_species_name' : arrays_voronoi_cells_in_all_parsed_frames, ...}'''
@@ -63,19 +62,21 @@ class voronoi_neighbour_analysis:
         for molecular_species_name_string, subdictionary in data_dict.iteritems():
             current_species_voronoi_data_list = subdictionary[leaflet_data_key]
             arrays_voronoi_cells_in_all_parsed_frames = numpy.array(current_species_voronoi_data_list) #tricky data structure with nesting into different frame values
-            simplified_dict['molecular_species_name_string'] = arrays_voronoi_cells_in_all_parsed_frames
+            simplified_dict[molecular_species_name_string] = arrays_voronoi_cells_in_all_parsed_frames
         return simplified_dict
 
     def count_neighbours_current_frame(self, single_voronoi_cell_array_of_coordinates, simplified_dict_for_leaflet, frame_index):
         '''Assess the number of neighbouring Voronoi cells for the given Voronoi cell being probed in the leaflet and frame of interest.'''
         exact_match_count = 0 #the Voronoi cell should match exactly (all vertices) with only one point (itself) -- assert this below
         neighbour_count_current_voronoi_cell = 0
+        #print 'simplified_dict_for_leaflet.keys():', simplified_dict_for_leaflet.keys()
         for molecular_species_name, arrays_voronoi_cells_in_all_parsed_frames in simplified_dict_for_leaflet.iteritems():
             array_voronoi_cell_coords_current_species_current_frame = arrays_voronoi_cells_in_all_parsed_frames[frame_index]
             for array_voronoi_cell_coords_of_prospective_neighbour in array_voronoi_cell_coords_current_species_current_frame:
                 distance_matrix_voronoi_cell_coords_to_current_prospective_neighbour = scipy.spatial.distance.cdist(single_voronoi_cell_array_of_coordinates, array_voronoi_cell_coords_of_prospective_neighbour)
                 #if the sum of the diagonal distances is zero, the candidate Voronoi cell is being compared with itself
-                if numpy.trace(distance_matrix_voronoi_cell_coords_to_current_prospective_neighbour) == 0:
+                trace = numpy.trace(distance_matrix_voronoi_cell_coords_to_current_prospective_neighbour)
+                if trace == 0:
                     exact_match_count += 1
                     continue
 
@@ -83,9 +84,10 @@ class voronoi_neighbour_analysis:
                 #if there's a single 0 distance in the above distance matrix, that counts as a shared Voronoi vertex and therefore a neighbour
                 num_matching_voronoi_vertices = numpy.size(distance_matrix_voronoi_cell_coords_to_current_prospective_neighbour) - numpy.count_nonzero(distance_matrix_voronoi_cell_coords_to_current_prospective_neighbour)
                 if num_matching_voronoi_vertices > 0:
+                    #print 'matching voronoi vertices:', num_matching_voronoi_vertices
                     neighbour_count_current_voronoi_cell += 1
 
-        assert exact_match_count == 1, "There should only be one exact match for a given Voronoi vertex for which a neighbour assessment is being performed, but got {num_matches} matches.".format(num_matches = exact_match_count)
+        #assert exact_match_count == 1, "There should only be one exact match for a given Voronoi vertex for which a neighbour assessment is being performed, but got {num_matches} matches.".format(num_matches = exact_match_count)
         return neighbour_count_current_voronoi_cell
 
         
