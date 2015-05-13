@@ -21,48 +21,90 @@ class voronoi_neighbour_analysis:
         self.outer_leaflet_data_key = outer_leaflet_vertex_list_key
         self.inner_leaflet_data_key = inner_leaflet_vertex_list_key
 
-    def identify_voronoi_neighbours(self):
+    def identify_voronoi_neighbours(self,frame_index):
         '''Produce a data structure that associates each voronoi cell for each molecular species in each leaflet with the number of neighbours that it has in the Voronoi diagram.'''
         #produce simplified dictionary data structures that can be used for neighbour comparison
+        #print "len(self.voronoi_data_dict['POPC'][self.inner_leaflet_data_key]):", len(self.voronoi_data_dict['POPC'][self.inner_leaflet_data_key])
+        #print "numpy.array(self.voronoi_data_dict['POPC'][self.inner_leaflet_data_key]).shape:", numpy.array(self.voronoi_data_dict['POPC'][self.inner_leaflet_data_key]).shape
+        #print "len(self.voronoi_data_dict['DPPE'][self.inner_leaflet_data_key]):", len(self.voronoi_data_dict['DPPE'][self.inner_leaflet_data_key])
+        #print "numpy.array(self.voronoi_data_dict['DPPE'][self.inner_leaflet_data_key]).shape:", numpy.array(self.voronoi_data_dict['DPPE'][self.inner_leaflet_data_key]).shape
+
         simplified_inner_leaflet_voronoi_data_dict = self.condense_voronoi_cell_data_by_leaflet(self.voronoi_data_dict,self.inner_leaflet_data_key)
         simplified_outer_leaflet_voronoi_data_dict = self.condense_voronoi_cell_data_by_leaflet(self.voronoi_data_dict,self.outer_leaflet_data_key)
         outer_leaflet_neighbour_dict = {}
         inner_leaflet_neighbour_dict = {}
       
-        inner_leaflet_neighbour_dict = self.per_leaflet_accumulation_neighbour_data(self.inner_leaflet_data_key, self.voronoi_data_dict, inner_leaflet_neighbour_dict, simplified_inner_leaflet_voronoi_data_dict)
-        outer_leaflet_neighbour_dict = self.per_leaflet_accumulation_neighbour_data(self.outer_leaflet_data_key, self.voronoi_data_dict, outer_leaflet_neighbour_dict, simplified_outer_leaflet_voronoi_data_dict)
+        inner_leaflet_neighbour_dict = self.per_leaflet_accumulation_neighbour_data(self.inner_leaflet_data_key, self.voronoi_data_dict, inner_leaflet_neighbour_dict, simplified_inner_leaflet_voronoi_data_dict,frame_index)
+        outer_leaflet_neighbour_dict = self.per_leaflet_accumulation_neighbour_data(self.outer_leaflet_data_key, self.voronoi_data_dict, outer_leaflet_neighbour_dict, simplified_outer_leaflet_voronoi_data_dict,frame_index)
 
         #idea is to have dictionary data structures that look like this (prototype at the moment): {'POPC': {5 : {'frequency': 20, 'list_surface_areas':[22,11,17], ...}}} where 5 is the number of neighbours
         #I think this won't handle multiple frames correctly yet, but just trying to get things started
         return (inner_leaflet_neighbour_dict, outer_leaflet_neighbour_dict)
 
-    def per_leaflet_accumulation_neighbour_data(self, leaflet_data_key, data_dict, results_dictionary, simplified_data_dict):
-        '''Populate results_dictionary with voronoi cell neighbour data structure for a given leaflet.'''
-        frame_index = 0
+    def per_leaflet_accumulation_neighbour_data(self, leaflet_data_key, data_dict, results_dictionary, simplified_data_dict, frame_index):
+        '''Populate results_dictionary with voronoi cell neighbour data structure for a given leaflet (and specific frame).'''
 
         def default_factory():
             '''For defaultdict accumulation of voronoi cell neighbour / surface area data structures.'''
             return {'frequency': 0, 'list_surface_areas': []}
 
         for molecular_species_name_string, subdictionary in data_dict.iteritems():
+            print molecular_species_name_string, '(', leaflet_data_key, ')'
             neighbour_freq_dict = collections.defaultdict(default_factory)
             leaflet_voronoi_data_list_current_species = subdictionary[leaflet_data_key]
-            for list_voronoi_cells_current_frame in leaflet_voronoi_data_list_current_species:
-                for voronoi_cell_coord_array in list_voronoi_cells_current_frame: #I'll want to find common vertices by checking all cells in current leaflet
-                    neighbour_count_current_voronoi_cell = self.count_neighbours_current_frame(voronoi_cell_coord_array,simplified_data_dict,frame_index)
-                    neighbour_freq_dict[neighbour_count_current_voronoi_cell]['frequency'] += 1
-                    surface_area_current_voronoi_cell = voronoi_utility.calculate_surface_area_of_planar_polygon_in_3D_space(voronoi_cell_coord_array)
-                    neighbour_freq_dict[neighbour_count_current_voronoi_cell]['list_surface_areas'].append(surface_area_current_voronoi_cell)
+            list_voronoi_cells_current_frame = leaflet_voronoi_data_list_current_species[frame_index]
+            #print 'len(list_voronoi_cells_current_frame):', len(list_voronoi_cells_current_frame)
+            for voronoi_cell_coord_array in list_voronoi_cells_current_frame: #I'll want to find common vertices by checking all cells in current leaflet
+                shape_voronoi_cell_coord_array = voronoi_cell_coord_array.shape
+                dimensions_voronoi_cell_coord_array = voronoi_cell_coord_array.ndim 
+                assert dimensions_voronoi_cell_coord_array == 2, "Each voronoi cell coordinate array should have two dimensions, but got {ndim}.".format(ndim = dimensions_voronoi_cell_coord_array)
+                assert shape_voronoi_cell_coord_array[1] == 3, "Voronoi cell coordinates should have 3 data columns, but got {columns} data columns.".format(columns = shape_voronoi_cell_coord_array[1])
+                neighbour_count_current_voronoi_cell = self.count_neighbours_current_frame(voronoi_cell_coord_array,simplified_data_dict,frame_index)
+                neighbour_freq_dict[neighbour_count_current_voronoi_cell]['frequency'] += 1 #debug: for the ZERO neighbour count, this incrementation is happening *thousands of times!!*
+                surface_area_current_voronoi_cell = voronoi_utility.calculate_surface_area_of_planar_polygon_in_3D_space(voronoi_cell_coord_array)
+                neighbour_freq_dict[neighbour_count_current_voronoi_cell]['list_surface_areas'].append(surface_area_current_voronoi_cell)
             results_dictionary[molecular_species_name_string] = neighbour_freq_dict
+            print molecular_species_name_string, 'results dict produced.'
+        print '(', leaflet_data_key, ')', 'overall results dict produced.'
         return results_dictionary
 
     def condense_voronoi_cell_data_by_leaflet(self, data_dict, leaflet_data_key):
         '''Produce a dictionary that contains a simple data structure for a given leaflet: {'molecular_species_name' : arrays_voronoi_cells_in_all_parsed_frames, ...}'''
         simplified_dict = {}
         for molecular_species_name_string, subdictionary in data_dict.iteritems():
+            #print '--------------------'
+            #print 'simple dict construction for:', molecular_species_name_string,  '(', leaflet_data_key, ')'
             current_species_voronoi_data_list = subdictionary[leaflet_data_key]
-            arrays_voronoi_cells_in_all_parsed_frames = numpy.array(current_species_voronoi_data_list) #tricky data structure with nesting into different frame values
+            #print 'len(current_species_voronoi_data_list):', len(current_species_voronoi_data_list)
+            #print 'len(current_species_voronoi_data_list[0])', len(current_species_voronoi_data_list[0])
+            #for voronoi_data_list in current_species_voronoi_data_list:
+                #for voronoi_cell_coord_array in voronoi_data_list:
+                    #if voronoi_cell_coord_array.ndim != 2:
+                        #print "Voronoi cell doesn't have a 2D data structure"
+                    #if voronoi_cell_coord_array.shape[1] != 3:
+                        #print 'Voronoi cell coords have incorrect shape'
+            #print 'current_species_voronoi_data_list[0][0].shape', current_species_voronoi_data_list[0][0].shape
+            #print 'type(current_species_voronoi_data_list):', type(current_species_voronoi_data_list)
+            arrays_voronoi_cells_in_all_parsed_frames = numpy.array(current_species_voronoi_data_list) #debug: problem exists here #tricky data structure with nesting into different frame values
+            #print 'type(arrays_voronoi_cells_in_all_parsed_frames):', type(arrays_voronoi_cells_in_all_parsed_frames)
+            #try:
+                #print 'arrays_voronoi_cells_in_all_parsed_frames[0,:2]', arrays_voronoi_cells_in_all_parsed_frames[0,:2]
+            #except IndexError:
+                #print '*** arrays_voronoi_cells_in_all_parsed_frames[:2]:', arrays_voronoi_cells_in_all_parsed_frames[:2]
+            #print 'arrays_voronoi_cells_in_all_parsed_frames.shape:', arrays_voronoi_cells_in_all_parsed_frames.shape, '(debug: problem exists here)'
+            #print 'expected size:', len(current_species_voronoi_data_list) * len(current_species_voronoi_data_list[0])             
+            #print 'arrays_voronoi_cells_in_all_parsed_frames.size:', arrays_voronoi_cells_in_all_parsed_frames.size 
             simplified_dict[molecular_species_name_string] = arrays_voronoi_cells_in_all_parsed_frames
+            #try:
+                #for index in xrange(10):
+                    #shape = simplified_dict[molecular_species_name_string][index].shape #should crash for list instead of numpy array (debugging)
+                    #print 'shape test:', shape
+                #print 'first element of numpy array:', simplified_dict[molecular_species_name_string][0][0]
+            #except AttributeError:
+                #for index in xrange(10):
+                    #print "**** List instead of array; length: ", len(simplified_dict[molecular_species_name_string][index])
+                #print '**** first element of above list object:', simplified_dict[molecular_species_name_string][0][0]
+            #print '--------------------'
         return simplified_dict
 
     def count_neighbours_current_frame(self, single_voronoi_cell_array_of_coordinates, simplified_dict_for_leaflet, frame_index):
@@ -70,9 +112,36 @@ class voronoi_neighbour_analysis:
         exact_match_count = 0 #the Voronoi cell should match exactly (all vertices) with only one point (itself) -- assert this below
         neighbour_count_current_voronoi_cell = 0
         #print 'simplified_dict_for_leaflet.keys():', simplified_dict_for_leaflet.keys()
+        #print 'preloop debug:'
+        #print "simplified_dict_for_leaflet['PPCS'][0]", simplified_dict_for_leaflet['PPCS'][0]
+        #print "simplified_dict_for_leaflet['POPC'][0].shape", simplified_dict_for_leaflet['POPC'][0].shape
+        #print "simplified_dict_for_leaflet['PPCE'][0]", simplified_dict_for_leaflet['PPCE'][0]
+        #print "simplified_dict_for_leaflet['DOPS'][0].shape", simplified_dict_for_leaflet['DOPS'][0].shape
+        #print "simplified_dict_for_leaflet['DUPC'][0].shape", simplified_dict_for_leaflet['DUPC'][0].shape
+        #print "simplified_dict_for_leaflet['CER'][0].shape", simplified_dict_for_leaflet['CER'][0].shape
+        #print "simplified_dict_for_leaflet['DPPE'][0].shape", simplified_dict_for_leaflet['DPPE'][0].shape
+        #print 'end preloop debug:'
+
+        #print 'frame index:', frame_index
+        #print 'single_voronoi_cell_array_of_coordinates.shape:', single_voronoi_cell_array_of_coordinates.shape
         for molecular_species_name, arrays_voronoi_cells_in_all_parsed_frames in simplified_dict_for_leaflet.iteritems():
-            array_voronoi_cell_coords_current_species_current_frame = arrays_voronoi_cells_in_all_parsed_frames[frame_index]
+            try:
+                array_voronoi_cell_coords_current_species_current_frame = arrays_voronoi_cells_in_all_parsed_frames[frame_index]
+                array_voronoi_cell_coords_current_species_current_frame.shape
+            except AttributeError: #handle cases where I get a list because the number of Voronoi cells has changed between frames for this molecular species (numpy doesn't like the heterogeneous data structure)
+                array_voronoi_cell_coords_current_species_current_frame = numpy.array(arrays_voronoi_cells_in_all_parsed_frames[frame_index])
+
+
+            #print 'frame_index:', frame_index
+            #print 'molecular_species_name:', molecular_species_name
+            #print 'arrays_voronoi_cells_in_all_parsed_frames.shape:', arrays_voronoi_cells_in_all_parsed_frames.shape
+            #print 'array_voronoi_cell_coords_current_species_current_frame.shape:', array_voronoi_cell_coords_current_species_current_frame.shape
+            #print 'first voronoi cell coord array:', array_voronoi_cell_coords_current_species_current_frame[0]
             for array_voronoi_cell_coords_of_prospective_neighbour in array_voronoi_cell_coords_current_species_current_frame:
+                shape_array_voronoi_cell_coords_of_prospective_neighbour = array_voronoi_cell_coords_of_prospective_neighbour.shape
+                dimensions_array_voronoi_cell_coords_of_prospective_neighbour = array_voronoi_cell_coords_of_prospective_neighbour.ndim
+                assert dimensions_array_voronoi_cell_coords_of_prospective_neighbour == 2, "The coordinate array of the prospective neighbour should have two dimensions, but got {ndim} dimensions.".format(ndim=dimensions_array_voronoi_cell_coords_of_prospective_neighbour)
+                assert shape_array_voronoi_cell_coords_of_prospective_neighbour[1] == 3, "The coordinate array of the prospective neighbour should have three data columns, but got {columns} columns.".format(columns = shape_array_voronoi_cell_coords_of_prospective_neighbour[1])
                 distance_matrix_voronoi_cell_coords_to_current_prospective_neighbour = scipy.spatial.distance.cdist(single_voronoi_cell_array_of_coordinates, array_voronoi_cell_coords_of_prospective_neighbour)
                 #if the sum of the diagonal distances is zero, the candidate Voronoi cell is being compared with itself
                 trace = numpy.trace(distance_matrix_voronoi_cell_coords_to_current_prospective_neighbour)
@@ -87,7 +156,10 @@ class voronoi_neighbour_analysis:
                     #print 'matching voronoi vertices:', num_matching_voronoi_vertices
                     neighbour_count_current_voronoi_cell += 1
 
-        #assert exact_match_count == 1, "There should only be one exact match for a given Voronoi vertex for which a neighbour assessment is being performed, but got {num_matches} matches.".format(num_matches = exact_match_count)
+        #print 'exact_match_count:', exact_match_count
+        #if exact_match_count == 0:
+            #print 'Voronoi cell for which a match cannot be found:', single_voronoi_cell_array_of_coordinates
+        assert exact_match_count == 1, "There should only be one exact match for a given Voronoi vertex for which a neighbour assessment is being performed, but got {num_matches} matches.".format(num_matches = exact_match_count)
         return neighbour_count_current_voronoi_cell
 
         
