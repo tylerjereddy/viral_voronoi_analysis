@@ -13,9 +13,6 @@ import collections
 import scipy
 import scipy.spatial
 
-class voronoi_neighbour_analysis_by_type(voronoi_neighbour_analysis):
-    '''Should parse the number of neighbours of *each type* of molecular species surrounding each voronoi cell in the Voronoi diagrams. This is intended as an extension of the basic functionality of the parent class, which only parses and reports the raw number of neighbours around each Voronoi cell.'''
-
 
 
 
@@ -169,6 +166,10 @@ class voronoi_neighbour_analysis:
         return neighbour_count_current_voronoi_cell
 
         
+class voronoi_neighbour_analysis_by_type(voronoi_neighbour_analysis):
+    '''Should parse the number of neighbours of *each type* of molecular species surrounding each voronoi cell in the Voronoi diagrams. This is intended as an extension of the basic functionality of the parent class, which only parses and reports the raw number of neighbours around each Voronoi cell.'''
+    pass
+
 
 
 
