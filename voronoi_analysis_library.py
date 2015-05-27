@@ -14,7 +14,38 @@ import scipy
 import scipy.spatial
 from collections import namedtuple
 
+class plot_voronoi_neighbour_data_species_specific:
+    '''Plot Voronoi neighbour data probing species-specific effects.'''
 
+    def __init__(self,matplotlib_figure_object,inner_leaflet_dict_by_species, outer_leaflet_dict_by_species):
+        self.fig = matplotlib_figure_object
+        self.subplot_number = 1
+        self.inner_leaflet_dict = inner_leaflet_dict_by_species
+        self.outer_leaflet_dict = outer_leaflet_dict_by_species
+
+    def plot(self):
+        for leaflet_name, leaflet_dict in zip(['inner','outer'],[self.inner_leaflet_dict, self.outer_leaflet_dict]):
+            for lipid_name, neighbours in leaflet_dict.iteritems():
+                for neighbour_species_name, neighbour_count_dict in neighbours.iteritems():
+                    list_neighbour_counts = []
+                    list_avg_surface_areas = []
+                    list_std_dev_values = []
+                    for neighbour_count, list_surface_areas in neighbour_count_dict.iteritems():
+                        list_neighbour_counts.append(neighbour_count)
+                        surface_area_array = numpy.array(list_surface_areas)
+                        average_surface_area = numpy.average(surface_area_array)
+                        std_surface_area = numpy.std(surface_area_array)
+                        list_avg_surface_areas.append(average_surface_area)
+                        list_std_dev_values.append(std_surface_area)
+                    ax = self.fig.add_subplot(100,2,self.subplot_number)
+                    ax.bar(numpy.array(list_neighbour_counts) - 0.4, list_avg_surface_areas, yerr = numpy.array(list_std_dev_values), alpha = 0.4)
+                    ax.set_xlabel('num neighbours')
+                    ax.set_ylabel('avg Voronoi cell\n surface area ($\AA^2$)')
+                    ax.set_xticks(numpy.arange(12))
+                    ax.set_title(leaflet_name + ' leaflet ' + lipid_name + '; neighbours of type: ' + neighbour_species_name)
+                    self.subplot_number += 1
+        self.fig.set_size_inches(10,250) 
+        self.fig.subplots_adjust(hspace = 0.7, wspace = 0.3)
 
 class voronoi_neighbour_analysis:
     '''Accepts the dictionary of Voronoi diagram data structure I've been using in the ipynb and allows for parsing of neighbour properties in Voronoi diagrams.'''
