@@ -420,6 +420,8 @@ def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indi
             ax.plot(filtered_generator_array[...,0]/10.,filtered_generator_array[...,1]/10.,filtered_generator_array[...,2]/10.,c='k',marker='.',linestyle='')
         plot_number += 1
     matplotlib_figure_object.set_size_inches(24,6)
+    #matplotlib_figure_object.savefig('control_1_inner_leaflet_pydata_london_2015.png', dpi = 300)
+    matplotlib_figure_object.savefig('sim35_outer_leaflet_pydata_london_2015.png', dpi = 300)
 
 class radial_distance_assessment_dengue:
 
@@ -1035,6 +1037,12 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         array_percent_surface_area_reconstitution_lipid_inner_leaflet = numpy.array(list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet)
         array_percent_surface_area_reconstitution_protein_outer_leaflet = numpy.array(list_percent_surface_area_reconstitution_from_proteins_only)
         array_percent_surface_area_reconstitution_protein_inner_leaflet = numpy.array(list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet)
+        #print out values for citation in dengue paper
+        print '---------'
+        print simulation_title
+        print 'avg array_percent_surface_area_reconstitution_protein_inner_leaflet:', numpy.average(array_percent_surface_area_reconstitution_protein_inner_leaflet)
+        print 'avg array_percent_surface_area_reconstitution_protein_outer_leaflet:', numpy.average(array_percent_surface_area_reconstitution_protein_outer_leaflet)
+        print '---------'
         combined_percent_reconstitution_array_outer_leaflet = array_percent_surface_area_reconstitution_lipid_outer_leaflet + array_percent_surface_area_reconstitution_protein_outer_leaflet
         combined_percent_reconstitution_array_inner_leaflet = array_percent_surface_area_reconstitution_lipid_inner_leaflet + array_percent_surface_area_reconstitution_protein_inner_leaflet
 
