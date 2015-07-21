@@ -123,7 +123,7 @@ class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specif
                     subplot_index += 1
                     #print 'subplot_index:', subplot_index
                     frequency_count_molecular_species += sum(frequency_of_neighbour_count_list)
-                assert frequency_count_molecular_species == species_count_dictionary[molecular_species_name], "The neighbour frequency count for {mol_species} does not match the total molecules of this type in the system.".format(mol_species = molecular_species_name)
+                assert frequency_count_molecular_species == species_count_dictionary[molecular_species_name], "The neighbour frequency count for {mol_species} does not match the total molecules of this type in the system. Got {actual_count} instead.".format(mol_species = molecular_species_name, actual_count = frequency_count_molecular_species)
                 
             for axis in [ax_aggregate_inner_area, ax_aggregate_outer_area]:
                 axis.legend(loc=2,fontsize=10,scatterpoints=1)
