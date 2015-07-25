@@ -23,29 +23,44 @@ class plot_voronoi_neighbour_data_species_specific:
         self.inner_leaflet_dict = inner_leaflet_dict_by_species
         self.outer_leaflet_dict = outer_leaflet_dict_by_species
 
-    def plot(self):
-        for leaflet_name, leaflet_dict in zip(['inner','outer'],[self.inner_leaflet_dict, self.outer_leaflet_dict]):
-            for lipid_name, neighbours in leaflet_dict.iteritems():
-                for neighbour_species_name, neighbour_count_dict in neighbours.iteritems():
-                    list_neighbour_counts = []
-                    list_avg_surface_areas = []
-                    list_std_dev_values = []
-                    for neighbour_count, list_surface_areas in neighbour_count_dict.iteritems():
-                        list_neighbour_counts.append(neighbour_count)
-                        surface_area_array = numpy.array(list_surface_areas)
-                        average_surface_area = numpy.average(surface_area_array)
-                        std_surface_area = numpy.std(surface_area_array)
-                        list_avg_surface_areas.append(average_surface_area)
-                        list_std_dev_values.append(std_surface_area)
-                    ax = self.fig.add_subplot(100,2,self.subplot_number)
-                    ax.bar(numpy.array(list_neighbour_counts) - 0.4, list_avg_surface_areas, yerr = numpy.array(list_std_dev_values), alpha = 0.4)
-                    ax.set_xlabel('num neighbours')
-                    ax.set_ylabel('avg Voronoi cell\n surface area ($\AA^2$)')
-                    ax.set_xticks(numpy.arange(12))
-                    ax.set_title(leaflet_name + ' leaflet ' + lipid_name + '; neighbours of type: ' + neighbour_species_name)
-                    self.subplot_number += 1
-        self.fig.set_size_inches(10,250) 
-        self.fig.subplots_adjust(hspace = 0.7, wspace = 0.3)
+    def plot(self, num_lipid_species, timestamp_list_microseconds, list_additional_inner_leaflet_dicts, list_additional_outer_leaflet_dicts, area_range):
+        list_inner_leaflet_dicts = [self.inner_leaflet_dict] + list_additional_inner_leaflet_dicts
+        list_outer_leaflet_dicts = [self.outer_leaflet_dict] + list_additional_outer_leaflet_dicts
+        current_time_index = 0
+        for time in timestamp_list_microseconds:
+            inner_leaflet_dict = list_inner_leaflet_dicts[current_time_index]
+            outer_leaflet_dict = list_outer_leaflet_dicts[current_time_index]
+            for leaflet_name, leaflet_dict in zip(['inner','outer'],[inner_leaflet_dict, outer_leaflet_dict]):
+                for lipid_name, neighbours in leaflet_dict.iteritems():
+                    ax = self.fig.add_subplot(num_lipid_species * 2, len(timestamp_list_microseconds), self.subplot_number)
+                    for neighbour_species_name, neighbour_count_dict in neighbours.iteritems():
+                        list_neighbour_counts = []
+                        list_avg_surface_areas = []
+                        list_std_dev_values = []
+                        for neighbour_count, list_surface_areas in neighbour_count_dict.iteritems():
+                            list_neighbour_counts.append(neighbour_count)
+                            surface_area_array = numpy.array(list_surface_areas)
+                            average_surface_area = numpy.average(surface_area_array)
+                            std_surface_area = numpy.std(surface_area_array)
+                            list_avg_surface_areas.append(average_surface_area)
+                            list_std_dev_values.append(std_surface_area)
+                        #ax.bar(numpy.array(list_neighbour_counts) - 0.4, list_avg_surface_areas, yerr = numpy.array(list_std_dev_values), alpha = 0.4)
+                        ax.errorbar(numpy.array(list_neighbour_counts), list_avg_surface_areas, yerr = None, alpha = 1.0, label = neighbour_species_name)
+                        error_array = numpy.array(list_std_dev_values)
+                        array_avg_surface_areas = numpy.array(list_avg_surface_areas)
+                        ax.fill_between(numpy.array(list_neighbour_counts), array_avg_surface_areas - error_array, array_avg_surface_areas + error_array, alpha = 0.05)
+
+                        ax.set_xlabel('num neighbours')
+                        ax.set_ylabel('avg Voronoi cell surface area ($\AA^2$)')
+                        ax.set_xticks(numpy.arange(12))
+                        ax.set_title(leaflet_name + ' leaflet ' + lipid_name + ' ({time} $\mu$s)'.format(time = time))
+                        ax.legend(prop={'size':8})
+                        ax.set_ylim(area_range)
+                    self.subplot_number += len(timestamp_list_microseconds)
+            current_time_index += 1
+            self.subplot_number = current_time_index + 1
+        self.fig.set_size_inches(25,80) 
+        self.fig.subplots_adjust(hspace = 0.3, wspace = 0.3)
 
 class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specific):
     '''Plot Voronoi raw neighbour data results.'''
