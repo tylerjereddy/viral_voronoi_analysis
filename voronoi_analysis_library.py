@@ -295,7 +295,7 @@ class voronoi_neighbour_analysis:
             #I think the most straightforward way to do this accounting is to keep track of the number of rows in each Voronoi cell coord set
             current_species_Voronoi_cell_row_sizes = [voronoi_coords.shape[0] for voronoi_coords in array_voronoi_cell_coords_current_species_current_frame]
             list_index_ranges = numpy.cumsum([0] + current_species_Voronoi_cell_row_sizes) #overlapping: i.e., [0, 6, 11, 15, 20]
-            list_index_range_tuples = [(list_index_ranges[index], list_index_ranges[index + 1]) for index in numpy.arange(len(list_index_ranges) - 1)] #should be i.e., [(0, 6), (6, 11), ...]
+            list_index_range_tuples = zip(list_index_ranges[:-1],list_index_ranges[1:]) #should be i.e., [(0, 6), (6, 11), ...]
             #print 'current_species_Voronoi_cell_row_sizes:', current_species_Voronoi_cell_row_sizes
             #flattened_array_voronoi_cell_coords_current_species_current_frame = numpy.vstack(array_voronoi_cell_coords_current_species_current_frame)
             flattened_array_voronoi_cell_coords_current_species_current_frame = numpy.concatenate(array_voronoi_cell_coords_current_species_current_frame)
