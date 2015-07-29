@@ -307,7 +307,8 @@ class voronoi_neighbour_analysis:
             #I think the most straightforward way to do this accounting is to keep track of the number of rows in each Voronoi cell coord set
             current_species_Voronoi_cell_row_sizes = [voronoi_coords.shape[0] for voronoi_coords in array_voronoi_cell_coords_current_species_current_frame]
             #print 'current_species_Voronoi_cell_row_sizes:', current_species_Voronoi_cell_row_sizes
-            flattened_array_voronoi_cell_coords_current_species_current_frame = numpy.vstack(array_voronoi_cell_coords_current_species_current_frame)
+            #flattened_array_voronoi_cell_coords_current_species_current_frame = numpy.vstack(array_voronoi_cell_coords_current_species_current_frame)
+            flattened_array_voronoi_cell_coords_current_species_current_frame = numpy.concatenate(array_voronoi_cell_coords_current_species_current_frame)
             view_structured_array_flattened_array_voronoi_cell_coords_current_species_current_frame = flattened_array_voronoi_cell_coords_current_species_current_frame.view(dtype = 'f8,f8,f8').reshape(flattened_array_voronoi_cell_coords_current_species_current_frame.shape[0])
             single_voronoi_cell_array_of_coordinates_view = single_voronoi_cell_array_of_coordinates.view(dtype = 'f8,f8,f8').reshape(single_voronoi_cell_array_of_coordinates.shape[0])
             mask = numpy.in1d(view_structured_array_flattened_array_voronoi_cell_coords_current_species_current_frame, single_voronoi_cell_array_of_coordinates_view)
