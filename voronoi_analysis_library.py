@@ -283,19 +283,7 @@ class voronoi_neighbour_analysis:
         '''Assess the number of neighbouring Voronoi cells for the given Voronoi cell being probed in the leaflet and frame of interest.'''
         exact_match_count = 0 #the Voronoi cell should match exactly (all vertices) with only one point (itself) -- assert this below
         neighbour_count_current_voronoi_cell = 0
-        #print 'simplified_dict_for_leaflet.keys():', simplified_dict_for_leaflet.keys()
-        #print 'preloop debug:'
-        #print "simplified_dict_for_leaflet['PPCS'][0]", simplified_dict_for_leaflet['PPCS'][0]
-        #print "simplified_dict_for_leaflet['POPC'][0].shape", simplified_dict_for_leaflet['POPC'][0].shape
-        #print "simplified_dict_for_leaflet['PPCE'][0]", simplified_dict_for_leaflet['PPCE'][0]
-        #print "simplified_dict_for_leaflet['DOPS'][0].shape", simplified_dict_for_leaflet['DOPS'][0].shape
-        #print "simplified_dict_for_leaflet['DUPC'][0].shape", simplified_dict_for_leaflet['DUPC'][0].shape
-        #print "simplified_dict_for_leaflet['CER'][0].shape", simplified_dict_for_leaflet['CER'][0].shape
-        #print "simplified_dict_for_leaflet['DPPE'][0].shape", simplified_dict_for_leaflet['DPPE'][0].shape
-        #print 'end preloop debug:'
 
-        #print 'frame index:', frame_index
-        #print 'single_voronoi_cell_array_of_coordinates.shape:', single_voronoi_cell_array_of_coordinates.shape
         for molecular_species_name, arrays_voronoi_cells_in_all_parsed_frames in simplified_dict_for_leaflet.iteritems():
             try:
                 array_voronoi_cell_coords_current_species_current_frame = arrays_voronoi_cells_in_all_parsed_frames[frame_index]
@@ -306,6 +294,8 @@ class voronoi_neighbour_analysis:
             #will probably have to flatten the data structure first because of the heterogeneity in the number of vertices in Voronoi regions, but could then check for contiguous cases of coordinate matches to identify the self-match and multiple vertex matches to correctly count actual neighbours
             #I think the most straightforward way to do this accounting is to keep track of the number of rows in each Voronoi cell coord set
             current_species_Voronoi_cell_row_sizes = [voronoi_coords.shape[0] for voronoi_coords in array_voronoi_cell_coords_current_species_current_frame]
+            list_index_ranges = numpy.cumsum([0] + current_species_Voronoi_cell_row_sizes) #overlapping: i.e., [0, 6, 11, 15, 20]
+            list_index_range_tuples = [(list_index_ranges[index], list_index_ranges[index + 1]) for index in numpy.arange(len(list_index_ranges) - 1)] #should be i.e., [(0, 6), (6, 11), ...]
             #print 'current_species_Voronoi_cell_row_sizes:', current_species_Voronoi_cell_row_sizes
             #flattened_array_voronoi_cell_coords_current_species_current_frame = numpy.vstack(array_voronoi_cell_coords_current_species_current_frame)
             flattened_array_voronoi_cell_coords_current_species_current_frame = numpy.concatenate(array_voronoi_cell_coords_current_species_current_frame)
@@ -313,62 +303,10 @@ class voronoi_neighbour_analysis:
             single_voronoi_cell_array_of_coordinates_view = single_voronoi_cell_array_of_coordinates.view(dtype = 'f8,f8,f8').reshape(single_voronoi_cell_array_of_coordinates.shape[0])
             mask = numpy.in1d(view_structured_array_flattened_array_voronoi_cell_coords_current_species_current_frame, single_voronoi_cell_array_of_coordinates_view)
             #print 'mask:', mask
-            start_index = 0
-            for voronoi_cell_rows in current_species_Voronoi_cell_row_sizes:
-                number_matching_vertices_current_cell = numpy.count_nonzero(mask[start_index:voronoi_cell_rows + start_index])
-                start_index += voronoi_cell_rows
-                if number_matching_vertices_current_cell > 0 and number_matching_vertices_current_cell < single_voronoi_cell_array_of_coordinates.shape[0]: #filter out exact matches to self
-                    neighbour_count_current_voronoi_cell += 1
-
-            #matching_vertex_count = numpy.count_nonzero(mask)
-            #looking reasonably good up to here--now, I think it would be ideal to split the mask into subarrays of sizes that match the values in current_species_Voronoi_cell_row_sizes, so that I can then count matchines vertices PER voronoi cell
-
-
-
-            #print 'frame_index:', frame_index
-            #print 'molecular_species_name:', molecular_species_name
-            #print 'arrays_voronoi_cells_in_all_parsed_frames.shape:', arrays_voronoi_cells_in_all_parsed_frames.shape
-            #print 'array_voronoi_cell_coords_current_species_current_frame.shape:', array_voronoi_cell_coords_current_species_current_frame.shape
-            #print 'first voronoi cell coord array:', array_voronoi_cell_coords_current_species_current_frame[0]
-            #for array_voronoi_cell_coords_of_prospective_neighbour in array_voronoi_cell_coords_current_species_current_frame:
-#                shape_array_voronoi_cell_coords_of_prospective_neighbour = array_voronoi_cell_coords_of_prospective_neighbour.shape
-#                dimensions_array_voronoi_cell_coords_of_prospective_neighbour = array_voronoi_cell_coords_of_prospective_neighbour.ndim
-#                assert dimensions_array_voronoi_cell_coords_of_prospective_neighbour == 2, "The coordinate array of the prospective neighbour should have two dimensions, but got {ndim} dimensions.".format(ndim=dimensions_array_voronoi_cell_coords_of_prospective_neighbour)
-#                assert shape_array_voronoi_cell_coords_of_prospective_neighbour[1] == 3, "The coordinate array of the prospective neighbour should have three data columns, but got {columns} columns.".format(columns = shape_array_voronoi_cell_coords_of_prospective_neighbour[1])
-#
-#                single_voronoi_cell_array_of_coordinates_view = single_voronoi_cell_array_of_coordinates.view(dtype = 'f8,f8,f8').reshape(single_voronoi_cell_array_of_coordinates.shape[0])
-#                array_voronoi_cell_coords_of_prospective_neighbour_view = array_voronoi_cell_coords_of_prospective_neighbour.view(dtype = 'f8,f8,f8').reshape(array_voronoi_cell_coords_of_prospective_neighbour.shape[0])
-#                #print 'view of single_voronoi_cell_array_of_coordinates:', single_voronoi_cell_array_of_coordinates_view
-#                #print 'view of single_voronoi_cell_array_of_coordinates.shape:', single_voronoi_cell_array_of_coordinates_view.shape
-#                #print 'view of array_voronoi_cell_coords_of_prospective_neighbour:', array_voronoi_cell_coords_of_prospective_neighbour_view
-#                #print 'view of array_voronoi_cell_coords_of_prospective_neighbour.shape:', array_voronoi_cell_coords_of_prospective_neighbour_view.shape
-#                mask = numpy.in1d(single_voronoi_cell_array_of_coordinates_view, array_voronoi_cell_coords_of_prospective_neighbour_view)
-#                #print 'mask:', mask
-#                matching_vertices = numpy.count_nonzero(mask)
-#
-#                #distance_matrix_voronoi_cell_coords_to_current_prospective_neighbour = scipy.spatial.distance.cdist(single_voronoi_cell_array_of_coordinates, array_voronoi_cell_coords_of_prospective_neighbour)
-#                #if the sum of the diagonal distances is zero, the candidate Voronoi cell is being compared with itself
-##                trace = numpy.trace(distance_matrix_voronoi_cell_coords_to_current_prospective_neighbour)
-##                if trace == 0:
-##                    exact_match_count += 1
-##                    continue
-#                if matching_vertices == shape_array_voronoi_cell_coords_of_prospective_neighbour[0]:
-#                    exact_match_count += 1
-#                    continue
-#
-#                #if control flow reaches this point, we shouldn't be dealing with an exact match
-#                #if there's a single 0 distance in the above distance matrix, that counts as a shared Voronoi vertex and therefore a neighbour
-#                #num_matching_voronoi_vertices = numpy.size(distance_matrix_voronoi_cell_coords_to_current_prospective_neighbour) - numpy.count_nonzero(distance_matrix_voronoi_cell_coords_to_current_prospective_neighbour)
-#                #if num_matching_voronoi_vertices > 0:
-#                    #print 'matching voronoi vertices:', num_matching_voronoi_vertices
-#                if matching_vertices > 0:
-#                    neighbour_count_current_voronoi_cell += 1
-#
-#        #print 'exact_match_count:', exact_match_count
-#        #if exact_match_count == 0:
-#            #print 'Voronoi cell for which a match cannot be found:', single_voronoi_cell_array_of_coordinates
-#        assert exact_match_count == 1, "There should only be one exact match for a given Voronoi vertex for which a neighbour assessment is being performed, but got {num_matches} matches.".format(num_matches = exact_match_count)
-        #print 'neighbour_count_current_voronoi_cell:', neighbour_count_current_voronoi_cell
+            non_zero_count_array = numpy.array([numpy.count_nonzero(mask[start:end+1]) for start, end in list_index_range_tuples])
+            #print 'non_zero_count_array:', non_zero_count_array
+            matching_vertices_current_cell = numpy.count_nonzero((non_zero_count_array > 0) & (non_zero_count_array < single_voronoi_cell_array_of_coordinates.shape[0])) #filter out exact matches to self
+            neighbour_count_current_voronoi_cell += matching_vertices_current_cell
         return neighbour_count_current_voronoi_cell
 
         
