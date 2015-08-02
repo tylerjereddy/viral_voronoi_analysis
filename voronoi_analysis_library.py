@@ -65,7 +65,7 @@ class plot_voronoi_neighbour_data_species_specific:
 class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specific):
     '''Plot Voronoi raw neighbour data results.'''
 
-    def plot(self, species_count_dictionary, sim_name, aggregate_figure_object, color_dict, fig_width_inches, fig_height_inches, list_additional_data_dictionaries_inner_leaflet = None, list_additional_data_dictionaries_outer_leaflet = None, list_time_stamps = None):
+    def plot(self, species_count_dictionary, sim_name, aggregate_figure_object, color_dict, fig_width_inches, fig_height_inches, list_additional_data_dictionaries_inner_leaflet = None, list_additional_data_dictionaries_outer_leaflet = None, list_time_stamps = None, general_plots_xmax = None, aggregate_ymax = None):
         '''species_count_dictionary is for verification that total frequencies of a given molecular species match the amount of that species in the system'''
         full_list_inner_leaflet_data_dicts = [self.inner_leaflet_dict] + list_additional_data_dictionaries_inner_leaflet
         full_list_outer_leaflet_data_dicts = [self.outer_leaflet_dict] + list_additional_data_dictionaries_outer_leaflet
@@ -109,7 +109,11 @@ class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specif
                         ax.errorbar(num_neighbours,average_surface_area, yerr = std_surface_area, marker = 'o',c='blue')
                         ax.set_xlabel('number of Voronoi neighbours')
                         ax.set_ylabel('avg Voronoi cell surface area ($\AA^2$)')
-                        ax.set_xlim(-0.2,12)
+                        if general_plots_xmax:
+                            ax.set_xlim(-0.2,general_plots_xmax)
+                        else:
+                            ax.set_xlim(-0.2,12)
+                            
                         num_neighbours_list.append(num_neighbours)
                         frequency_of_neighbour_count_list.append(frequency_of_neighbour_count)
                         if leaflet_name == 'inner':
@@ -130,7 +134,10 @@ class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specif
                                 ax_aggregate_outer_area.scatter(num_neighbours,average_surface_area,color=color_dict[molecular_species_name])
                                 
                     ax2.bar(numpy.array(num_neighbours_list) - 0.3, frequency_of_neighbour_count_list)
-                    ax2.set_xlim(-1,12)
+                    if general_plots_xmax:
+                        ax2.set_xlim(-1,general_plots_xmax)
+                    else:
+                        ax2.set_xlim(-1,12)
                     ax2.set_ylabel('frequency')
                     ax2.set_xlabel('number of Voronoi neighbours')
                     for axis in [ax,ax2]:
@@ -144,14 +151,23 @@ class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specif
                 axis.legend(loc=2,fontsize=10,scatterpoints=1)
                 axis.set_xlabel('number of Voronoi neighbours')
                 axis.set_ylabel('avg Voronoi cell surface area ($\AA^2$)')
-                axis.set_xlim(0,14)
+                if general_plots_xmax:
+                    axis.set_xlim(0,general_plots_xmax)
+                else:
+                    axis.set_xlim(0,14)
                 axis.set_ylim(0,350)
                 
             for axis in [ax_aggregate_inner_freq,ax_aggregate_outer_freq]:
                 axis.set_xlabel('number of Voronoi neighbours')
-                axis.set_xlim(0,14)
+                if general_plots_xmax:
+                    axis.set_xlim(0,general_plots_xmax)
+                else:
+                    axis.set_xlim(0,14)
                 axis.set_ylabel('Frequency')
-                axis.set_ylim(0,2000)
+                if aggregate_ymax:
+                    axis.set_ylim(0,aggregate_ymax)
+                else:
+                    axis.set_ylim(0,2000)
                 
             assert len(list_aggregate_frequency_data_inner_leaflet) + len(list_aggregate_frequency_data_outer_leaflet) == sum(species_count_dictionary.itervalues()), "The total number of Voronoi cells for which there are requency values should match the total number of particles in the system."
 
