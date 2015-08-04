@@ -23,7 +23,7 @@ class plot_voronoi_neighbour_data_species_specific:
         self.inner_leaflet_dict = inner_leaflet_dict_by_species
         self.outer_leaflet_dict = outer_leaflet_dict_by_species
 
-    def plot(self, num_lipid_species, timestamp_list_microseconds, list_additional_inner_leaflet_dicts, list_additional_outer_leaflet_dicts, area_range):
+    def plot(self, num_lipid_species, timestamp_list_microseconds, list_additional_inner_leaflet_dicts, list_additional_outer_leaflet_dicts, area_range, max_num_neighbours = 12):
         list_inner_leaflet_dicts = [self.inner_leaflet_dict] + list_additional_inner_leaflet_dicts
         list_outer_leaflet_dicts = [self.outer_leaflet_dict] + list_additional_outer_leaflet_dicts
         current_time_index = 0
@@ -52,7 +52,7 @@ class plot_voronoi_neighbour_data_species_specific:
 
                         ax.set_xlabel('num neighbours')
                         ax.set_ylabel('avg Voronoi cell surface area ($\AA^2$)')
-                        ax.set_xticks(numpy.arange(12))
+                        ax.set_xticks(numpy.arange(0,max_num_neighbours, 2))
                         ax.set_title(leaflet_name + ' leaflet ' + lipid_name + ' ({time} $\mu$s)'.format(time = time))
                         ax.legend(prop={'size':8})
                         ax.set_ylim(area_range)
