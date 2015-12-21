@@ -12,6 +12,7 @@ import multicore_vesicle_virion_analysis
 import collections
 import scipy
 import scipy.spatial
+from scipy.spatial import SphericalVoronoi
 from collections import namedtuple
 
 class plot_voronoi_neighbour_data_species_specific:
@@ -506,6 +507,7 @@ class radial_distance_assessment_dengue:
     def plot(self,title_string):
         '''Plot the dengue radial distance assessment data.'''
         ax = self.matplotlib_figure_object.add_subplot('121')
+        print self.array_frame_numbers.shape, self.array_min_dengue_lipid_headgroup_radial_distances.shape #debug
         ax.scatter(self.array_frame_numbers,self.array_min_dengue_lipid_headgroup_radial_distances,label='min dengue lipid headgroup radial distance',c='black',edgecolor='None')
         ax.scatter(self.array_frame_numbers,self.array_min_protein_distances,label='min protein distances',c='grey',edgecolor='None')
         ax.scatter(self.array_frame_numbers,self.array_max_protein_distances,label='max protein distances',c='green',edgecolor='None')
@@ -745,18 +747,18 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
     '''Generalization of the large Voronoi analysis loop so that I can easily expand my ipynb analysis to include all flu simulation replicates / conditions.'''
     #selections:
     if not dengue_condition:
-        PPCH_PO4_selection = universe_object.selectAtoms('resname PPCH and name PO4')
-        FORS_AM2_selection = universe_object.selectAtoms('resname FORS and name AM2')
+        PPCH_PO4_selection = universe_object.select_atoms('resname PPCH and name PO4')
+        FORS_AM2_selection = universe_object.select_atoms('resname FORS and name AM2')
         PPCH_PO4_threshold = PPCH_PO4_threshold #28.5 nm cutoff for outer leaflet assignment (see above)
-        CHOL_ROH_selection = universe_object.selectAtoms('resname CHOL and name ROH')
-        DOPX_PO4_selection = universe_object.selectAtoms('resname DOPX and name PO4')
-        DOPE_PO4_selection = universe_object.selectAtoms('resname DOPE and name PO4')
-        POPS_PO4_selection = universe_object.selectAtoms('resname POPS and name PO4')
+        CHOL_ROH_selection = universe_object.select_atoms('resname CHOL and name ROH')
+        DOPX_PO4_selection = universe_object.select_atoms('resname DOPX and name PO4')
+        DOPE_PO4_selection = universe_object.select_atoms('resname DOPE and name PO4')
+        POPS_PO4_selection = universe_object.select_atoms('resname POPS and name PO4')
         combined_selection_DOPE_DOPX_POPS_PO4 = DOPX_PO4_selection + DOPE_PO4_selection + POPS_PO4_selection
-        all_lipid_selection = universe_object.selectAtoms('resname PPCH or resname CHOL or resname POPS or resname DOPX or resname DOPE or resname FORS')
+        all_lipid_selection = universe_object.select_atoms('resname PPCH or resname CHOL or resname POPS or resname DOPX or resname DOPE or resname FORS')
 
         if proteins_present == 'yes':
-            all_protein_selection = universe_object.selectAtoms('bynum 1:344388')
+            all_protein_selection = universe_object.select_atoms('bynum 1:344388')
             if FORS_present == 'no':
                 dictionary_headgroup_data = {'PPCH':{'selection':PPCH_PO4_selection},'CHOL':{'selection':CHOL_ROH_selection},'DOPX':{'selection':DOPX_PO4_selection},'DOPE':{'selection':DOPE_PO4_selection},'POPS':{'selection':POPS_PO4_selection},'protein':{'selection':all_protein_selection}}
             else:
@@ -771,16 +773,16 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
             list_percent_surface_area_reconstitution = []
             list_percent_surface_area_reconstitution_inner_leaflet = []
     else: #selections and initial data structures for dengue case
-        POPC_PO4_selection = universe_object.selectAtoms('resname POPC and name PO4')
-        PPCE_PO4_selection = universe_object.selectAtoms('resname PPCE and name PO4')
-        DPPE_PO4_selection = universe_object.selectAtoms('resname DPPE and name PO4')
-        CER_AM2_selection = universe_object.selectAtoms('resname CER and name AM2') #may have to treat ceramide differently without PO4 in headgroup region?
-        DUPC_PO4_selection = universe_object.selectAtoms('resname DUPC and name PO4')
-        DOPS_PO4_selection = universe_object.selectAtoms('resname DOPS and name PO4')
-        PPCS_PO4_selection = universe_object.selectAtoms('resname PPCS and name PO4')
+        POPC_PO4_selection = universe_object.select_atoms('resname POPC and name PO4')
+        PPCE_PO4_selection = universe_object.select_atoms('resname PPCE and name PO4')
+        DPPE_PO4_selection = universe_object.select_atoms('resname DPPE and name PO4')
+        CER_AM2_selection = universe_object.select_atoms('resname CER and name AM2') #may have to treat ceramide differently without PO4 in headgroup region?
+        DUPC_PO4_selection = universe_object.select_atoms('resname DUPC and name PO4')
+        DOPS_PO4_selection = universe_object.select_atoms('resname DOPS and name PO4')
+        PPCS_PO4_selection = universe_object.select_atoms('resname PPCS and name PO4')
         combined_dengue_lipid_headgroup_selection = POPC_PO4_selection + PPCE_PO4_selection + DPPE_PO4_selection + CER_AM2_selection + DUPC_PO4_selection + DOPS_PO4_selection + PPCS_PO4_selection
-        all_lipid_selection = universe_object.selectAtoms('resname POPC or resname PPCE or resname DPPE or resname CER or resname DUPC or resname DOPS or resname PPCS')
-        all_protein_selection = universe_object.selectAtoms('bynum 1:221040') #I think I'm actually going to need to select the TMDs separately (I should have some previous code written for this task -- may be able to split into TMD selections downstream, or may be easier to do it here-we'll see)
+        all_lipid_selection = universe_object.select_atoms('resname POPC or resname PPCE or resname DPPE or resname CER or resname DUPC or resname DOPS or resname PPCS')
+        all_protein_selection = universe_object.select_atoms('bynum 1:221040') #I think I'm actually going to need to select the TMDs separately (I should have some previous code written for this task -- may be able to split into TMD selections downstream, or may be easier to do it here-we'll see)
         dictionary_headgroup_data = {'POPC':{'selection':POPC_PO4_selection},'PPCE':{'selection':PPCE_PO4_selection},'DPPE':{'selection':DPPE_PO4_selection},'CER':{'selection':CER_AM2_selection},'DUPC':{'selection':DUPC_PO4_selection},'DOPS':{'selection':DOPS_PO4_selection},'PPCS':{'selection':PPCS_PO4_selection},'protein':{'selection':all_protein_selection}}
         list_percent_surface_area_reconstitution_from_lipids_only = [] #outer leaflet
         list_percent_surface_area_reconstitution_from_proteins_only = [] #outer leaflet
@@ -801,7 +803,7 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
 
     simulation_trajectory_object = universe_object.trajectory
     if end_frame == 'full':
-        end_frame = int(simulation_trajectory_object.numframes)
+        end_frame = int(simulation_trajectory_object.n_frames)
     for ts in simulation_trajectory_object[start_frame:end_frame:skip_frame_value]: 
         lipid_centroid = all_lipid_selection.centroid()
         if not dengue_condition:
@@ -833,7 +835,7 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
         inner_leaflet_index_counter = 0
         for residue_name, subdictionary in dictionary_headgroup_data.iteritems():
             current_headgroup_MDA_selection = subdictionary['selection'] #protein selection is hardly 'headgroup,' but same treatment
-            assert current_headgroup_MDA_selection.numberOfAtoms() > 0, "Number of selected {resname} headgroup particles not greater than 0.".format(resname=residue_name)
+            assert current_headgroup_MDA_selection.n_atoms > 0, "Number of selected {resname} headgroup particles not greater than 0.".format(resname=residue_name)
             current_headgroup_coordinate_array = current_headgroup_MDA_selection.coordinates()
             current_headgroup_coordinate_array -= lipid_centroid #center at origin
             current_headgroup_spherical_polar_coord_array = voronoi_utility.convert_cartesian_array_to_spherical_array(current_headgroup_coordinate_array)
@@ -921,21 +923,29 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
             dictionary_headgroup_data[residue_name]['inner_leaflet_end_index'] = inner_leaflet_index_counter + inner_leaflet_spherical_coord_array.shape[0]
             inner_leaflet_index_counter += inner_leaflet_spherical_coord_array.shape[0]
         
-        voronoi_instance = voronoi_utility.Voronoi_Sphere_Surface(projected_outer_leaflet_coordinate_array,outer_leaflet_projection_radius)
-        inner_leaflet_voronoi_instance = voronoi_utility.Voronoi_Sphere_Surface(projected_inner_leaflet_coordinate_array,inner_leaflet_projection_radius)
-        dictionary_voronoi_polygon_vertices = voronoi_instance.voronoi_region_vertices_spherical_surface() #for sample plotting Voronoi diagrams
-        dictionary_voronoi_polygon_vertices_inner_leaflet = inner_leaflet_voronoi_instance.voronoi_region_vertices_spherical_surface() #for sample plotting Voronoi diagrams
+        voronoi_instance = SphericalVoronoi(projected_outer_leaflet_coordinate_array,outer_leaflet_projection_radius)
+        inner_leaflet_voronoi_instance = SphericalVoronoi(projected_inner_leaflet_coordinate_array,inner_leaflet_projection_radius)
+        voronoi_instance.sort_vertices_of_regions()
+        inner_leaflet_voronoi_instance.sort_vertices_of_regions()
+        list_voronoi_polygon_vertex_indices = voronoi_instance.regions #for sample plotting Voronoi diagrams
+        list_voronoi_polygon_vertex_indices_inner_leaflet = inner_leaflet_voronoi_instance.regions #for sample plotting Voronoi diagrams
+        list_voronoi_polygon_vertices = []
+        list_voronoi_polygon_vertices_inner_leaflet = []
+        for region in list_voronoi_polygon_vertex_indices:
+            list_voronoi_polygon_vertices.append(voronoi_instance.vertices[region])
+        for region in list_voronoi_polygon_vertex_indices_inner_leaflet:
+            list_voronoi_polygon_vertices_inner_leaflet.append(inner_leaflet_voronoi_instance.vertices[region])
         #avoid redundant calculation of Voronoi diagram by using the diagrams produced above (voronoi_utility module should probably eventually allow this workflow more naturally rather than requiring me to abstract the code)
-        def produce_Voronoi_area_dict(voronoi_polygon_vertex_dict,estimated_sphere_radius):
+        def produce_Voronoi_area_dict(list_voronoi_polygon_vertices,estimated_sphere_radius):
             dictionary_Voronoi_region_surface_areas_for_each_generator = {}
-            for generator_index, Voronoi_polygon_sorted_vertex_array in voronoi_polygon_vertex_dict.iteritems():
+            for generator_index, Voronoi_polygon_sorted_vertex_array in enumerate(list_voronoi_polygon_vertices):
                 current_Voronoi_polygon_surface_area_on_sphere = voronoi_utility.calculate_surface_area_of_a_spherical_Voronoi_polygon(Voronoi_polygon_sorted_vertex_array,estimated_sphere_radius)
                 assert current_Voronoi_polygon_surface_area_on_sphere > 0, "Obtained a surface area of zero for a Voronoi region."
                 dictionary_Voronoi_region_surface_areas_for_each_generator[generator_index] = current_Voronoi_polygon_surface_area_on_sphere
             return dictionary_Voronoi_region_surface_areas_for_each_generator
 
-        dictionary_voronoi_polygon_surface_areas = produce_Voronoi_area_dict(dictionary_voronoi_polygon_vertices,voronoi_instance.estimated_sphere_radius)
-        dictionary_voronoi_polygon_surface_areas_inner_leaflet = produce_Voronoi_area_dict(dictionary_voronoi_polygon_vertices_inner_leaflet,inner_leaflet_voronoi_instance.estimated_sphere_radius)
+        dictionary_voronoi_polygon_surface_areas = produce_Voronoi_area_dict(list_voronoi_polygon_vertices,voronoi_instance.radius)
+        dictionary_voronoi_polygon_surface_areas_inner_leaflet = produce_Voronoi_area_dict(list_voronoi_polygon_vertices_inner_leaflet,inner_leaflet_voronoi_instance.radius)
         frame_number = ts.frame
         theoretical_surface_area = calculate_surface_area_sphere(outer_leaflet_projection_radius)
         theoretical_surface_area_inner_leaflet = calculate_surface_area_sphere(inner_leaflet_projection_radius)
@@ -982,10 +992,10 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
             inner_leaflet_end_index = subdictionary['inner_leaflet_end_index']
             #outer leaflet:
             #print 'populating outer leaflet dict data:'
-            populate_dictionary_with_spherical_Voronoi_data(dict_Voronoi_cell_surface_areas=dictionary_voronoi_polygon_surface_areas,start_index=start_index,end_index=end_index,Voronoi_cell_surface_area_list=voronoi_cell_surface_area_list,dict_Voronoi_polygon_vertices=dictionary_voronoi_polygon_vertices,list_arrays_Voronoi_cells=list_arrays_Voronoi_cells,subdictionary_object=subdictionary,subdictionary_key_avg_surface_area='voronoi_cell_avg_values_list',subdictionary_key_std_surface_area='voronoi_cell_std_values_list',subdictionary_key_vertex_arrays='voronoi_cell_list_vertex_arrays')
+            populate_dictionary_with_spherical_Voronoi_data(dict_Voronoi_cell_surface_areas=dictionary_voronoi_polygon_surface_areas,start_index=start_index,end_index=end_index,Voronoi_cell_surface_area_list=voronoi_cell_surface_area_list,dict_Voronoi_polygon_vertices=list_voronoi_polygon_vertices,list_arrays_Voronoi_cells=list_arrays_Voronoi_cells,subdictionary_object=subdictionary,subdictionary_key_avg_surface_area='voronoi_cell_avg_values_list',subdictionary_key_std_surface_area='voronoi_cell_std_values_list',subdictionary_key_vertex_arrays='voronoi_cell_list_vertex_arrays')
             #inner leaflet:
             #print 'populating inner leaflet dict data:'
-            populate_dictionary_with_spherical_Voronoi_data(dict_Voronoi_cell_surface_areas=dictionary_voronoi_polygon_surface_areas_inner_leaflet,start_index=inner_leaflet_start_index,end_index=inner_leaflet_end_index,Voronoi_cell_surface_area_list=voronoi_cell_surface_area_list_inner_leaflet,dict_Voronoi_polygon_vertices=dictionary_voronoi_polygon_vertices_inner_leaflet,list_arrays_Voronoi_cells=list_arrays_Voronoi_cells_inner_leaflet,subdictionary_object=subdictionary,subdictionary_key_avg_surface_area='voronoi_cell_avg_values_list_inner_leaflet',subdictionary_key_std_surface_area='voronoi_cell_std_values_list_inner_leaflet',subdictionary_key_vertex_arrays='voronoi_cell_list_vertex_arrays_inner_leaflet')
+            populate_dictionary_with_spherical_Voronoi_data(dict_Voronoi_cell_surface_areas=dictionary_voronoi_polygon_surface_areas_inner_leaflet,start_index=inner_leaflet_start_index,end_index=inner_leaflet_end_index,Voronoi_cell_surface_area_list=voronoi_cell_surface_area_list_inner_leaflet,dict_Voronoi_polygon_vertices=list_voronoi_polygon_vertices_inner_leaflet,list_arrays_Voronoi_cells=list_arrays_Voronoi_cells_inner_leaflet,subdictionary_object=subdictionary,subdictionary_key_avg_surface_area='voronoi_cell_avg_values_list_inner_leaflet',subdictionary_key_std_surface_area='voronoi_cell_std_values_list_inner_leaflet',subdictionary_key_vertex_arrays='voronoi_cell_list_vertex_arrays_inner_leaflet')
             
         print 'frame:', frame_number
     residue_name_list = dictionary_headgroup_data.keys()
@@ -1160,18 +1170,18 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
 def precursor_radial_distance_analysis_dengue(universe_object):
     '''Modified version of precursor_radial_distance_analysis() intended for analysis of dengue virion simulation. I think all dengue lipids should be assessed in the same manner because a symmetrical lipid species distribution (ER-derived) was assumed during the construction process.'''
     import MDAnalysis.core.distances
-    POPC_PO4_selection = universe_object.selectAtoms('resname POPC and name PO4')
-    PPCE_PO4_selection = universe_object.selectAtoms('resname PPCE and name PO4')
-    DPPE_PO4_selection = universe_object.selectAtoms('resname DPPE and name PO4')
-    CER_AM2_selection = universe_object.selectAtoms('resname CER and name AM2') #may have to treat ceramide differently without PO4 in headgroup region?
-    DUPC_PO4_selection = universe_object.selectAtoms('resname DUPC and name PO4')
-    DOPS_PO4_selection = universe_object.selectAtoms('resname DOPS and name PO4')
-    PPCS_PO4_selection = universe_object.selectAtoms('resname PPCS and name PO4')
+    POPC_PO4_selection = universe_object.select_atoms('resname POPC and name PO4')
+    PPCE_PO4_selection = universe_object.select_atoms('resname PPCE and name PO4')
+    DPPE_PO4_selection = universe_object.select_atoms('resname DPPE and name PO4')
+    CER_AM2_selection = universe_object.select_atoms('resname CER and name AM2') #may have to treat ceramide differently without PO4 in headgroup region?
+    DUPC_PO4_selection = universe_object.select_atoms('resname DUPC and name PO4')
+    DOPS_PO4_selection = universe_object.select_atoms('resname DOPS and name PO4')
+    PPCS_PO4_selection = universe_object.select_atoms('resname PPCS and name PO4')
     combined_dengue_lipid_selection = POPC_PO4_selection + PPCE_PO4_selection + DPPE_PO4_selection + CER_AM2_selection + DUPC_PO4_selection + DOPS_PO4_selection + PPCS_PO4_selection
-    protein_selection = universe_object.selectAtoms('bynum 1:221040')
-    total_dengue_particles_assessed = combined_dengue_lipid_selection.numberOfAtoms()
+    protein_selection = universe_object.select_atoms('bynum 1:221040')
+    total_dengue_particles_assessed = combined_dengue_lipid_selection.n_atoms
     threshold = 275 #adjust as needed to split leaflet populations appropriately
-    all_lipid_selection = universe_object.selectAtoms('resname POPC or resname PPCE or resname DPPE or resname CER or resname DUPC or resname DOPS or resname PPCS')
+    all_lipid_selection = universe_object.select_atoms('resname POPC or resname PPCE or resname DPPE or resname CER or resname DUPC or resname DOPS or resname PPCS')
    
     list_min_protein_distances = []
     list_max_protein_distances = []
@@ -1235,21 +1245,21 @@ def precursor_radial_distance_analysis_dengue(universe_object):
 
 def precursor_radial_distance_analysis(universe_object,FORS_present=None,control_condition=None):
     '''This function should parse out the necessary precursor data for the radial_distance_assessment class above. Ideally, should operate remotely on an IPython engine to allow for an asychronous parallel workflow with each replicate (universe object) analyzed simultaneously on a different core.'''
-    PPCH_PO4_selection = universe_object.selectAtoms('resname PPCH and name PO4')
-    FORS_AM2_selection = universe_object.selectAtoms('resname FORS and name AM2')
-    CHOL_ROH_selection = universe_object.selectAtoms('resname CHOL and name ROH')
-    remaining_headgroup_selection = universe_object.selectAtoms('(resname DOPE or resname DOPX or resname POPS) and name PO4')
-    total_PPCH_PO4_particles = PPCH_PO4_selection.numberOfAtoms()
-    total_FORS_AM2_particles = FORS_AM2_selection.numberOfAtoms()
-    total_CHOL_ROH_particles = CHOL_ROH_selection.numberOfAtoms()
-    total_remaining_particles = remaining_headgroup_selection.numberOfAtoms()
+    PPCH_PO4_selection = universe_object.select_atoms('resname PPCH and name PO4')
+    FORS_AM2_selection = universe_object.select_atoms('resname FORS and name AM2')
+    CHOL_ROH_selection = universe_object.select_atoms('resname CHOL and name ROH')
+    remaining_headgroup_selection = universe_object.select_atoms('(resname DOPE or resname DOPX or resname POPS) and name PO4')
+    total_PPCH_PO4_particles = PPCH_PO4_selection.n_atoms
+    total_FORS_AM2_particles = FORS_AM2_selection.n_atoms
+    total_CHOL_ROH_particles = CHOL_ROH_selection.n_atoms
+    total_remaining_particles = remaining_headgroup_selection.n_atoms
     if FORS_present:
         threshold = 275 #smaller threshold in presence of FORS virions (which are smaller)
     elif control_condition:
         threshold = 600 #60 nm threshold for control conditions
     else:
         threshold = 285 #28.5 nm threshold for outer leaflet PPCH PO4 (currently testing)
-    all_lipid_selection = universe_object.selectAtoms('resname PPCH or resname CHOL or resname POPS or resname DOPX or resname DOPE or resname FORS')
+    all_lipid_selection = universe_object.select_atoms('resname PPCH or resname CHOL or resname POPS or resname DOPX or resname DOPE or resname FORS')
 
     list_min_PPCH_PO4_distances = []
     list_max_PPCH_PO4_distances = []
@@ -1393,16 +1403,16 @@ def create_dengue_trajectory_movie(universe_object):
     trajectory.rewind() #rewind the trajectory 
     start_time = time.time()
 
-    POPC_PO4_selection = universe_object.selectAtoms('resname POPC and name PO4')
-    PPCE_PO4_selection = universe_object.selectAtoms('resname PPCE and name PO4')
-    DPPE_PO4_selection = universe_object.selectAtoms('resname DPPE and name PO4')
-    CER_AM2_selection = universe_object.selectAtoms('resname CER and name AM2') #may have to treat ceramide differently without PO4 in headgroup region?
-    DUPC_PO4_selection = universe_object.selectAtoms('resname DUPC and name PO4')
-    DOPS_PO4_selection = universe_object.selectAtoms('resname DOPS and name PO4')
-    PPCS_PO4_selection = universe_object.selectAtoms('resname PPCS and name PO4')
+    POPC_PO4_selection = universe_object.select_atoms('resname POPC and name PO4')
+    PPCE_PO4_selection = universe_object.select_atoms('resname PPCE and name PO4')
+    DPPE_PO4_selection = universe_object.select_atoms('resname DPPE and name PO4')
+    CER_AM2_selection = universe_object.select_atoms('resname CER and name AM2') #may have to treat ceramide differently without PO4 in headgroup region?
+    DUPC_PO4_selection = universe_object.select_atoms('resname DUPC and name PO4')
+    DOPS_PO4_selection = universe_object.select_atoms('resname DOPS and name PO4')
+    PPCS_PO4_selection = universe_object.select_atoms('resname PPCS and name PO4')
     combined_dengue_lipid_selection = POPC_PO4_selection + PPCE_PO4_selection + DPPE_PO4_selection + CER_AM2_selection + DUPC_PO4_selection + DOPS_PO4_selection + PPCS_PO4_selection
-    protein_selection = universe_object.selectAtoms('bynum 1:221040')
-    water_selection = universe_object.selectAtoms('resname W and name W')
+    protein_selection = universe_object.select_atoms('bynum 1:221040')
+    water_selection = universe_object.select_atoms('resname W and name W')
     
     #set up base figure:
     fig = plt.figure()
@@ -1473,12 +1483,12 @@ def create_control_universe_data(flu_coordinate_file_path):
     total_residue_headgroup_coordinates_outer_leaflet = 0
     for residue_name, residue_subdictionary in dict_lipid_residue_data.iteritems():
         sel_string = residue_subdictionary['sel_string']
-        selection = input_flu_coordinate_file_universe_object.selectAtoms(sel_string)
+        selection = input_flu_coordinate_file_universe_object.select_atoms(sel_string)
         residue_subdictionary['selection'] = selection
         if residue_name in ['DOPX','DOPE','POPS']:
-            total_residue_headgroup_coordinates_inner_leaflet += residue_subdictionary['selection'].numberOfAtoms()
+            total_residue_headgroup_coordinates_inner_leaflet += residue_subdictionary['selection'].n_atoms
         else: 
-            total_residue_headgroup_coordinates_outer_leaflet += residue_subdictionary['selection'].numberOfAtoms()
+            total_residue_headgroup_coordinates_outer_leaflet += residue_subdictionary['selection'].n_atoms
     #now, I want to generate a pseudo random distribution of points on two spheres (leaflets) of different radii -- the number of points should match up nicely with the number of residue headgroup coords above [though I will make a second data set that removes about half the points I think]
     prng = numpy.random.RandomState(117) 
     inner_radius = 500
@@ -1495,24 +1505,24 @@ def create_control_universe_data(flu_coordinate_file_path):
     outer_leaflet_particle_counter = 0
     for residue_name, residue_subdictionary in dict_lipid_residue_data.iteritems():
         if residue_name in ['DOPX','DOPE','POPS']:
-            num_atoms = residue_subdictionary['selection'].numberOfAtoms()
+            num_atoms = residue_subdictionary['selection'].n_atoms
             residue_subdictionary['selection'].set_positions(inner_leaflet_coord_array[inner_leaflet_particle_counter:inner_leaflet_particle_counter + num_atoms,...])
             inner_leaflet_particle_counter += num_atoms
         else: #outer leaflet
-            num_atoms = residue_subdictionary['selection'].numberOfAtoms()
+            num_atoms = residue_subdictionary['selection'].n_atoms
             residue_subdictionary['selection'].set_positions(outer_leaflet_coord_array[outer_leaflet_particle_counter:outer_leaflet_particle_counter + num_atoms,...])
             outer_leaflet_particle_counter += num_atoms
     #now write the first control xtc file with the above random positions on sphere surface
     xtc_writer_instace_1 = MDAnalysis.coordinates.XTC.XTCWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_1.xtc',total_residue_headgroup_coordinates_outer_leaflet + total_residue_headgroup_coordinates_inner_leaflet)
     frames_to_write = 5000
     while frames_to_write > 0:
-        xtc_writer_instace_1.write(input_flu_coordinate_file_universe_object.selectAtoms('(resname DOPX and name PO4) or (resname DOPE and name PO4) or (resname POPS and name PO4) or (resname CHOL and name ROH) or (resname PPCH and name PO4)')) #5000 frames with the same custom random coordinates
+        xtc_writer_instace_1.write(input_flu_coordinate_file_universe_object.select_atoms('(resname DOPX and name PO4) or (resname DOPE and name PO4) or (resname POPS and name PO4) or (resname CHOL and name ROH) or (resname PPCH and name PO4)')) #5000 frames with the same custom random coordinates
         frames_to_write -= 1
     #now, set up for writing a second control xtc file, with about half as many total coordinates in each leaflet
     merged_halved_atom_groups = None
     for residue_name, residue_subdictionary in dict_lipid_residue_data.iteritems():
         full_selection_current_residue_type = residue_subdictionary['selection']
-        num_atoms_current_residue_type = full_selection_current_residue_type.numberOfAtoms()
+        num_atoms_current_residue_type = full_selection_current_residue_type.n_atoms
         approx_half_num_atoms_current_residue_type = int(float(num_atoms_current_residue_type)/2.)
         halved_atomgroup_current_residue_type = full_selection_current_residue_type[0:approx_half_num_atoms_current_residue_type]
         if not merged_halved_atom_groups:
@@ -1520,7 +1530,7 @@ def create_control_universe_data(flu_coordinate_file_path):
         else: #start concatenating once initialized
             merged_halved_atom_groups += halved_atomgroup_current_residue_type
     #now write the second control xtc file with approx. half as many coordinates in each leaflet
-    xtc_writer_instace_2 = MDAnalysis.coordinates.XTC.XTCWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_2.xtc',merged_halved_atom_groups.numberOfAtoms())
+    xtc_writer_instace_2 = MDAnalysis.coordinates.XTC.XTCWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_2.xtc',merged_halved_atom_groups.n_atoms)
     frames_to_write = 5000
     while frames_to_write > 0:
         xtc_writer_instace_2.write(merged_halved_atom_groups) #5000 frames with the same custom random coordinates
@@ -1539,12 +1549,12 @@ def create_control_universe_coord_data(flu_coordinate_file_path):
     total_residue_headgroup_coordinates_outer_leaflet = 0
     for residue_name, residue_subdictionary in dict_lipid_residue_data.iteritems():
         sel_string = residue_subdictionary['sel_string']
-        selection = input_flu_coordinate_file_universe_object.selectAtoms(sel_string)
+        selection = input_flu_coordinate_file_universe_object.select_atoms(sel_string)
         residue_subdictionary['selection'] = selection
         if residue_name in ['DOPX','DOPE','POPS']:
-            total_residue_headgroup_coordinates_inner_leaflet += residue_subdictionary['selection'].numberOfAtoms()
+            total_residue_headgroup_coordinates_inner_leaflet += residue_subdictionary['selection'].n_atoms
         else: 
-            total_residue_headgroup_coordinates_outer_leaflet += residue_subdictionary['selection'].numberOfAtoms()
+            total_residue_headgroup_coordinates_outer_leaflet += residue_subdictionary['selection'].n_atoms
     #now, I want to generate a pseudo random distribution of points on two spheres (leaflets) of different radii -- the number of points should match up nicely with the number of residue headgroup coords above [though I will make a second data set that removes about half the points I think]
     prng = numpy.random.RandomState(117) 
     inner_radius = 500
@@ -1561,21 +1571,21 @@ def create_control_universe_coord_data(flu_coordinate_file_path):
     outer_leaflet_particle_counter = 0
     for residue_name, residue_subdictionary in dict_lipid_residue_data.iteritems():
         if residue_name in ['DOPX','DOPE','POPS']:
-            num_atoms = residue_subdictionary['selection'].numberOfAtoms()
+            num_atoms = residue_subdictionary['selection'].n_atoms
             residue_subdictionary['selection'].set_positions(inner_leaflet_coord_array[inner_leaflet_particle_counter:inner_leaflet_particle_counter + num_atoms,...])
             inner_leaflet_particle_counter += num_atoms
         else: #outer leaflet
-            num_atoms = residue_subdictionary['selection'].numberOfAtoms()
+            num_atoms = residue_subdictionary['selection'].n_atoms
             residue_subdictionary['selection'].set_positions(outer_leaflet_coord_array[outer_leaflet_particle_counter:outer_leaflet_particle_counter + num_atoms,...])
             outer_leaflet_particle_counter += num_atoms
     #now write the first control gro file with the above random positions on sphere surface
     gro_writer_instace_1 = MDAnalysis.coordinates.GRO.GROWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_1.gro')
-    gro_writer_instace_1.write(input_flu_coordinate_file_universe_object.selectAtoms('(resname DOPX and name PO4) or (resname DOPE and name PO4) or (resname POPS and name PO4) or (resname CHOL and name ROH) or (resname PPCH and name PO4)')) 
+    gro_writer_instace_1.write(input_flu_coordinate_file_universe_object.select_atoms('(resname DOPX and name PO4) or (resname DOPE and name PO4) or (resname POPS and name PO4) or (resname CHOL and name ROH) or (resname PPCH and name PO4)')) 
     #now, set up for writing a second control gro file, with about half as many total coordinates in each leaflet
     merged_halved_atom_groups = None
     for residue_name, residue_subdictionary in dict_lipid_residue_data.iteritems():
         full_selection_current_residue_type = residue_subdictionary['selection']
-        num_atoms_current_residue_type = full_selection_current_residue_type.numberOfAtoms()
+        num_atoms_current_residue_type = full_selection_current_residue_type.n_atoms
         approx_half_num_atoms_current_residue_type = int(float(num_atoms_current_residue_type)/2.)
         halved_atomgroup_current_residue_type = full_selection_current_residue_type[0:approx_half_num_atoms_current_residue_type]
         if not merged_halved_atom_groups:
