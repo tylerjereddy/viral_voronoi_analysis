@@ -262,6 +262,10 @@ class voronoi_neighbour_analysis(object):
                 surface_area_current_voronoi_cell = voronoi_utility.calculate_surface_area_of_planar_polygon_in_3D_space(voronoi_cell_coord_array)
                 neighbour_freq_dict[neighbour_count_current_voronoi_cell]['list_surface_areas'].append(surface_area_current_voronoi_cell)
             results_dictionary[molecular_species_name_string] = neighbour_freq_dict
+            total_frequency = 0
+            for neighbour_count, subdict in neighbour_freq_dict.iteritems():
+                total_frequency += subdict['frequency']
+            assert len(simplified_data_dict[molecular_species_name_string][frame_index]) == total_frequency, "Frequency mismatch for {species}.".format(species=molecular_species_name_string)
             print molecular_species_name_string, 'results dict produced.'
         print '(', leaflet_data_key, ')', 'overall results dict produced.'
         return results_dictionary
@@ -300,6 +304,32 @@ class voronoi_neighbour_analysis(object):
             neighbour_count_current_voronoi_cell += matching_vertices_current_cell
         return neighbour_count_current_voronoi_cell
 
+class voronoi_neighbour_analysis_optimized(voronoi_neighbour_analysis):
+    '''Slightly optimized version of raw neighbour analysis code.'''
+
+    def count_neighbours_current_frame(self, single_voronoi_cell_array_of_coordinates, simplified_dict_for_leaflet, frame_index, voronoi_cell_row_accounting_dict):
+        '''Assess the number of neighbouring Voronoi cells for the given Voronoi cell being probed in the leaflet and frame of interest.'''
+        neighbour_count_current_voronoi_cell = 0
+        list_arrays_all_Voronoi_cells_current_frame = [] #for raw neighbour analysis don't care about species identities, so just merge all the Voronoi cells in current frame to a single list
+        list_all_voronoi_cell_row_sizes = []
+
+        for molecular_species_name, list_arrays_voronoi_cells_in_all_parsed_frames in simplified_dict_for_leaflet.iteritems():
+            list_arrays_voronoi_cell_coords_current_species_current_frame = list_arrays_voronoi_cells_in_all_parsed_frames[frame_index]
+            list_arrays_all_Voronoi_cells_current_frame.extend(list_arrays_voronoi_cell_coords_current_species_current_frame)
+            current_species_Voronoi_cell_row_sizes = voronoi_cell_row_accounting_dict[molecular_species_name]
+            list_all_voronoi_cell_row_sizes.extend(current_species_Voronoi_cell_row_sizes)
+
+        list_index_ranges = numpy.cumsum([0] + list_all_voronoi_cell_row_sizes) #overlapping: i.e., [0, 6, 11, 15, 20]
+        list_index_range_tuples = zip(list_index_ranges[:-1],list_index_ranges[1:]) #should be i.e., [(0, 6), (6, 11), ...]
+        flattened_array_all_voronoi_cell_coords_current_frame = numpy.concatenate(list_arrays_all_Voronoi_cells_current_frame)
+        view_structured_array_flattened_array_voronoi_cell_coords_current_frame = flattened_array_all_voronoi_cell_coords_current_frame.view(dtype = 'f8,f8,f8').reshape(flattened_array_all_voronoi_cell_coords_current_frame.shape[0])
+        single_voronoi_cell_array_of_coordinates_view = single_voronoi_cell_array_of_coordinates.view(dtype = 'f8,f8,f8').reshape(single_voronoi_cell_array_of_coordinates.shape[0])
+        mask = numpy.in1d(view_structured_array_flattened_array_voronoi_cell_coords_current_frame, single_voronoi_cell_array_of_coordinates_view)
+        non_zero_count_array = numpy.array([numpy.count_nonzero(mask[start:end+1]) for start, end in list_index_range_tuples])
+        matching_vertices_current_cell = numpy.count_nonzero((non_zero_count_array > 0) & (non_zero_count_array < single_voronoi_cell_array_of_coordinates.shape[0])) #filter out exact matches to self
+        neighbour_count_current_voronoi_cell = matching_vertices_current_cell
+
+        return neighbour_count_current_voronoi_cell
         
 class voronoi_neighbour_analysis_by_type(voronoi_neighbour_analysis):
     '''Should parse the number of neighbours of *each type* of molecular species surrounding each voronoi cell in the Voronoi diagrams. This is intended as an extension of the basic functionality of the parent class, which only parses and reports the raw number of neighbours around each Voronoi cell.'''
