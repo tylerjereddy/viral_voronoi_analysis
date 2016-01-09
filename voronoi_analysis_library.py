@@ -12,7 +12,10 @@ import multicore_vesicle_virion_analysis
 import collections
 import scipy
 import scipy.spatial
-from scipy.spatial import SphericalVoronoi
+try:
+    from scipy.spatial import SphericalVoronoi
+except ImportError:
+    pass #for Travis CI using scipy master (temporary fix for this issue)
 from collections import namedtuple
 
 class plot_voronoi_neighbour_data_species_specific:
