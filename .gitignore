@@ -1,0 +1,6 @@
+*.pyc
+*.png
+.ipynb_checkpoints
+*.sw*
+*.pkl
+*.mp4
