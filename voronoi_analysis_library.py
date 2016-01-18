@@ -301,7 +301,7 @@ class voronoi_neighbour_analysis(object):
             single_voronoi_cell_array_of_coordinates_view = single_voronoi_cell_array_of_coordinates.view(dtype = 'f8,f8,f8').reshape(single_voronoi_cell_array_of_coordinates.shape[0])
             mask = numpy.in1d(view_structured_array_flattened_array_voronoi_cell_coords_current_species_current_frame, single_voronoi_cell_array_of_coordinates_view)
             #print 'mask:', mask
-            non_zero_count_array = numpy.array([numpy.count_nonzero(mask[start:end+1]) for start, end in list_index_range_tuples])
+            non_zero_count_array = numpy.array([numpy.count_nonzero(mask[start:end]) for start, end in list_index_range_tuples])
             #print 'non_zero_count_array:', non_zero_count_array
             matching_vertices_current_cell = numpy.count_nonzero((non_zero_count_array > 0) & (non_zero_count_array < single_voronoi_cell_array_of_coordinates.shape[0])) #filter out exact matches to self
             neighbour_count_current_voronoi_cell += matching_vertices_current_cell
@@ -328,7 +328,7 @@ class voronoi_neighbour_analysis_optimized(voronoi_neighbour_analysis):
         view_structured_array_flattened_array_voronoi_cell_coords_current_frame = flattened_array_all_voronoi_cell_coords_current_frame.view(dtype = 'f8,f8,f8').reshape(flattened_array_all_voronoi_cell_coords_current_frame.shape[0])
         single_voronoi_cell_array_of_coordinates_view = single_voronoi_cell_array_of_coordinates.view(dtype = 'f8,f8,f8').reshape(single_voronoi_cell_array_of_coordinates.shape[0])
         mask = numpy.in1d(view_structured_array_flattened_array_voronoi_cell_coords_current_frame, single_voronoi_cell_array_of_coordinates_view)
-        non_zero_count_array = numpy.array([numpy.count_nonzero(mask[start:end+1]) for start, end in list_index_range_tuples])
+        non_zero_count_array = numpy.array([numpy.count_nonzero(mask[start:end]) for start, end in list_index_range_tuples])
         matching_vertices_current_cell = numpy.count_nonzero((non_zero_count_array > 0) & (non_zero_count_array < single_voronoi_cell_array_of_coordinates.shape[0])) #filter out exact matches to self
         neighbour_count_current_voronoi_cell = matching_vertices_current_cell
 
