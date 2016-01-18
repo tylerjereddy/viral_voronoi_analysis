@@ -285,34 +285,6 @@ class voronoi_neighbour_analysis(object):
     def count_neighbours_current_frame(self, single_voronoi_cell_array_of_coordinates, simplified_dict_for_leaflet, frame_index, voronoi_cell_row_accounting_dict):
         '''Assess the number of neighbouring Voronoi cells for the given Voronoi cell being probed in the leaflet and frame of interest.'''
         neighbour_count_current_voronoi_cell = 0
-
-        for molecular_species_name, arrays_voronoi_cells_in_all_parsed_frames in simplified_dict_for_leaflet.iteritems():
-            array_voronoi_cell_coords_current_species_current_frame = arrays_voronoi_cells_in_all_parsed_frames[frame_index]
-            #try to create a view of a structured array made from array_voronoi_cell_coords_current_species_current_frame to avoid python loops and use a direct in1d comparison?
-            #will probably have to flatten the data structure first because of the heterogeneity in the number of vertices in Voronoi regions, but could then check for contiguous cases of coordinate matches to identify the self-match and multiple vertex matches to correctly count actual neighbours
-            #I think the most straightforward way to do this accounting is to keep track of the number of rows in each Voronoi cell coord set
-            current_species_Voronoi_cell_row_sizes = voronoi_cell_row_accounting_dict[molecular_species_name]
-            list_index_ranges = numpy.cumsum([0] + current_species_Voronoi_cell_row_sizes) #overlapping: i.e., [0, 6, 11, 15, 20]
-            list_index_range_tuples = zip(list_index_ranges[:-1],list_index_ranges[1:]) #should be i.e., [(0, 6), (6, 11), ...]
-            #print 'current_species_Voronoi_cell_row_sizes:', current_species_Voronoi_cell_row_sizes
-            #flattened_array_voronoi_cell_coords_current_species_current_frame = numpy.vstack(array_voronoi_cell_coords_current_species_current_frame)
-            flattened_array_voronoi_cell_coords_current_species_current_frame = numpy.concatenate(array_voronoi_cell_coords_current_species_current_frame)
-            view_structured_array_flattened_array_voronoi_cell_coords_current_species_current_frame = flattened_array_voronoi_cell_coords_current_species_current_frame.view(dtype = 'f8,f8,f8').reshape(flattened_array_voronoi_cell_coords_current_species_current_frame.shape[0])
-            single_voronoi_cell_array_of_coordinates_view = single_voronoi_cell_array_of_coordinates.view(dtype = 'f8,f8,f8').reshape(single_voronoi_cell_array_of_coordinates.shape[0])
-            mask = numpy.in1d(view_structured_array_flattened_array_voronoi_cell_coords_current_species_current_frame, single_voronoi_cell_array_of_coordinates_view)
-            #print 'mask:', mask
-            non_zero_count_array = numpy.array([numpy.count_nonzero(mask[start:end]) for start, end in list_index_range_tuples])
-            #print 'non_zero_count_array:', non_zero_count_array
-            matching_vertices_current_cell = numpy.count_nonzero((non_zero_count_array > 0) & (non_zero_count_array < single_voronoi_cell_array_of_coordinates.shape[0])) #filter out exact matches to self
-            neighbour_count_current_voronoi_cell += matching_vertices_current_cell
-        return neighbour_count_current_voronoi_cell
-
-class voronoi_neighbour_analysis_optimized(voronoi_neighbour_analysis):
-    '''Slightly optimized version of raw neighbour analysis code.'''
-
-    def count_neighbours_current_frame(self, single_voronoi_cell_array_of_coordinates, simplified_dict_for_leaflet, frame_index, voronoi_cell_row_accounting_dict):
-        '''Assess the number of neighbouring Voronoi cells for the given Voronoi cell being probed in the leaflet and frame of interest.'''
-        neighbour_count_current_voronoi_cell = 0
         list_arrays_all_Voronoi_cells_current_frame = [] #for raw neighbour analysis don't care about species identities, so just merge all the Voronoi cells in current frame to a single list
         list_all_voronoi_cell_row_sizes = []
 
