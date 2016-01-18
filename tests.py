@@ -58,3 +58,22 @@ class TestRawNeighbourAnalysis(unittest.TestCase):
         self.assertEqual(inner_leaflet_neighbour_dict['POPC'][2]['frequency'], 2, "Inner leaflet POPC should have 2 cells with 2 neighbours.")
         self.assertEqual(outer_leaflet_neighbour_dict['PPCE'][4]['frequency'], 1, "Outer leaflet PPCE should have 1 cell with 4 neighbours.")
         self.assertEqual(inner_leaflet_neighbour_dict['POPC'][4]['frequency'], 1, "Inner leaflet POPC should have 1 cell with 4 neighbours.")
+
+    def test_neighbour_counting_all_unique_cells(self):
+        '''Using 3 unique artifical polygons that all share one vertex with each other as input, 
+        two residue types with three molecules each should have a neighbour result with
+        4 neighbours for all polygons, and frequency of 3 per residue type.'''
+        a = np.array([[3,3,3],[5,5,5],[7,7,7]])
+        b = np.array([[3,3,3],[0,0,0],[9,9,9]])
+        c = np.array([[9,9,9],[1,1,1],[5,5,5]])
+        for resname, subdict in self.small_data_dict.iteritems():
+            subdict['voronoi_cell_list_vertex_arrays'] = [[a,b,c]]
+            subdict['voronoi_cell_list_vertex_arrays_inner_leaflet'] = [[a,b,c]]
+        voronoi_neighbour_instance = voronoi_analysis_library.voronoi_neighbour_analysis(self.small_data_dict, inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays')
+        inner_leaflet_neighbour_dict, outer_leaflet_neighbour_dict = voronoi_neighbour_instance.identify_voronoi_neighbours(frame_index = 0)
+        self.assertEqual(inner_leaflet_neighbour_dict['POPC'].keys(), [4], "Inner leaflet POPC should have 4 neighbours")
+        self.assertEqual(inner_leaflet_neighbour_dict['PPCE'].keys(), [4], "Inner leaflet PPCE should have 4 neighbours.") 
+        self.assertEqual(outer_leaflet_neighbour_dict['POPC'].keys(), [4], "Outer leaflet POPC should have 4 neighbours.") 
+        self.assertEqual(outer_leaflet_neighbour_dict['PPCE'].keys(), [4], "Outer leaflet PPCE should have 4 neighbours.") 
+        self.assertEqual(outer_leaflet_neighbour_dict['PPCE'][4]['frequency'], 3, "Outer leaflet PPCE should have 3 cells with 4 neighbours.")
+        self.assertEqual(inner_leaflet_neighbour_dict['POPC'][4]['frequency'], 3, "Inner leaflet POPC should have 3 cells with 4 neighbours.")
