@@ -77,3 +77,43 @@ class TestRawNeighbourAnalysis(unittest.TestCase):
         self.assertEqual(outer_leaflet_neighbour_dict['PPCE'].keys(), [4], "Outer leaflet PPCE should have 4 neighbours.") 
         self.assertEqual(outer_leaflet_neighbour_dict['PPCE'][4]['frequency'], 3, "Outer leaflet PPCE should have 3 cells with 4 neighbours.")
         self.assertEqual(inner_leaflet_neighbour_dict['POPC'][4]['frequency'], 3, "Inner leaflet POPC should have 3 cells with 4 neighbours.")
+
+
+class TestSpeciesSpecificNeighbourAnalysis(unittest.TestCase):
+
+    def setUp(self):
+        self.small_data_dict = {'POPC':{},'PPCE':{}} #build a dict with simple coords to test neighbour properties
+        self.a = np.array([[3,3,3],[5,5,5],[7,7,7]])
+        self.b = np.array([[3,3,3],[0,0,0],[9,9,9]])
+        self.c = np.array([[9,9,9],[1,1,1],[5,5,5]])
+
+    def tearDown(self):
+        del self.small_data_dict
+        del self.a
+        del self.b
+        del self.c
+
+    def test_neighbours_3_unique_polygons(self):
+        '''Given 3 unique polygons a,b,c specifying coordinates for Voronoi cells for two residue types,
+        and given that each polygon only shares one vertex with any other, the small POPC / POPE system
+        should have each polygon in a given residue type paired with two neighbours of the same type and 
+        two neighbours of the other type (self should be excluded regardless of residue type).'''
+        for resname, subdict in self.small_data_dict.iteritems():
+            subdict['voronoi_cell_list_vertex_arrays'] = [[self.a,self.b,self.c]]
+            subdict['voronoi_cell_list_vertex_arrays_inner_leaflet'] = [[self.a,self.b,self.c]]
+        voronoi_neighbour_instance = voronoi_analysis_library.voronoi_neighbour_analysis_by_type(self.small_data_dict, inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays')
+        inner_leaflet_neighbour_dict, outer_leaflet_neighbour_dict = voronoi_neighbour_instance.identify_voronoi_neighbours(frame_index = 0)
+        self.assertEqual(inner_leaflet_neighbour_dict['POPC']['POPC'].keys(), [2], "Inner leaflet POPC should have 2 neighbours of type POPC.")
+        self.assertEqual(inner_leaflet_neighbour_dict['POPC']['PPCE'].keys(), [2], "Inner leaflet POPC should have 2 neighbours of type PPCE.")
+        self.assertEqual(inner_leaflet_neighbour_dict['PPCE']['POPC'].keys(), [2], "Inner leaflet PPCE should have 2 neighbours of type POPC.")
+        self.assertEqual(inner_leaflet_neighbour_dict['PPCE']['PPCE'].keys(), [2], "Inner leaflet PPCE should have 2 neighbours of type PPCE.")
+        self.assertEqual(outer_leaflet_neighbour_dict['POPC']['POPC'].keys(), [2], "Outer leaflet POPC should have 2 neighbours of type POPC.")
+        self.assertEqual(outer_leaflet_neighbour_dict['POPC']['PPCE'].keys(), [2], "Outer leaflet POPC should have 2 neighbours of type PPCE.")
+        self.assertEqual(outer_leaflet_neighbour_dict['PPCE']['POPC'].keys(), [2], "Outer leaflet PPCE should have 2 neighbours of type POPC.")
+        self.assertEqual(outer_leaflet_neighbour_dict['PPCE']['PPCE'].keys(), [2], "Outer leaflet PPCE should have 2 neighbours of type PPCE.")
+        #there should be 3 cells (a,b,c) with two neighbours in all combinations:
+        self.assertEqual(len(outer_leaflet_neighbour_dict['PPCE']['PPCE'][2]), 3)
+        self.assertEqual(len(inner_leaflet_neighbour_dict['POPC']['PPCE'][2]), 3)
+
+
+
