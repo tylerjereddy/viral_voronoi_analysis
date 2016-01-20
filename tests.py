@@ -116,4 +116,21 @@ class TestSpeciesSpecificNeighbourAnalysis(unittest.TestCase):
         self.assertEqual(len(inner_leaflet_neighbour_dict['POPC']['PPCE'][2]), 3)
 
 
+class TestVoronoiAreaSummation(unittest.TestCase):
 
+    def setUp(self):
+        self.test_dict = {0: 1.55, 1: 1.32, 2: 1.56, 3: 0.97, 4: 0.55, 5: 2.9}
+        #arbitrarily set the first half to protein cells
+        self.total_protein_area = 1.55 + 1.32 + 1.56
+        self.total_lipid_area = 0.97 + 0.55 + 2.9
+
+    def tearDown(self):
+        del self.test_dict
+        del self.total_protein_area
+        del self.total_lipid_area
+
+    def test_summation(self):
+        '''Confirm proper summation of protein and lipid surface areas in sum_Voronoi_cell_surface_areas() function.'''
+        protein_SA_sum, lipid_SA_sum = voronoi_analysis_library.sum_Voronoi_cell_surface_areas(0,3,self.test_dict)
+        self.assertEqual(protein_SA_sum, self.total_protein_area, "Sum of protein surface areas incorrect.")
+        self.assertEqual(lipid_SA_sum, self.total_lipid_area, "Sum of lipid surface areas incorrect.")
