@@ -1601,18 +1601,6 @@ def create_control_universe_coord_data(flu_coordinate_file_path):
     gro_writer_instace_2 = MDAnalysis.coordinates.GRO.GROWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_2.gro')
     gro_writer_instace_2.write(merged_halved_atom_groups) 
 
-def produce_orthogonalization_matrix(a,b,c,alpha,beta,gamma):
-    '''Take crystallographic fractional unit cell coordinates as input and return the appropriate matrix for transforming fractional coordinates to orthorhombic (Cartesian) coordinates. I've seen a few different forms for this transformation matrix. Currently working with the version provided here: http://www.ruppweb.org/Xray/tutorial/Coordinate%20system%20transformation.htm'''
-
-    def cosine_squared(x):
-        return 0.5 + 0.5 * math.cos(2 * math.radians(x))
-
-    volume = a * b * c * math.sqrt(1 - cosine_squared(alpha) - cosine_squared(beta) - cosine_squared(gamma) + 2 * math.cos(math.radians(alpha)) * math.cos(math.radians(beta)) * math.cos(math.radians(gamma)))
-    orthogononlization_matrix = numpy.array( [ [a, b * math.cos(math.radians(gamma)), c * math.cos(math.radians(beta))],\
-                                               [0, b * math.sin(math.radians(gamma)), c * (math.cos(math.radians(alpha))-math.cos(math.radians(beta)) * math.cos(math.radians(gamma))) / math.sin(math.radians(gamma))],\
-                                               [0, 0, volume / (a * b * math.sin(math.radians(gamma)))]])
-    return orthogononlization_matrix
-
 #copy in a useful function (I previously wrote) that pulls out the coordinates of asymmetric unit TMDs and modify as needed:
 def TMD_particle_selector_dengue(asymmetric_unit_input_array):
     '''Selects the TMD coordinate elements from the asymmetric_unit_input_array and combines to simplified new numpy arrays with TMD particle coordinates only for E and M proteins, respectively.
