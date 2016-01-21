@@ -134,3 +134,23 @@ class TestVoronoiAreaSummation(unittest.TestCase):
         protein_SA_sum, lipid_SA_sum = voronoi_analysis_library.sum_Voronoi_cell_surface_areas(0,3,self.test_dict)
         self.assertEqual(protein_SA_sum, self.total_protein_area, "Sum of protein surface areas incorrect.")
         self.assertEqual(lipid_SA_sum, self.total_lipid_area, "Sum of lipid surface areas incorrect.")
+
+
+class TestDengueTMDSelector(unittest.TestCase):
+
+    def setUp(self):
+        self.test_array = np.random.random_sample((4000,3))
+        self.third_E_TMD_centroid = np.average(self.test_array[3117:3153,...], axis = 0)
+        self.sixth_M_TMD_centroid = np.average(self.test_array[3652:3679,...], axis = 0)
+        
+    def tearDown(self):
+        del self.test_array
+        del self.third_E_TMD_centroid
+        del self.sixth_M_TMD_centroid
+
+    def test_selector_return_lists(self):
+        list_E_TMD_centroids, list_M_TMD_centroids = voronoi_analysis_library.TMD_particle_selector_dengue(self.test_array)
+        np.testing.assert_array_almost_equal(list_E_TMD_centroids[2], self.third_E_TMD_centroid, err_msg = "Did not retrieve correct centroid for E TMD #3.")
+        np.testing.assert_array_almost_equal(list_M_TMD_centroids[-1], self.sixth_M_TMD_centroid, err_msg = "Did not retrieve correct centroid for M TMD #6.")
+
+
