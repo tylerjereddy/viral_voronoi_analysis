@@ -726,7 +726,7 @@ class radial_distance_assessment:
         self.matplotlib_figure_object.set_size_inches(16,24)
 
 def TMD_particle_selector(input_array,molecule_type):
-    '''selects the TMD coordinate elements from the input array and combines to a simplified new numpy array with TMD particle coordinates only.'''
+    '''Selects the TMD coordinate elements from the input array and combines to a simplified new numpy array with TMD particle centroid coordinates only.'''
     if molecule_type == 'lipid':
         output_array = input_array #still using the COG of the entire lipid
     elif molecule_type == 'HA': #the index numbers are based on study of topology combined with Danny's DPhil thesis
