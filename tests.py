@@ -154,3 +154,33 @@ class TestDengueTMDSelector(unittest.TestCase):
         np.testing.assert_array_almost_equal(list_M_TMD_centroids[-1], self.sixth_M_TMD_centroid, err_msg = "Did not retrieve correct centroid for M TMD #6.")
 
 
+class TestFluTMDSelector(unittest.TestCase):
+
+    def setUp(self):
+        self.test_array = np.random.random_sample((4000,3))
+        
+    def tearDown(self):
+        del self.test_array
+
+    def test_HA(self):
+        output_array = voronoi_analysis_library.TMD_particle_selector(self.test_array, 'HA')
+        self.assertEqual(output_array.shape, (3,3), "The array of HA TMD centroid coordinates should have shape (3,3)")
+        HA_TMD_2_centroid = np.average(self.test_array[2305:2369],axis = 0)
+        np.testing.assert_array_almost_equal(output_array[1,...], HA_TMD_2_centroid, decimal=6, err_msg="The second HA TMD centroid is incorrect.")
+
+    def test_NA(self):
+        output_array = voronoi_analysis_library.TMD_particle_selector(self.test_array, 'NA')
+        self.assertEqual(output_array.shape, (4,3), "The array of NA TMD centroid coordinates should have shape (4,3)")
+        NA_TMD_4_centroid = np.average(self.test_array[3083:3140],axis = 0)
+        np.testing.assert_array_almost_equal(output_array[3,...], NA_TMD_4_centroid, decimal=6, err_msg="The fourth NA TMD centroid is incorrect.")
+
+    def test_M2(self):
+        output_array = voronoi_analysis_library.TMD_particle_selector(self.test_array, 'M2')
+        self.assertEqual(output_array.shape, (4,3), "The array of M2 TMD centroid coordinates should have shape (4,3)")
+        M2_TMD_1_centroid = np.average(self.test_array[13:64],axis = 0)
+        np.testing.assert_array_almost_equal(output_array[0,...], M2_TMD_1_centroid, decimal=6, err_msg="The first M2 TMD centroid is incorrect.")
+
+    def test_lipid(self):
+        output_array = voronoi_analysis_library.TMD_particle_selector(self.test_array, 'lipid')
+        np.testing.assert_array_almost_equal(output_array, self.test_array, decimal=6, err_msg="Lipid output array should be unchanged from input.")
+        
