@@ -1601,11 +1601,8 @@ def create_control_universe_coord_data(flu_coordinate_file_path):
     gro_writer_instace_2 = MDAnalysis.coordinates.GRO.GROWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_2.gro')
     gro_writer_instace_2.write(merged_halved_atom_groups) 
 
-#copy in a useful function (I previously wrote) that pulls out the coordinates of asymmetric unit TMDs and modify as needed:
 def TMD_particle_selector_dengue(asymmetric_unit_input_array):
-    '''Selects the TMD coordinate elements from the asymmetric_unit_input_array and combines to simplified new numpy arrays with TMD particle coordinates only for E and M proteins, respectively.
-    The asymmetric_unit_input_array should be a single numpy array of coordinates for a given asymmetric unit. This function assumes an asymmetric unit topology of 3 x E followed by 3 x M. Now
-    modifying the function to return the centroids of the individual TMDs.'''
+    '''The asymmetric_unit_input_array should be a single numpy array of coordinates for a given asymmetric unit of the dengue viron. This function assumes an asymmetric unit topology of 3 x E followed by 3 x M. Returns the centroids of the individual TMDs: [list_E_TMD_centroids, list_M_TMD_centroids].'''
     E_TMD_1_coordinate_array = asymmetric_unit_input_array[977:1013,...]
     E_TMD_2_coordinate_array = asymmetric_unit_input_array[2047:2083,...]
     E_TMD_3_coordinate_array = asymmetric_unit_input_array[3117:3153,...]
