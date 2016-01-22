@@ -184,3 +184,17 @@ class TestFluTMDSelector(unittest.TestCase):
         output_array = voronoi_analysis_library.TMD_particle_selector(self.test_array, 'lipid')
         np.testing.assert_array_almost_equal(output_array, self.test_array, decimal=6, err_msg="Lipid output array should be unchanged from input.")
         
+class TestSurfaceAreaSphere(unittest.TestCase):
+
+    def setUp(self):
+        self.sphere_radius = 1.997842
+        self.google_result = 50.157 #SA from google calculation
+
+    def tearDown(self):
+        del self.sphere_radius
+        del self.google_result
+
+    def test_SA_calculation(self):
+        calculated_SA = voronoi_analysis_library.calculate_surface_area_sphere(self.sphere_radius)
+        self.assertAlmostEqual(calculated_SA, self.google_result, places = 3, msg = "Calculated surface area of sphere is not correct to 3 decimal places.")
+
