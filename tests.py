@@ -2,6 +2,10 @@ import unittest
 import numpy as np
 import numpy.testing
 import voronoi_analysis_library
+import MDAnalysis
+import MDAnalysis.coordinates
+from MDAnalysis.coordinates.xdrfile.XTC import XTCWriter
+from testfixtures import TempDirectory
 
 class TestRawNeighbourAnalysis(unittest.TestCase):
 
@@ -197,4 +201,37 @@ class TestSurfaceAreaSphere(unittest.TestCase):
     def test_SA_calculation(self):
         calculated_SA = voronoi_analysis_library.calculate_surface_area_sphere(self.sphere_radius)
         self.assertAlmostEqual(calculated_SA, self.google_result, places = 3, msg = "Calculated surface area of sphere is not correct to 3 decimal places.")
+
+class TestVoronoiAnalysisLoop(unittest.TestCase):
+    '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function.'''
+
+    def setUp(self):
+        self.u = MDAnalysis.Universe('control_traj_2.gro') #mock flu universe with DOPE/X and POPS inner leaflet; PPCH / CHOL outer leaflet; no protein
+        self.d = TempDirectory()
+        #create a short trajectory with the same control coords in each frame
+        self.num_frames = 4
+        with XTCWriter(self.d.path + '/control_traj_2_dummy.xtc', self.u.trajectory.n_atoms) as W:
+            while self.num_frames > 0:
+                W.write(self.u)
+                self.num_frames -= 1
+        self.loop_result = voronoi_analysis_library.voronoi_analysis_loop(self.u,0,'full',1,control_condition=1)
+
+    def tearDown(self):
+        del self.u
+        self.d.cleanup()
+        del self.num_frames
+        del self.loop_result
+
+
+    def test_surface_area_reconstitution(self):
+        '''For a control system with no proteins we should achive > 99% surface area reconstitution in all frames.'''
+        array_outer_leaflet_percent_SA_reconstitution = np.array(self.loop_result[1])
+        array_inner_leaflet_percent_SA_reconstitution = np.array(self.loop_result[2])
+        outer_min = array_outer_leaflet_percent_SA_reconstitution.min()
+        inner_min = array_inner_leaflet_percent_SA_reconstitution.min()
+        self.assertGreaterEqual(outer_min, 99.0, "Outer leaflet % surface area reconsitution drops below 99%. Minimum value found was {mini}.".format(mini=outer_min))
+        self.assertGreaterEqual(inner_min, 99.0, "Inner leaflet % surface area reconsitution drops below 99%. Minimum value found was {mini}.".format(mini=inner_min))
+
+
+        
 
