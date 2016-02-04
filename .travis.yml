@@ -12,7 +12,7 @@ addons:
     - libmpfr-dev
     - ccache
 cache:
-  - pip
+    - pip
   directories:
     - $HOME/.ccache
 before_install:
