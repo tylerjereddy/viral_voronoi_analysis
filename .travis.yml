@@ -11,9 +11,7 @@ addons:
     - libgmp-dev
     - libmpfr-dev
     - ccache
-cache:
-  directories:
-    - $HOME/.ccache
+cache: pip
 before_install:
   - export PATH=/usr/lib/ccache:$PATH
   - uname -a
