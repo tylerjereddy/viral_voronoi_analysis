@@ -205,27 +205,28 @@ class TestSurfaceAreaSphere(unittest.TestCase):
 class TestVoronoiAnalysisLoop(unittest.TestCase):
     '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function.'''
 
-    def setUp(self):
-        self.u = MDAnalysis.Universe('control_traj_2.gro') #mock flu universe with DOPE/X and POPS inner leaflet; PPCH / CHOL outer leaflet; no protein
-        self.d = TempDirectory()
+    @classmethod
+    def setUpClass(cls):
+        cls.u = MDAnalysis.Universe('control_traj_2.gro') #mock flu universe with DOPE/X and POPS inner leaflet; PPCH / CHOL outer leaflet; no protein
+        cls.d = TempDirectory()
         #create a short trajectory with the same control coords in each frame
-        self.num_frames = 4
-        self.xtc = self.d.path + '/control_traj_2_dummy.xtc'
-        with XTCWriter(self.xtc, self.u.trajectory.n_atoms) as W:
-            while self.num_frames > 0:
-                W.write(self.u)
-                self.num_frames -= 1
-        self.u_multiframe = MDAnalysis.Universe('control_traj_2.gro', self.xtc)
-        self.loop_result = voronoi_analysis_library.voronoi_analysis_loop(self.u_multiframe,0,'full',1,control_condition=1)
+        cls.num_frames = 4
+        cls.xtc = cls.d.path + '/control_traj_2_dummy.xtc'
+        with XTCWriter(cls.xtc, cls.u.trajectory.n_atoms) as W:
+            while cls.num_frames > 0:
+                W.write(cls.u)
+                cls.num_frames -= 1
+        cls.u_multiframe = MDAnalysis.Universe('control_traj_2.gro', cls.xtc)
+        cls.loop_result = voronoi_analysis_library.voronoi_analysis_loop(cls.u_multiframe,0,'full',1,control_condition=1)
 
-    def tearDown(self):
-        del self.u
-        self.d.cleanup()
-        del self.num_frames
-        del self.loop_result
-        del self.xtc
-        del self.u_multiframe
-
+    @classmethod
+    def tearDownClass(cls):
+        del cls.u
+        cls.d.cleanup()
+        del cls.num_frames
+        del cls.loop_result
+        del cls.xtc
+        del cls.u_multiframe
 
     def test_surface_area_reconstitution(self):
         '''For a control system with no proteins we should achive > 99% surface area reconstitution in all frames.'''
@@ -245,9 +246,9 @@ class TestVoronoiAnalysisLoop(unittest.TestCase):
         tuple_list_lengths = len(list_outer_leaflet_percent_SA_reconstitution), len(list_inner_leaflet_percent_SA_reconstitution)
         self.assertEqual(tuple_list_lengths, (4,4), "Surface area reconstitution data structures are inconsistent with the number of frames in the data received by voronoi_analysis_loop. Actual list lengths received: {list_tuple}".format(list_tuple=tuple_list_lengths))
 
-
-
-
-
-        
+    def test_dictionary_headgroup_data_structure(self):
+        '''Check data structures in the dictionary_headgroup_data as returned by voronoi_analysis_loop.'''
+        dictionary_headgroup_data = self.loop_result[3]
+        keys = dictionary_headgroup_data.keys()
+        self.assertEqual(keys, ['POPS', 'DOPE', 'CHOL', 'PPCH', 'DOPX'], "Incorrect set of keys in dictionary_headgroup_data: {keys}".format(keys=keys))
 
