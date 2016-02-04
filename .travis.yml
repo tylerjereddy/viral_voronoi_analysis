@@ -11,7 +11,28 @@ addons:
     - libgmp-dev
     - libmpfr-dev
     - ccache
+cache:
+  directories:
+    - $HOME/.ccache
 before_install:
+  - export PATH=/usr/lib/ccache:$PATH
+  - uname -a
+  - free -m
+  - df -h
+  - ulimit -a
+  - mkdir builds
+  - pushd builds
+  # Install gmpy2 dependencies
+  - mkdir -p $HOME/.local
+  - wget ftp://ftp.gnu.org/gnu/mpc/mpc-1.0.2.tar.gz
+  - tar xzvf mpc-1.0.2.tar.gz
+  - pushd mpc-1.0.2
+  - ./configure --prefix=$HOME/.local
+  - make
+  - make install
+  - popd
+  - export CPATH=$HOME/.local/include
+  - export LIBRARY_PATH=$HOME/.local/lib
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b -p /home/travis/miniconda
