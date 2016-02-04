@@ -210,17 +210,21 @@ class TestVoronoiAnalysisLoop(unittest.TestCase):
         self.d = TempDirectory()
         #create a short trajectory with the same control coords in each frame
         self.num_frames = 4
-        with XTCWriter(self.d.path + '/control_traj_2_dummy.xtc', self.u.trajectory.n_atoms) as W:
+        self.xtc = self.d.path + '/control_traj_2_dummy.xtc'
+        with XTCWriter(self.xtc, self.u.trajectory.n_atoms) as W:
             while self.num_frames > 0:
                 W.write(self.u)
                 self.num_frames -= 1
-        self.loop_result = voronoi_analysis_library.voronoi_analysis_loop(self.u,0,'full',1,control_condition=1)
+        self.u_multiframe = MDAnalysis.Universe('control_traj_2.gro', self.xtc)
+        self.loop_result = voronoi_analysis_library.voronoi_analysis_loop(self.u_multiframe,0,'full',1,control_condition=1)
 
     def tearDown(self):
         del self.u
         self.d.cleanup()
         del self.num_frames
         del self.loop_result
+        del self.xtc
+        del self.u_multiframe
 
 
     def test_surface_area_reconstitution(self):
@@ -231,6 +235,18 @@ class TestVoronoiAnalysisLoop(unittest.TestCase):
         inner_min = array_inner_leaflet_percent_SA_reconstitution.min()
         self.assertGreaterEqual(outer_min, 99.0, "Outer leaflet % surface area reconsitution drops below 99%. Minimum value found was {mini}.".format(mini=outer_min))
         self.assertGreaterEqual(inner_min, 99.0, "Inner leaflet % surface area reconsitution drops below 99%. Minimum value found was {mini}.".format(mini=inner_min))
+
+    def test_frame_count(self):
+        '''Ensure that data structures returned by voronoi_analysis_loop match the number of frames in the input data.'''
+        list_frame_numbers = self.loop_result[0]
+        list_outer_leaflet_percent_SA_reconstitution = self.loop_result[1]
+        list_inner_leaflet_percent_SA_reconstitution = self.loop_result[2]
+        self.assertEqual(list_frame_numbers, [0,1,2,3], "Incorrect frame numbers returned by voronoi_analysis_loop: {returned_list}.".format(returned_list=list_frame_numbers))
+        tuple_list_lengths = len(list_outer_leaflet_percent_SA_reconstitution), len(list_inner_leaflet_percent_SA_reconstitution)
+        self.assertEqual(tuple_list_lengths, (4,4), "Surface area reconstitution data structures are inconsistent with the number of frames in the data received by voronoi_analysis_loop. Actual list lengths received: {list_tuple}".format(list_tuple=tuple_list_lengths))
+
+
+
 
 
         
