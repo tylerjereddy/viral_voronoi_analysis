@@ -251,4 +251,5 @@ class TestVoronoiAnalysisLoop(unittest.TestCase):
         dictionary_headgroup_data = self.loop_result[3]
         keys = dictionary_headgroup_data.keys()
         self.assertEqual(keys, ['POPS', 'DOPE', 'CHOL', 'PPCH', 'DOPX'], "Incorrect set of keys in dictionary_headgroup_data: {keys}".format(keys=keys))
+        self.assertEqual(len(dictionary_headgroup_data['CHOL']['voronoi_cell_avg_values_list']),4,"List of outer leaflet Voronoi cell areas is not consistent with the number of frames in the trajectory input to voronoi_analysis_loop.")
 
