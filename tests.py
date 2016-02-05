@@ -1,5 +1,8 @@
 import unittest
+import voronoi_utility
 import numpy as np
+import scipy
+from scipy.spatial import SphericalVoronoi
 import numpy.testing
 import voronoi_analysis_library
 import MDAnalysis
@@ -259,5 +262,32 @@ class TestVoronoiAnalysisLoop(unittest.TestCase):
         list_inner_leaflet_percent_SA_reconstitution = self.loop_result[2]
         self.assertTrue(list_outer_leaflet_percent_SA_reconstitution.count(list_outer_leaflet_percent_SA_reconstitution[0]) == len(list_outer_leaflet_percent_SA_reconstitution), "Not all outer leaflet surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in test trajectory.")
         self.assertTrue(list_inner_leaflet_percent_SA_reconstitution.count(list_inner_leaflet_percent_SA_reconstitution[0]) == len(list_inner_leaflet_percent_SA_reconstitution), "Not all inner leaflet surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in test trajectory.")
+
+class TestVoronoiAreaDict(unittest.TestCase):
+
+    def setUp(self):
+        self.prng = numpy.random.RandomState(117) 
+        self.sphere_radius = 17.3
+        self.num_points = 30
+        self.random_coords_sphere = voronoi_utility.generate_random_array_spherical_generators(self.num_points, self.sphere_radius, self.prng)
+
+    def tearDown(self):
+        del self.prng
+        del self.sphere_radius
+        del self.num_points 
+        del self.random_coords_sphere 
+
+    def test_voronoi_dict_data_struct(self):
+        '''Test the basic data structure returned by produce_Voronoi_area_dict() function.'''
+        voronoi_instance = SphericalVoronoi(self.random_coords_sphere,self.sphere_radius)
+        voronoi_instance.sort_vertices_of_regions()
+        list_voronoi_polygon_vertex_indices = voronoi_instance.regions 
+        list_voronoi_polygon_vertices = []
+        for region in list_voronoi_polygon_vertex_indices:
+            list_voronoi_polygon_vertices.append(voronoi_instance.vertices[region])
+        dictionary_voronoi_polygon_surface_areas = voronoi_analysis_library.produce_Voronoi_area_dict(list_voronoi_polygon_vertices,self.sphere_radius)
+        self.assertEqual(len(dictionary_voronoi_polygon_surface_areas), self.num_points, "The number of items in dictionary_voronoi_polygon_surface_areas does not match the number of generators in the input test data.")
+        final_Voronoi_region_surface_area = voronoi_utility.calculate_surface_area_of_a_spherical_Voronoi_polygon(list_voronoi_polygon_vertices[-1], self.sphere_radius)
+        self.assertEqual(dictionary_voronoi_polygon_surface_areas[self.num_points - 1], final_Voronoi_region_surface_area, "The surface area of the final Voronoi region has not been stored correctly in dictionary_voronoi_polygon_surface_areas.")
 
 
