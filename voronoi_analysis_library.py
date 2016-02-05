@@ -15,6 +15,18 @@ import scipy.spatial
 from scipy.spatial import SphericalVoronoi
 from collections import namedtuple
 
+def calculate_haversine_distance_between_spherical_points(cartesian_array_1,cartesian_array_2,sphere_radius):
+    '''Calculate the haversine-based distance between two points on the surface of a sphere. Should be more accurate than the arc cosine strategy. See, for example: http://en.wikipedia.org/wiki/Haversine_formula'''
+    spherical_array_1 = voronoi_utility.convert_cartesian_array_to_spherical_array(cartesian_array_1)
+    spherical_array_2 = voronoi_utility.convert_cartesian_array_to_spherical_array(cartesian_array_2)
+    lambda_1 = spherical_array_1[1]
+    lambda_2 = spherical_array_2[1]
+    phi_1 = spherical_array_1[2]
+    phi_2 = spherical_array_2[2]
+    #we rewrite the standard Haversine slightly as long/lat is not the same as spherical coordinates - phi differs by pi/4
+    spherical_distance = 2.0 * sphere_radius * math.asin(math.sqrt( ((1 - math.cos(phi_2-phi_1))/2.) + math.sin(phi_1) * math.sin(phi_2) * ( (1 - math.cos(lambda_2-lambda_1))/2.)  ))
+    return spherical_distance
+
 def calculate_surface_area_of_a_spherical_Voronoi_polygon(array_ordered_Voronoi_polygon_vertices,sphere_radius):
     '''Calculate the surface area of a polygon on the surface of a sphere. Based on equation provided here: http://mathworld.wolfram.com/LHuiliersTheorem.html
     Decompose into triangles, calculate excess for each'''
@@ -35,13 +47,13 @@ def calculate_surface_area_of_a_spherical_Voronoi_polygon(array_ordered_Voronoi_
         #loop from 1 to n-2, with point 2 to n-1 as other vertex of triangle
         # this could definitely be written more nicely
         b_point = array_ordered_Voronoi_polygon_vertices[1]
-        root_b_dist = voronoi_utility.calculate_haversine_distance_between_spherical_points(root_point, b_point, 1.0)
+        root_b_dist = calculate_haversine_distance_between_spherical_points(root_point, b_point, 1.0)
         for i in 1 + numpy.arange(n - 2):
             a_point = b_point
             b_point = array_ordered_Voronoi_polygon_vertices[i+1]
             root_a_dist = root_b_dist
-            root_b_dist = voronoi_utility.calculate_haversine_distance_between_spherical_points(root_point, b_point, 1.0)
-            a_b_dist = voronoi_utility.calculate_haversine_distance_between_spherical_points(a_point, b_point, 1.0)
+            root_b_dist = calculate_haversine_distance_between_spherical_points(root_point, b_point, 1.0)
+            a_b_dist = calculate_haversine_distance_between_spherical_points(a_point, b_point, 1.0)
             s = (root_a_dist + root_b_dist + a_b_dist) / 2.
             totalexcess += 4 * math.atan(math.sqrt( math.tan(0.5 * s) * math.tan(0.5 * (s-root_a_dist)) * math.tan(0.5 * (s-root_b_dist)) * math.tan(0.5 * (s-a_b_dist))))
         return totalexcess * (sphere_radius ** 2)
