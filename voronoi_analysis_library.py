@@ -15,6 +15,36 @@ import scipy.spatial
 from scipy.spatial import SphericalVoronoi
 from collections import namedtuple
 
+def calculate_surface_area_of_a_spherical_Voronoi_polygon(array_ordered_Voronoi_polygon_vertices,sphere_radius):
+    '''Calculate the surface area of a polygon on the surface of a sphere. Based on equation provided here: http://mathworld.wolfram.com/LHuiliersTheorem.html
+    Decompose into triangles, calculate excess for each'''
+    #have to convert to unit sphere before applying the formula
+    spherical_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(array_ordered_Voronoi_polygon_vertices)
+    spherical_coordinates[...,0] = 1.0
+    array_ordered_Voronoi_polygon_vertices = voronoi_utility.convert_spherical_array_to_cartesian_array(spherical_coordinates)
+    #handle nearly-degenerate vertices on the unit sphere by returning an area close to 0 -- may be better options, but this is my current solution to prevent crashes, etc.
+    #seems to be relatively rare in my own work, but sufficiently common to cause crashes when iterating over large amounts of messy data
+    if scipy.spatial.distance.pdist(array_ordered_Voronoi_polygon_vertices).min() < (10 ** -7):
+        return 10 ** -8
+    else:
+        n = array_ordered_Voronoi_polygon_vertices.shape[0]
+        #point we start from
+        root_point = array_ordered_Voronoi_polygon_vertices[0]
+        totalexcess = 0
+        #loop from 1 to n-2, with point 2 to n-1 as other vertex of triangle
+        # this could definitely be written more nicely
+        b_point = array_ordered_Voronoi_polygon_vertices[1]
+        root_b_dist = voronoi_utility.calculate_haversine_distance_between_spherical_points(root_point, b_point, 1.0)
+        for i in 1 + numpy.arange(n - 2):
+            a_point = b_point
+            b_point = array_ordered_Voronoi_polygon_vertices[i+1]
+            root_a_dist = root_b_dist
+            root_b_dist = voronoi_utility.calculate_haversine_distance_between_spherical_points(root_point, b_point, 1.0)
+            a_b_dist = voronoi_utility.calculate_haversine_distance_between_spherical_points(a_point, b_point, 1.0)
+            s = (root_a_dist + root_b_dist + a_b_dist) / 2
+            totalexcess += 4 * math.atan(math.sqrt( math.tan(0.5 * s) * math.tan(0.5 * (s-root_a_dist)) * math.tan(0.5 * (s-root_b_dist)) * math.tan(0.5 * (s-a_b_dist))))
+        return totalexcess * (sphere_radius ** 2)
+
 class plot_voronoi_neighbour_data_species_specific:
     '''Plot Voronoi neighbour data probing species-specific effects.'''
 
@@ -748,7 +778,7 @@ def TMD_particle_selector(input_array,molecule_type):
 def produce_Voronoi_area_dict(list_voronoi_polygon_vertices,estimated_sphere_radius):
     dictionary_Voronoi_region_surface_areas_for_each_generator = {}
     for generator_index, Voronoi_polygon_sorted_vertex_array in enumerate(list_voronoi_polygon_vertices):
-        current_Voronoi_polygon_surface_area_on_sphere = voronoi_utility.calculate_surface_area_of_a_spherical_Voronoi_polygon(Voronoi_polygon_sorted_vertex_array,estimated_sphere_radius)
+        current_Voronoi_polygon_surface_area_on_sphere = calculate_surface_area_of_a_spherical_Voronoi_polygon(Voronoi_polygon_sorted_vertex_array,estimated_sphere_radius)
         assert current_Voronoi_polygon_surface_area_on_sphere > 0, "Obtained a surface area of zero for a Voronoi region."
         dictionary_Voronoi_region_surface_areas_for_each_generator[generator_index] = current_Voronoi_polygon_surface_area_on_sphere
     return dictionary_Voronoi_region_surface_areas_for_each_generator

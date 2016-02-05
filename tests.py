@@ -287,7 +287,7 @@ class TestVoronoiAreaDict(unittest.TestCase):
             list_voronoi_polygon_vertices.append(voronoi_instance.vertices[region])
         dictionary_voronoi_polygon_surface_areas = voronoi_analysis_library.produce_Voronoi_area_dict(list_voronoi_polygon_vertices,self.sphere_radius)
         self.assertEqual(len(dictionary_voronoi_polygon_surface_areas), self.num_points, "The number of items in dictionary_voronoi_polygon_surface_areas does not match the number of generators in the input test data.")
-        final_Voronoi_region_surface_area = voronoi_utility.calculate_surface_area_of_a_spherical_Voronoi_polygon(list_voronoi_polygon_vertices[-1], self.sphere_radius)
+        final_Voronoi_region_surface_area = voronoi_analysis_library.calculate_surface_area_of_a_spherical_Voronoi_polygon(list_voronoi_polygon_vertices[-1], self.sphere_radius)
         self.assertEqual(dictionary_voronoi_polygon_surface_areas[self.num_points - 1], final_Voronoi_region_surface_area, "The surface area of the final Voronoi region has not been stored correctly in dictionary_voronoi_polygon_surface_areas.")
 
 
