@@ -290,4 +290,59 @@ class TestVoronoiAreaDict(unittest.TestCase):
         final_Voronoi_region_surface_area = voronoi_analysis_library.calculate_surface_area_of_a_spherical_Voronoi_polygon(list_voronoi_polygon_vertices[-1], self.sphere_radius)
         self.assertEqual(dictionary_voronoi_polygon_surface_areas[self.num_points - 1], final_Voronoi_region_surface_area, "The surface area of the final Voronoi region has not been stored correctly in dictionary_voronoi_polygon_surface_areas.")
 
+class TestSphericalPolygonSA(unittest.TestCase):
+    '''Test(s) for calculation of the surface area of a spherical polygon.'''
 
+    @classmethod
+    def setUpClass(cls):
+        cls.area_unit_sphere = voronoi_analysis_library.calculate_surface_area_sphere(1.0)
+        cls.area_larger_sphere = voronoi_analysis_library.calculate_surface_area_sphere(17.0)
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.area_unit_sphere
+        del cls.area_larger_sphere
+
+    def test_spherical_triangle_SA_eighth_unit_sphere(self):
+        '''Test that a spherical triangle covering 1/8 of a unit sphere surface has the appropriate surface area.'''
+        # test would fail for the 1/4 case -- perhaps because 3 points are 'co-linear' / equatorial in a sense
+        test_polygon = np.array([[0,0,1],[0,1,0],[-1,0,0]]) 
+        calculated_SA = voronoi_analysis_library.calculate_surface_area_of_a_spherical_Voronoi_polygon(test_polygon, 1.0)
+        theoretical_SA = self.area_unit_sphere / 8.0
+        self.assertAlmostEqual(calculated_SA, theoretical_SA, places = 6, msg="Surface area of spherical triangle covering one eighth of unit sphere not calculated accurately enough. Calculated: {calc}; Target: {target}".format(calc=calculated_SA, target=theoretical_SA))
+        
+    def test_spherical_polygon_SA_quarter_unit_sphere(self):
+        '''Test that a spherical polygon covering 1/4 of a unit sphere surface has the appropriate surface area.'''
+        test_polygon = np.array([[0,0,1],[1,0,0],[0,1,0],[-1,0,0]])
+        calculated_SA = voronoi_analysis_library.calculate_surface_area_of_a_spherical_Voronoi_polygon(test_polygon, 1.0)
+        theoretical_SA = self.area_unit_sphere / 4.0
+        self.assertAlmostEqual(calculated_SA, theoretical_SA, places = 6, msg="Surface area of spherical polygon covering one quarter of unit sphere not calculated accurately enough. Calculated: {calc}; Target: {target}".format(calc=calculated_SA, target=theoretical_SA))
+
+    def test_spherical_polygon_SA_3_eighths_unit_sphere(self):
+        '''Test that a spherical polygon covering 3/8 of a unit sphere surface has the appropriate surface area.'''
+        test_polygon = np.array([[0,0,1],[1,0,0],[0,1,0],[-1,0,0],[0,-1,0]])
+        calculated_SA = voronoi_analysis_library.calculate_surface_area_of_a_spherical_Voronoi_polygon(test_polygon, 1.0)
+        theoretical_SA = 3./8. * self.area_unit_sphere 
+        self.assertAlmostEqual(calculated_SA, theoretical_SA, places = 6, msg="Surface area of spherical polygon covering 3/8  of unit sphere not calculated accurately enough. Calculated: {calc}; Target: {target}".format(calc=calculated_SA, target=theoretical_SA))
+
+    def test_spherical_triangle_SA_eighth_large_sphere(self):
+        '''Test that a spherical triangle covering 1/8 of a large sphere surface has the appropriate surface area.'''
+        # test would fail for the 1/4 case -- perhaps because 3 points are 'co-linear' / equatorial in a sense
+        test_polygon = np.array([[0,0,17],[0,17,0],[-17,0,0]]) 
+        calculated_SA = voronoi_analysis_library.calculate_surface_area_of_a_spherical_Voronoi_polygon(test_polygon, 17.0)
+        theoretical_SA = self.area_larger_sphere / 8.0
+        self.assertAlmostEqual(calculated_SA, theoretical_SA, places = 6, msg="Surface area of spherical triangle covering one eighth of larger sphere not calculated accurately enough. Calculated: {calc}; Target: {target}".format(calc=calculated_SA, target=theoretical_SA))
+        
+    def test_spherical_polygon_SA_quarter_larger_sphere(self):
+        '''Test that a spherical polygon covering 1/4 of a larger sphere surface has the appropriate surface area.'''
+        test_polygon = np.array([[0,0,17],[17,0,0],[0,17,0],[-17,0,0]])
+        calculated_SA = voronoi_analysis_library.calculate_surface_area_of_a_spherical_Voronoi_polygon(test_polygon, 17.0)
+        theoretical_SA = self.area_larger_sphere / 4.0
+        self.assertAlmostEqual(calculated_SA, theoretical_SA, places = 6, msg="Surface area of spherical polygon covering one quarter of larger sphere not calculated accurately enough. Calculated: {calc}; Target: {target}".format(calc=calculated_SA, target=theoretical_SA))
+
+    def test_spherical_polygon_SA_3_eighths_larger_sphere(self):
+        '''Test that a spherical polygon covering 3/8 of a larger sphere surface has the appropriate surface area.'''
+        test_polygon = np.array([[0,0,17],[17,0,0],[0,17,0],[-17,0,0],[0,-17,0]])
+        calculated_SA = voronoi_analysis_library.calculate_surface_area_of_a_spherical_Voronoi_polygon(test_polygon, 17.0)
+        theoretical_SA = 3./8. * self.area_larger_sphere 
+        self.assertAlmostEqual(calculated_SA, theoretical_SA, places = 6, msg="Surface area of spherical polygon covering 3/8  of larger sphere not calculated accurately enough. Calculated: {calc}; Target: {target}".format(calc=calculated_SA, target=theoretical_SA))

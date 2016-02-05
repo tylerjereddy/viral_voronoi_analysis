@@ -25,6 +25,7 @@ def calculate_surface_area_of_a_spherical_Voronoi_polygon(array_ordered_Voronoi_
     #handle nearly-degenerate vertices on the unit sphere by returning an area close to 0 -- may be better options, but this is my current solution to prevent crashes, etc.
     #seems to be relatively rare in my own work, but sufficiently common to cause crashes when iterating over large amounts of messy data
     if scipy.spatial.distance.pdist(array_ordered_Voronoi_polygon_vertices).min() < (10 ** -7):
+        print 'Problematic spherical polygon SA calculation.'
         return 10 ** -8
     else:
         n = array_ordered_Voronoi_polygon_vertices.shape[0]
@@ -41,7 +42,7 @@ def calculate_surface_area_of_a_spherical_Voronoi_polygon(array_ordered_Voronoi_
             root_a_dist = root_b_dist
             root_b_dist = voronoi_utility.calculate_haversine_distance_between_spherical_points(root_point, b_point, 1.0)
             a_b_dist = voronoi_utility.calculate_haversine_distance_between_spherical_points(a_point, b_point, 1.0)
-            s = (root_a_dist + root_b_dist + a_b_dist) / 2
+            s = (root_a_dist + root_b_dist + a_b_dist) / 2.
             totalexcess += 4 * math.atan(math.sqrt( math.tan(0.5 * s) * math.tan(0.5 * (s-root_a_dist)) * math.tan(0.5 * (s-root_b_dist)) * math.tan(0.5 * (s-a_b_dist))))
         return totalexcess * (sphere_radius ** 2)
 
