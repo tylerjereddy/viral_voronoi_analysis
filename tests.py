@@ -1,4 +1,5 @@
 import unittest
+import math
 import voronoi_utility
 import numpy as np
 import scipy
@@ -346,3 +347,54 @@ class TestSphericalPolygonSA(unittest.TestCase):
         calculated_SA = voronoi_analysis_library.calculate_surface_area_of_a_spherical_Voronoi_polygon(test_polygon, 17.0)
         theoretical_SA = 3./8. * self.area_larger_sphere 
         self.assertAlmostEqual(calculated_SA, theoretical_SA, places = 6, msg="Surface area of spherical polygon covering 3/8  of larger sphere not calculated accurately enough. Calculated: {calc}; Target: {target}".format(calc=calculated_SA, target=theoretical_SA))
+
+class TestHaversineDist(unittest.TestCase):
+    '''Unit test(s) for haversine distance calculation on a sphere.'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.small_radius = 1.0
+        cls.large_radius = 29.892
+        cls.small_circumference = 2 * math.pi * cls.small_radius
+        cls.large_circumference = 2 * math.pi * cls.large_radius
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.small_radius 
+        del cls.large_radius
+        del cls.small_circumference
+        del cls.large_circumference 
+
+    def test_haversine_antipodes_unit_sphere(self):
+        '''Test haversine distance calculation for antipodal points on unit sphere.'''
+        first_point = np.array([0,0,1])
+        second_point = np.array([0,0,-1])
+        calculated_distance = voronoi_analysis_library.calculate_haversine_distance_between_spherical_points(first_point, second_point, self.small_radius)
+        target_distance = self.small_circumference / 2.
+        self.assertAlmostEqual(calculated_distance, target_distance, places=7, msg="The haversine distance between antipodal points on the unit sphere was not calculated correctly. Target: {target}; calculated: {calc}.".format(target=target_distance, calc=calculated_distance))
+        
+    def test_haversine_antipodes_large_sphere(self):
+        '''Test haversine distance calculation for antipodal points on unit sphere.'''
+        first_point = np.array([0,0,self.large_radius])
+        second_point = np.array([0,0,-self.large_radius])
+        calculated_distance = voronoi_analysis_library.calculate_haversine_distance_between_spherical_points(first_point, second_point, self.large_radius)
+        target_distance = self.large_circumference / 2.
+        self.assertAlmostEqual(calculated_distance, target_distance, places=7, msg="The haversine distance between antipodal points on the large sphere was not calculated correctly. Target: {target}; calculated: {calc}.".format(target=target_distance, calc=calculated_distance))
+        
+    def test_haversine_half_arc_unit_sphere(self):
+        '''Test haversine distance calculation for half-arc points on unit sphere.'''
+        first_point = np.array([0,0,1])
+        second_point = np.array([0,1,0])
+        calculated_distance = voronoi_analysis_library.calculate_haversine_distance_between_spherical_points(first_point, second_point, self.small_radius)
+        target_distance = self.small_circumference / 4.
+        self.assertAlmostEqual(calculated_distance, target_distance, places=7, msg="The haversine distance between half-arc points on the unit sphere was not calculated correctly. Target: {target}; calculated: {calc}.".format(target=target_distance, calc=calculated_distance))
+
+    def test_haversine_half_arc_large_sphere(self):
+        '''Test haversine distance calculation for half-arc points on large sphere.'''
+        first_point = np.array([0,0,self.large_radius])
+        second_point = np.array([0,self.large_radius,0])
+        calculated_distance = voronoi_analysis_library.calculate_haversine_distance_between_spherical_points(first_point, second_point, self.large_radius)
+        target_distance = self.large_circumference / 4.
+        self.assertAlmostEqual(calculated_distance, target_distance, places=7, msg="The haversine distance between half-arc points on the large sphere was not calculated correctly. Target: {target}; calculated: {calc}.".format(target=target_distance, calc=calculated_distance))
+
+
