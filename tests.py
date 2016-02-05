@@ -253,3 +253,11 @@ class TestVoronoiAnalysisLoop(unittest.TestCase):
         self.assertEqual(keys, ['POPS', 'DOPE', 'CHOL', 'PPCH', 'DOPX'], "Incorrect set of keys in dictionary_headgroup_data: {keys}".format(keys=keys))
         self.assertEqual(len(dictionary_headgroup_data['CHOL']['voronoi_cell_avg_values_list']),4,"List of outer leaflet Voronoi cell areas is not consistent with the number of frames in the trajectory input to voronoi_analysis_loop.")
 
+    def test_voronoi_analysis_loop_invariance(self):
+        '''As the input test xtc has the same 4 frames, the data extracted from each frame should match (loop invariance).'''
+        list_outer_leaflet_percent_SA_reconstitution = self.loop_result[1]
+        list_inner_leaflet_percent_SA_reconstitution = self.loop_result[2]
+        self.assertTrue(list_outer_leaflet_percent_SA_reconstitution.count(list_outer_leaflet_percent_SA_reconstitution[0]) == len(list_outer_leaflet_percent_SA_reconstitution), "Not all outer leaflet surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in test trajectory.")
+        self.assertTrue(list_inner_leaflet_percent_SA_reconstitution.count(list_inner_leaflet_percent_SA_reconstitution[0]) == len(list_inner_leaflet_percent_SA_reconstitution), "Not all inner leaflet surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in test trajectory.")
+
+
