@@ -745,6 +745,14 @@ def TMD_particle_selector(input_array,molecule_type):
         output_array = numpy.concatenate((M2_1_TMD_numpy_array,M2_2_TMD_numpy_array,M2_3_TMD_numpy_array,M2_4_TMD_numpy_array))
     return output_array
 
+def produce_Voronoi_area_dict(list_voronoi_polygon_vertices,estimated_sphere_radius):
+    dictionary_Voronoi_region_surface_areas_for_each_generator = {}
+    for generator_index, Voronoi_polygon_sorted_vertex_array in enumerate(list_voronoi_polygon_vertices):
+        current_Voronoi_polygon_surface_area_on_sphere = voronoi_utility.calculate_surface_area_of_a_spherical_Voronoi_polygon(Voronoi_polygon_sorted_vertex_array,estimated_sphere_radius)
+        assert current_Voronoi_polygon_surface_area_on_sphere > 0, "Obtained a surface area of zero for a Voronoi region."
+        dictionary_Voronoi_region_surface_areas_for_each_generator[generator_index] = current_Voronoi_polygon_surface_area_on_sphere
+    return dictionary_Voronoi_region_surface_areas_for_each_generator
+
 def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value,PPCH_PO4_threshold=285,proteins_present='no',FORS_present='no',control_condition=None,dengue_condition=None):
     '''Generalization of the large Voronoi analysis loop so that I can easily expand my ipynb analysis to include all flu simulation replicates / conditions.'''
     #selections:
@@ -938,13 +946,6 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
         for region in list_voronoi_polygon_vertex_indices_inner_leaflet:
             list_voronoi_polygon_vertices_inner_leaflet.append(inner_leaflet_voronoi_instance.vertices[region])
         #avoid redundant calculation of Voronoi diagram by using the diagrams produced above (voronoi_utility module should probably eventually allow this workflow more naturally rather than requiring me to abstract the code)
-        def produce_Voronoi_area_dict(list_voronoi_polygon_vertices,estimated_sphere_radius):
-            dictionary_Voronoi_region_surface_areas_for_each_generator = {}
-            for generator_index, Voronoi_polygon_sorted_vertex_array in enumerate(list_voronoi_polygon_vertices):
-                current_Voronoi_polygon_surface_area_on_sphere = voronoi_utility.calculate_surface_area_of_a_spherical_Voronoi_polygon(Voronoi_polygon_sorted_vertex_array,estimated_sphere_radius)
-                assert current_Voronoi_polygon_surface_area_on_sphere > 0, "Obtained a surface area of zero for a Voronoi region."
-                dictionary_Voronoi_region_surface_areas_for_each_generator[generator_index] = current_Voronoi_polygon_surface_area_on_sphere
-            return dictionary_Voronoi_region_surface_areas_for_each_generator
 
         dictionary_voronoi_polygon_surface_areas = produce_Voronoi_area_dict(list_voronoi_polygon_vertices,voronoi_instance.radius)
         dictionary_voronoi_polygon_surface_areas_inner_leaflet = produce_Voronoi_area_dict(list_voronoi_polygon_vertices_inner_leaflet,inner_leaflet_voronoi_instance.radius)
