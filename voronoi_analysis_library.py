@@ -15,6 +15,22 @@ import scipy.spatial
 from scipy.spatial import SphericalVoronoi
 from collections import namedtuple
 
+def generate_random_array_spherical_generators(num_generators,sphere_radius,prng_object):
+    '''Recoded using standard uniform selector over theta and acos phi, http://mathworld.wolfram.com/SpherePointPicking.html
+    Same as in iPython notebook version'''
+    u = prng_object.uniform(low=0,high=1,size=num_generators)
+    v = prng_object.uniform(low=0,high=1,size=num_generators)
+    theta_array = 2 * math.pi * u
+    phi_array = numpy.arccos((2*v - 1.0))
+    r_array = sphere_radius * numpy.ones((num_generators,))
+    spherical_polar_data = numpy.column_stack((r_array,theta_array,phi_array))
+    cartesian_random_points = convert_spherical_array_to_cartesian_array(spherical_polar_data)
+    #filter out any duplicate generators:
+    df_random_points = pandas.DataFrame(cartesian_random_points)
+    df_random_points_no_duplicates = df_random_points.drop_duplicates()
+    array_random_spherical_generators = df_random_points_no_duplicates.as_matrix()
+    return array_random_spherical_generators
+
 def convert_cartesian_array_to_spherical_array(coord_array,angle_measure='radians'):
     '''Take shape (N,3) cartesian coord_array and return an array of the same shape in spherical polar form (r, theta, phi). Based on StackOverflow response: http://stackoverflow.com/a/4116899
     use radians for the angles by default, degrees if angle_measure == 'degrees' '''
@@ -1160,8 +1176,8 @@ def create_control_universe_data(flu_coordinate_file_path):
     prng = numpy.random.RandomState(117) 
     inner_radius = 500
     outer_radius = 700
-    inner_leaflet_coord_array = voronoi_utility.generate_random_array_spherical_generators(total_residue_headgroup_coordinates_inner_leaflet,inner_radius,prng)
-    outer_leaflet_coord_array = voronoi_utility.generate_random_array_spherical_generators(total_residue_headgroup_coordinates_outer_leaflet,outer_radius,prng)
+    inner_leaflet_coord_array = generate_random_array_spherical_generators(total_residue_headgroup_coordinates_inner_leaflet,inner_radius,prng)
+    outer_leaflet_coord_array = generate_random_array_spherical_generators(total_residue_headgroup_coordinates_outer_leaflet,outer_radius,prng)
     #ensure that none of the points are pathologically close
     inner_dist_array = scipy.spatial.distance.pdist(inner_leaflet_coord_array)
     outer_dist_array = scipy.spatial.distance.pdist(outer_leaflet_coord_array)
@@ -1226,8 +1242,8 @@ def create_control_universe_coord_data(flu_coordinate_file_path):
     prng = numpy.random.RandomState(117) 
     inner_radius = 500
     outer_radius = 700
-    inner_leaflet_coord_array = voronoi_utility.generate_random_array_spherical_generators(total_residue_headgroup_coordinates_inner_leaflet,inner_radius,prng)
-    outer_leaflet_coord_array = voronoi_utility.generate_random_array_spherical_generators(total_residue_headgroup_coordinates_outer_leaflet,outer_radius,prng)
+    inner_leaflet_coord_array = generate_random_array_spherical_generators(total_residue_headgroup_coordinates_inner_leaflet,inner_radius,prng)
+    outer_leaflet_coord_array = generate_random_array_spherical_generators(total_residue_headgroup_coordinates_outer_leaflet,outer_radius,prng)
     #ensure that none of the points are pathologically close
     inner_dist_array = scipy.spatial.distance.pdist(inner_leaflet_coord_array)
     outer_dist_array = scipy.spatial.distance.pdist(outer_leaflet_coord_array)
