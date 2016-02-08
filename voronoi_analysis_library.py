@@ -15,6 +15,20 @@ import scipy.spatial
 from scipy.spatial import SphericalVoronoi
 from collections import namedtuple
 
+def convert_spherical_array_to_cartesian_array(spherical_coord_array,angle_measure='radians'):
+    '''Take shape (N,3) spherical_coord_array (r,theta,phi) and return an array of the same shape in cartesian coordinate form (x,y,z). Based on the equations provided at: http://en.wikipedia.org/wiki/List_of_common_coordinate_transformations#From_spherical_coordinates
+    use radians for the angles by default, degrees if angle_measure == 'degrees' '''
+    cartesian_coord_array = numpy.zeros(spherical_coord_array.shape)
+    #convert to radians if degrees are used in input (prior to Cartesian conversion process)
+    if angle_measure == 'degrees':
+        spherical_coord_array[...,1] = numpy.deg2rad(spherical_coord_array[...,1])
+        spherical_coord_array[...,2] = numpy.deg2rad(spherical_coord_array[...,2])
+    #now the conversion to Cartesian coords
+    cartesian_coord_array[...,0] = spherical_coord_array[...,0] * numpy.cos(spherical_coord_array[...,1]) * numpy.sin(spherical_coord_array[...,2])
+    cartesian_coord_array[...,1] = spherical_coord_array[...,0] * numpy.sin(spherical_coord_array[...,1]) * numpy.sin(spherical_coord_array[...,2])
+    cartesian_coord_array[...,2] = spherical_coord_array[...,0] * numpy.cos(spherical_coord_array[...,2])
+    return cartesian_coord_array
+
 def calculate_haversine_distance_between_spherical_points(cartesian_array_1,cartesian_array_2,sphere_radius):
     '''Calculate the haversine-based distance between two points on the surface of a sphere. Should be more accurate than the arc cosine strategy. See, for example: http://en.wikipedia.org/wiki/Haversine_formula'''
     spherical_array_1 = voronoi_utility.convert_cartesian_array_to_spherical_array(cartesian_array_1)
@@ -33,7 +47,7 @@ def calculate_surface_area_of_a_spherical_Voronoi_polygon(array_ordered_Voronoi_
     #have to convert to unit sphere before applying the formula
     spherical_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(array_ordered_Voronoi_polygon_vertices)
     spherical_coordinates[...,0] = 1.0
-    array_ordered_Voronoi_polygon_vertices = voronoi_utility.convert_spherical_array_to_cartesian_array(spherical_coordinates)
+    array_ordered_Voronoi_polygon_vertices = convert_spherical_array_to_cartesian_array(spherical_coordinates)
     #handle nearly-degenerate vertices on the unit sphere by returning an area close to 0 -- may be better options, but this is my current solution to prevent crashes, etc.
     #seems to be relatively rare in my own work, but sufficiently common to cause crashes when iterating over large amounts of messy data
     if scipy.spatial.distance.pdist(array_ordered_Voronoi_polygon_vertices).min() < (10 ** -7):
@@ -684,9 +698,9 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
                 inner_leaflet_spherical_coord_array[...,0] = inner_leaflet_projection_radius
         
             if index_counter == 0: #initialize the projected outer leaflet coord array rather than concatenating for first residue type
-                projected_outer_leaflet_coordinate_array = voronoi_utility.convert_spherical_array_to_cartesian_array(outer_leaflet_spherical_coord_array)
+                projected_outer_leaflet_coordinate_array = convert_spherical_array_to_cartesian_array(outer_leaflet_spherical_coord_array)
             else:
-                projected_outer_leaflet_coordinate_array = numpy.concatenate((projected_outer_leaflet_coordinate_array,voronoi_utility.convert_spherical_array_to_cartesian_array(outer_leaflet_spherical_coord_array)))
+                projected_outer_leaflet_coordinate_array = numpy.concatenate((projected_outer_leaflet_coordinate_array,convert_spherical_array_to_cartesian_array(outer_leaflet_spherical_coord_array)))
             #also need to track the coordinate indices for data structure management with Voronoi code (i.e., which cell areas correspond to which residue types)
             dictionary_headgroup_data[residue_name]['start_index'] = index_counter
             dictionary_headgroup_data[residue_name]['end_index'] = index_counter + outer_leaflet_spherical_coord_array.shape[0]
@@ -694,9 +708,9 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
             
             
             if inner_leaflet_index_counter == 0: 
-                projected_inner_leaflet_coordinate_array = voronoi_utility.convert_spherical_array_to_cartesian_array(inner_leaflet_spherical_coord_array)
+                projected_inner_leaflet_coordinate_array = convert_spherical_array_to_cartesian_array(inner_leaflet_spherical_coord_array)
             else:
-                projected_inner_leaflet_coordinate_array = numpy.concatenate((projected_inner_leaflet_coordinate_array,voronoi_utility.convert_spherical_array_to_cartesian_array(inner_leaflet_spherical_coord_array)))
+                projected_inner_leaflet_coordinate_array = numpy.concatenate((projected_inner_leaflet_coordinate_array,convert_spherical_array_to_cartesian_array(inner_leaflet_spherical_coord_array)))
             dictionary_headgroup_data[residue_name]['inner_leaflet_start_index'] = inner_leaflet_index_counter
             dictionary_headgroup_data[residue_name]['inner_leaflet_end_index'] = inner_leaflet_index_counter + inner_leaflet_spherical_coord_array.shape[0]
             inner_leaflet_index_counter += inner_leaflet_spherical_coord_array.shape[0]
