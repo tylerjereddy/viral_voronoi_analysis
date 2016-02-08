@@ -15,6 +15,19 @@ import scipy.spatial
 from scipy.spatial import SphericalVoronoi
 from collections import namedtuple
 
+def convert_cartesian_array_to_spherical_array(coord_array,angle_measure='radians'):
+    '''Take shape (N,3) cartesian coord_array and return an array of the same shape in spherical polar form (r, theta, phi). Based on StackOverflow response: http://stackoverflow.com/a/4116899
+    use radians for the angles by default, degrees if angle_measure == 'degrees' '''
+    spherical_coord_array = numpy.zeros(coord_array.shape)
+    xy = coord_array[...,0]**2 + coord_array[...,1]**2
+    spherical_coord_array[...,0] = numpy.sqrt(xy + coord_array[...,2]**2)
+    spherical_coord_array[...,1] = numpy.arctan2(coord_array[...,1], coord_array[...,0])
+    spherical_coord_array[...,2] = numpy.arccos(coord_array[...,2] / spherical_coord_array[...,0])
+    if angle_measure == 'degrees':
+        spherical_coord_array[...,1] = numpy.degrees(spherical_coord_array[...,1])
+        spherical_coord_array[...,2] = numpy.degrees(spherical_coord_array[...,2])
+    return spherical_coord_array
+
 def convert_spherical_array_to_cartesian_array(spherical_coord_array,angle_measure='radians'):
     '''Take shape (N,3) spherical_coord_array (r,theta,phi) and return an array of the same shape in cartesian coordinate form (x,y,z). Based on the equations provided at: http://en.wikipedia.org/wiki/List_of_common_coordinate_transformations#From_spherical_coordinates
     use radians for the angles by default, degrees if angle_measure == 'degrees' '''
@@ -31,8 +44,8 @@ def convert_spherical_array_to_cartesian_array(spherical_coord_array,angle_measu
 
 def calculate_haversine_distance_between_spherical_points(cartesian_array_1,cartesian_array_2,sphere_radius):
     '''Calculate the haversine-based distance between two points on the surface of a sphere. Should be more accurate than the arc cosine strategy. See, for example: http://en.wikipedia.org/wiki/Haversine_formula'''
-    spherical_array_1 = voronoi_utility.convert_cartesian_array_to_spherical_array(cartesian_array_1)
-    spherical_array_2 = voronoi_utility.convert_cartesian_array_to_spherical_array(cartesian_array_2)
+    spherical_array_1 = convert_cartesian_array_to_spherical_array(cartesian_array_1)
+    spherical_array_2 = convert_cartesian_array_to_spherical_array(cartesian_array_2)
     lambda_1 = spherical_array_1[1]
     lambda_2 = spherical_array_2[1]
     phi_1 = spherical_array_1[2]
@@ -45,7 +58,7 @@ def calculate_surface_area_of_a_spherical_Voronoi_polygon(array_ordered_Voronoi_
     '''Calculate the surface area of a polygon on the surface of a sphere. Based on equation provided here: http://mathworld.wolfram.com/LHuiliersTheorem.html
     Decompose into triangles, calculate excess for each'''
     #have to convert to unit sphere before applying the formula
-    spherical_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(array_ordered_Voronoi_polygon_vertices)
+    spherical_coordinates = convert_cartesian_array_to_spherical_array(array_ordered_Voronoi_polygon_vertices)
     spherical_coordinates[...,0] = 1.0
     array_ordered_Voronoi_polygon_vertices = convert_spherical_array_to_cartesian_array(spherical_coordinates)
     #handle nearly-degenerate vertices on the unit sphere by returning an area close to 0 -- may be better options, but this is my current solution to prevent crashes, etc.
@@ -600,7 +613,7 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
         lipid_centroid = all_lipid_selection.centroid()
         if not dengue_condition:
             PPCH_PO4_coords = dictionary_headgroup_data['PPCH']['selection'].coordinates() - lipid_centroid
-            PPCH_PO4_spherical_coords = voronoi_utility.convert_cartesian_array_to_spherical_array(PPCH_PO4_coords)
+            PPCH_PO4_spherical_coords = convert_cartesian_array_to_spherical_array(PPCH_PO4_coords)
         if not control_condition and not dengue_condition:
             outer_leaflet_projection_radius = numpy.average(PPCH_PO4_spherical_coords[...,0])
         elif dengue_condition:
@@ -611,7 +624,7 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
         if not dengue_condition:
             #use the same inner leaflet projection criterion that was used for sim33
             combined_DOPE_DOPX_POPS_PO4_coords = combined_selection_DOPE_DOPX_POPS_PO4.coordinates() - lipid_centroid
-            combined_DOPE_DOPX_POPS_PO4_spherical_coords = voronoi_utility.convert_cartesian_array_to_spherical_array(combined_DOPE_DOPX_POPS_PO4_coords)
+            combined_DOPE_DOPX_POPS_PO4_spherical_coords = convert_cartesian_array_to_spherical_array(combined_DOPE_DOPX_POPS_PO4_coords)
             max_DOPE_DOPX_POPS_PO4_radial_distance = numpy.sort(combined_DOPE_DOPX_POPS_PO4_spherical_coords[...,0])[-2]
             min_DOPE_DOPX_POPS_PO4_radial_distance = combined_DOPE_DOPX_POPS_PO4_spherical_coords[...,0].min()
             unbiased_midpoint_radial_distance_DOPE_DOPX_POPS_PO4 = (max_DOPE_DOPX_POPS_PO4_radial_distance + min_DOPE_DOPX_POPS_PO4_radial_distance) / 2.
@@ -630,7 +643,7 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
             assert current_headgroup_MDA_selection.n_atoms > 0, "Number of selected {resname} headgroup particles not greater than 0.".format(resname=residue_name)
             current_headgroup_coordinate_array = current_headgroup_MDA_selection.coordinates()
             current_headgroup_coordinate_array -= lipid_centroid #center at origin
-            current_headgroup_spherical_polar_coord_array = voronoi_utility.convert_cartesian_array_to_spherical_array(current_headgroup_coordinate_array)
+            current_headgroup_spherical_polar_coord_array = convert_cartesian_array_to_spherical_array(current_headgroup_coordinate_array)
             #perform the necessary filtering and projection based on residue type
             if residue_name == 'PPCH' or residue_name == 'FORS' and not dengue_condition:
                 if control_condition:
@@ -664,7 +677,7 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
                 #concatenate HA, NA, M2 TMD centroid coords to a single array (using previous nomenclature)
                 current_headgroup_coordinate_array = numpy.concatenate((array_HA_TMD_centroids,array_NA_TMD_centroids,array_M2_TMD_centroids))
                 assert current_headgroup_coordinate_array.shape == (348,3), "There should be 348 centroids for HA, NA and M2 TMDs in 3 dimensions." 
-                current_headgroup_spherical_polar_coord_array = voronoi_utility.convert_cartesian_array_to_spherical_array(current_headgroup_coordinate_array)
+                current_headgroup_spherical_polar_coord_array = convert_cartesian_array_to_spherical_array(current_headgroup_coordinate_array)
                 #crudely project the TMD centroid particles both up AND down to fill in proteins spaces in both leaflets (how 'bad' is this for area approximation in Voronoi diagram?!)
                 outer_leaflet_spherical_coord_array = numpy.copy(current_headgroup_spherical_polar_coord_array)
                 outer_leaflet_spherical_coord_array[...,0] = outer_leaflet_projection_radius
@@ -680,7 +693,7 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
                 current_headgroup_coordinate_array = numpy.array(list_EM_TMD_centroids_combined)
                 assert current_headgroup_coordinate_array.shape == (720,3), "The dengue virion should have 720 TMD centroids."
                 #crudely project the TMD centroids to both leaflets
-                current_headgroup_spherical_polar_coord_array = voronoi_utility.convert_cartesian_array_to_spherical_array(current_headgroup_coordinate_array)
+                current_headgroup_spherical_polar_coord_array = convert_cartesian_array_to_spherical_array(current_headgroup_coordinate_array)
                 outer_leaflet_spherical_coord_array = numpy.copy(current_headgroup_spherical_polar_coord_array)
                 outer_leaflet_spherical_coord_array[...,0] = outer_leaflet_projection_radius
                 inner_leaflet_spherical_coord_array = numpy.copy(current_headgroup_spherical_polar_coord_array)
@@ -856,8 +869,8 @@ def precursor_radial_distance_analysis_dengue(universe_object):
         #place the centroid of the system at the origin
         dengue_lipid_headgroup_coordinates -= all_lipid_centroid
         dengue_protein_coordinates -= all_lipid_centroid
-        spherical_polar_dengue_lipid_headgroup_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(dengue_lipid_headgroup_coordinates)
-        spherical_polar_dengue_protein_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(dengue_protein_coordinates)
+        spherical_polar_dengue_lipid_headgroup_coordinates = convert_cartesian_array_to_spherical_array(dengue_lipid_headgroup_coordinates)
+        spherical_polar_dengue_protein_coordinates = convert_cartesian_array_to_spherical_array(dengue_protein_coordinates)
         #assess the positions of the dengue lipid headgroup particles
         minimum_dengue_lipid_headgroup_radial_distance = spherical_polar_dengue_lipid_headgroup_coordinates[...,0].min()
         maximum_dengue_lipid_headgroup_radial_distance = numpy.sort(spherical_polar_dengue_lipid_headgroup_coordinates[...,0])[-1] #looks like we have a DUPC floater, based on visual inspection of debug coords printed below
@@ -957,11 +970,11 @@ def precursor_radial_distance_analysis(universe_object,FORS_present=None,control
             FORS_AM2_coordinates -= all_lipid_centroid
         CHOL_ROH_coordinates -= all_lipid_centroid #place the centroid of the vesicle at the origin
         remaining_headgroup_coordinates -= all_lipid_centroid
-        spherical_polar_PPCH_PO4_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(PPCH_PO4_coordinates)
+        spherical_polar_PPCH_PO4_coordinates = convert_cartesian_array_to_spherical_array(PPCH_PO4_coordinates)
         if FORS_present:
-            spherical_polar_FORS_AM2_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(FORS_AM2_coordinates)
-        spherical_polar_CHOL_ROH_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(CHOL_ROH_coordinates)
-        spherical_polar_remaining_coordinates = voronoi_utility.convert_cartesian_array_to_spherical_array(remaining_headgroup_coordinates)
+            spherical_polar_FORS_AM2_coordinates = convert_cartesian_array_to_spherical_array(FORS_AM2_coordinates)
+        spherical_polar_CHOL_ROH_coordinates = convert_cartesian_array_to_spherical_array(CHOL_ROH_coordinates)
+        spherical_polar_remaining_coordinates = convert_cartesian_array_to_spherical_array(remaining_headgroup_coordinates)
         #determine the minimum and maximum and average radial distance so I get an idea of leaflet distribution for PPCH PO4
         minimum_PPCH_PO4_radial_distance = spherical_polar_PPCH_PO4_coordinates[...,0].min()
         maximum_PPCH_PO4_radial_distance = spherical_polar_PPCH_PO4_coordinates[...,0].max()
