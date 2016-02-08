@@ -432,3 +432,34 @@ class TestSphericalCartesianConversion(unittest.TestCase):
         '''Test conversion of spherical to Cartesian coords using radians for angles.'''
         actual_result = voronoi_analysis_library.convert_spherical_array_to_cartesian_array(self.radians_input, angle_measure = 'radians')
         np.testing.assert_array_almost_equal(actual_result, self.expected_radian_output, decimal = 5, err_msg = "The conversion of spherical coordinates to Cartesian coordinates using radians units for angles does not produce the expected result to the desired precision.")
+
+class TestCartesianSphericalConversion(unittest.TestCase):
+    '''Test(s) for conversion of Cartesian coordinate arrays to spherical coordinate arrays.'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.Cartesian_input = np.array([[155.6, 178.9, 0.91],
+                                        [99.999,3.1015,-8789.2]])
+
+        #expected spherical coord output from an online calculator (http://keisan.casio.com/exec/system/1359533867)
+        cls.expected_spherical_output_degrees = np.array([[237.10208371079, 48.984570421492, 89.780097726068],
+                                                  [8789.7693973905, 1.7764768911113, 179.34783277354]])
+
+        cls.expected_spherical_output_radians = np.array([[237.10208371079, 0.85494203653007, 1.5669583080822],
+                                                         [8789.7693973905, 0.031005370835486, 3.1302101882145]])
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.Cartesian_input
+        del cls.expected_spherical_output_degrees
+        del cls.expected_spherical_output_radians
+
+    def test_cartesian_to_spherical_degrees(self):
+        '''Test conversion of a Cartesian coordinate array to a spherical coordinate array with degrees used for angles in the output.'''
+        actual_value = voronoi_analysis_library.convert_cartesian_array_to_spherical_array(self.Cartesian_input, angle_measure='degrees')
+        np.testing.assert_array_almost_equal(actual_value, self.expected_spherical_output_degrees, decimal = 5, err_msg = "The conversion of cartesian coordinates to spherical coordinates using degree angle measurements did not achieve the expected values to the desired precision.")
+
+    def test_cartesian_to_spherical_radians(self):
+        '''Test conversion of a Cartesian coordinate array to a spherical coordinate array with radians used for angles in the output.'''
+        actual_value = voronoi_analysis_library.convert_cartesian_array_to_spherical_array(self.Cartesian_input, angle_measure='radians')
+        np.testing.assert_array_almost_equal(actual_value, self.expected_spherical_output_radians, decimal = 5, err_msg = "The conversion of cartesian coordinates to spherical coordinates using radian angle measurements did not achieve the expected values to the desired precision.")
