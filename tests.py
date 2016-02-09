@@ -530,3 +530,53 @@ class TestProduceTrajList(unittest.TestCase):
         xtc_filenames = [filepath.split('/')[-1] for filepath in self.list_of_trajectories]
         self.assertEqual(sorted(xtc_filenames), self.xtcs)
 
+class TestControlCoordProduction(unittest.TestCase):
+    '''Unit test(s) for create_control_universe_coord_data() function.'''
+
+    @classmethod
+    def setUpClass(cls):
+        #need a small flu-like input file (only need residue names to be correct, don't even need coords on sphere for input)
+        cls.u = MDAnalysis.Universe('control_traj_2.gro') #using the output of the tested function as the input, so make sure to wipe the coords first
+        cls.all_selection = cls.u.select_atoms('all')
+        cls.all_selection.set_positions(np.zeros(3)) #all particles are at [0,0,0]
+        cls.d = TempDirectory()
+        cls.test_input_path = cls.d.path + '/test_input.gro'
+        cls.all_selection.atoms.write(cls.test_input_path)
+        cls.large_output_path = cls.d.path + '/large.gro'
+        cls.small_output_path = cls.d.path + '/small.gro'
+        voronoi_analysis_library.create_control_universe_coord_data(cls.test_input_path, output_path=cls.d.path + '/')
+        cls.large_output_universe = MDAnalysis.Universe(cls.d.path + '/' + 'control_traj_1.gro')
+        cls.small_output_universe = MDAnalysis.Universe(cls.d.path + '/' + 'control_traj_2.gro')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.d.cleanup()
+        del cls.all_selection
+        del cls.test_input_path
+        del cls.large_output_universe 
+        del cls.small_output_universe 
+
+    def test_control_coord_radii(self):
+        '''Test for the correct radii of inner and outer leaflets in control coordinate data produced.'''
+        inner_leaflet_selection_small_system = self.small_output_universe.select_atoms('resname DOPE or resname DOPX or resname POPS')
+        inner_leaflet_selection_large_system = self.large_output_universe.select_atoms('resname DOPE or resname DOPX or resname POPS')
+        outer_leaflet_selection_small_system = self.small_output_universe.select_atoms('resname CHOL or resname PPCH')
+        outer_leaflet_selection_large_system = self.large_output_universe.select_atoms('resname CHOL or resname PPCH')
+        inner_small_radius_actual = int(voronoi_analysis_library.convert_cartesian_array_to_spherical_array(inner_leaflet_selection_small_system.coordinates()[0])[0])
+        inner_large_radius_actual = int(voronoi_analysis_library.convert_cartesian_array_to_spherical_array(inner_leaflet_selection_large_system.coordinates()[0])[0])
+        outer_small_radius_actual = int(voronoi_analysis_library.convert_cartesian_array_to_spherical_array(outer_leaflet_selection_small_system.coordinates()[0])[0])
+        outer_large_radius_actual = int(voronoi_analysis_library.convert_cartesian_array_to_spherical_array(outer_leaflet_selection_large_system.coordinates()[0])[0])
+        self.assertEqual([inner_small_radius_actual, inner_large_radius_actual, outer_small_radius_actual, outer_large_radius_actual], [500,500,700,700], "The control coordinate leaflet radii are incorrect: {inner_1} {inner_2} {outer_1} {outer_2} instead of 500 500 700 700.".format(inner_1=inner_small_radius_actual,inner_2=inner_large_radius_actual,outer_1=outer_small_radius_actual, outer_2=outer_large_radius_actual))
+
+
+    def test_num_output_coords(self):
+        '''Check that the sizes of the generated control data structures are appropriate.'''
+        expected_total_particles = self.all_selection.n_atoms
+        upper_limit_total_particles_small = int(0.6 * expected_total_particles) #should be ~half
+        actual_particles_small_sys = self.small_output_universe.select_atoms('all').n_atoms
+        actual_particles_large_sys = self.large_output_universe.select_atoms('all').n_atoms
+        self.assertEqual(actual_particles_large_sys, expected_total_particles, "Total number of particles in large control system is not correct.")
+        self.assertLess(actual_particles_small_sys, upper_limit_total_particles_small, "Total number of particles in small control system is not correct (Exceeds 60% of particles in original system).")
+
+
+
