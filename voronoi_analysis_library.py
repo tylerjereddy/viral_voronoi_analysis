@@ -6,13 +6,10 @@ import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib.patches import Rectangle
-import sys; sys.path.append('/sansom/sc2/bioc1009/github_projects/spherical_Voronoi/py_sphere_Voronoi')
-sys.path.append('/sansom/sc2/bioc1009/python_scripts/matplotlib_scripts')
 import collections
 import scipy
 import scipy.spatial
 from scipy.spatial import SphericalVoronoi
-from collections import namedtuple
 import pandas
 
 def produce_list_trajectories(path_string,glob_search_string):
