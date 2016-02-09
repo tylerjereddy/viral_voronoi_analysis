@@ -1,4 +1,5 @@
 '''Library of utility functions for analyzing virus simulations with spherical Voronoi diagrams.'''
+import glob
 import math
 import numpy
 import matplotlib
@@ -7,13 +8,17 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib.patches import Rectangle
 import sys; sys.path.append('/sansom/sc2/bioc1009/github_projects/spherical_Voronoi/py_sphere_Voronoi')
 sys.path.append('/sansom/sc2/bioc1009/python_scripts/matplotlib_scripts')
-import multicore_vesicle_virion_analysis
 import collections
 import scipy
 import scipy.spatial
 from scipy.spatial import SphericalVoronoi
 from collections import namedtuple
 import pandas
+
+def produce_list_trajectories(path_string,glob_search_string):
+    '''Function to produce a list of trajectories given a path string and a glob search string for the file names at that path. Include the final slash in the path_string'''
+    list_of_trajectories = glob.glob(path_string + glob_search_string)
+    return list_of_trajectories
 
 def generate_random_array_spherical_generators(num_generators,sphere_radius,prng_object):
     '''Recoded using standard uniform selector over theta and acos phi, http://mathworld.wolfram.com/SpherePointPicking.html
@@ -825,17 +830,16 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
 
 def produce_universe_object_on_remote_engine(data_path_1 = None,data_path_2 = None,limit_1=None,limit_2=None,limit_3=None,limit_4 = None,coordinate_filepath=None,traj_data_extension=None,traj_data_extension_with_replace=None):
     '''For loading MDA universe object on a remote engine.'''
-    import multicore_vesicle_virion_analysis
     import MDAnalysis
     import numpy
     import scipy
     import math 
     #produce a list of trajectory files:
-    list_trajectories_compact_no_solvent = sorted(multicore_vesicle_virion_analysis.produce_list_trajectories(data_path_1,'*no_solvent*xtc'),key= lambda file_string: int(file_string[limit_1:limit_2].replace('_',''))) #sort by file name part number
+    list_trajectories_compact_no_solvent = sorted(produce_list_trajectories(data_path_1,'*no_solvent*xtc'),key= lambda file_string: int(file_string[limit_1:limit_2].replace('_',''))) #sort by file name part number
     if traj_data_extension: #extend the list of trajectories, if applicable
-        list_trajectories_compact_no_solvent.extend(sorted(multicore_vesicle_virion_analysis.produce_list_trajectories(data_path_2,'*no_solvent*xtc'),key= lambda file_string: int(file_string[limit_3:limit_4])))
+        list_trajectories_compact_no_solvent.extend(sorted(produce_list_trajectories(data_path_2,'*no_solvent*xtc'),key= lambda file_string: int(file_string[limit_3:limit_4])))
     elif traj_data_extension_with_replace: #in some cases have to use the different format with replacement method
-        list_trajectories_compact_no_solvent.extend(sorted(multicore_vesicle_virion_analysis.produce_list_trajectories(data_path_2,'*no_solvent*xtc'),key= lambda file_string: int(file_string[limit_3:limit_4].replace('_',''))))
+        list_trajectories_compact_no_solvent.extend(sorted(produce_list_trajectories(data_path_2,'*no_solvent*xtc'),key= lambda file_string: int(file_string[limit_3:limit_4].replace('_',''))))
     universe_object = MDAnalysis.Universe(coordinate_filepath,list_trajectories_compact_no_solvent) 
     return universe_object
 
