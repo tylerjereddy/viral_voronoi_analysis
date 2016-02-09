@@ -6,7 +6,6 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib.patches import Rectangle
 import sys; sys.path.append('/sansom/sc2/bioc1009/github_projects/spherical_Voronoi/py_sphere_Voronoi')
-import voronoi_utility
 sys.path.append('/sansom/sc2/bioc1009/python_scripts/matplotlib_scripts')
 import multicore_vesicle_virion_analysis
 import collections
@@ -109,10 +108,12 @@ def calculate_surface_area_of_a_spherical_Voronoi_polygon(array_ordered_Voronoi_
 class voronoi_neighbour_analysis(object):
     '''Accepts the dictionary of Voronoi diagram data structure I've been using in the ipynb and allows for parsing of neighbour properties in Voronoi diagrams.'''
 
-    def __init__(self,voronoi_data_dict,inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays'):
+    def __init__(self,voronoi_data_dict,inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays', inner_leaflet_radius=None, outer_leaflet_radius=None):
         self.voronoi_data_dict = voronoi_data_dict
         self.outer_leaflet_data_key = outer_leaflet_vertex_list_key
         self.inner_leaflet_data_key = inner_leaflet_vertex_list_key
+        self.inner_leaflet_radius = inner_leaflet_radius
+        self.outer_leaflet_radius = outer_leaflet_radius
 
     def voronoi_cell_row_accounting(self, simplified_dict, frame_index):
         '''Produce convenience dictionary that contains the number of rows in each voronoi cell array, as this is quite costly to calculate repetitively if not abstacted. Basically, tricky to work with because the data is not homogenously structured (sub-arrays have different numbers of rows so numpy convenience functions mostly don't work).'''
@@ -135,14 +136,14 @@ class voronoi_neighbour_analysis(object):
         outer_leaflet_neighbour_dict = {}
         inner_leaflet_neighbour_dict = {}
       
-        inner_leaflet_neighbour_dict = self.per_leaflet_accumulation_neighbour_data(self.inner_leaflet_data_key, self.voronoi_data_dict, inner_leaflet_neighbour_dict, simplified_inner_leaflet_voronoi_data_dict,frame_index, inner_leaflet_voronoi_row_accounting_dict)
-        outer_leaflet_neighbour_dict = self.per_leaflet_accumulation_neighbour_data(self.outer_leaflet_data_key, self.voronoi_data_dict, outer_leaflet_neighbour_dict, simplified_outer_leaflet_voronoi_data_dict,frame_index, outer_leaflet_voronoi_row_accounting_dict)
+        inner_leaflet_neighbour_dict = self.per_leaflet_accumulation_neighbour_data(self.inner_leaflet_data_key, self.voronoi_data_dict, inner_leaflet_neighbour_dict, simplified_inner_leaflet_voronoi_data_dict,frame_index, inner_leaflet_voronoi_row_accounting_dict, self.inner_leaflet_radius)
+        outer_leaflet_neighbour_dict = self.per_leaflet_accumulation_neighbour_data(self.outer_leaflet_data_key, self.voronoi_data_dict, outer_leaflet_neighbour_dict, simplified_outer_leaflet_voronoi_data_dict,frame_index, outer_leaflet_voronoi_row_accounting_dict, self.outer_leaflet_radius)
 
         #idea is to have dictionary data structures that look like this (prototype at the moment): {'POPC': {5 : {'frequency': 20, 'list_surface_areas':[22,11,17], ...}}} where 5 is the number of neighbours
         #I think this won't handle multiple frames correctly yet, but just trying to get things started
         return (inner_leaflet_neighbour_dict, outer_leaflet_neighbour_dict)
 
-    def per_leaflet_accumulation_neighbour_data(self, leaflet_data_key, data_dict, results_dictionary, simplified_data_dict, frame_index, voronoi_cell_row_accounting_dict):
+    def per_leaflet_accumulation_neighbour_data(self, leaflet_data_key, data_dict, results_dictionary, simplified_data_dict, frame_index, voronoi_cell_row_accounting_dict, radius):
         '''Populate results_dictionary with voronoi cell neighbour data structure for a given leaflet (and specific frame).'''
 
         def default_factory():
@@ -163,7 +164,7 @@ class voronoi_neighbour_analysis(object):
 
                 neighbour_count_current_voronoi_cell = self.count_neighbours_current_frame(voronoi_cell_coord_array,simplified_data_dict,frame_index, voronoi_cell_row_accounting_dict)
                 neighbour_freq_dict[neighbour_count_current_voronoi_cell]['frequency'] += 1 #debug: for the ZERO neighbour count, this incrementation is happening *thousands of times!!*
-                surface_area_current_voronoi_cell = voronoi_utility.calculate_surface_area_of_planar_polygon_in_3D_space(voronoi_cell_coord_array)
+                surface_area_current_voronoi_cell = calculate_surface_area_of_a_spherical_Voronoi_polygon(voronoi_cell_coord_array,radius)
                 neighbour_freq_dict[neighbour_count_current_voronoi_cell]['list_surface_areas'].append(surface_area_current_voronoi_cell)
             results_dictionary[molecular_species_name_string] = neighbour_freq_dict
             total_frequency = 0
@@ -219,7 +220,7 @@ class voronoi_neighbour_analysis_by_type(voronoi_neighbour_analysis):
             dict_neighbour_data_current_voronoi_cell[molecular_species_name] = {'num_neighbours': neighbour_count_current_voronoi_cell} 
         return dict_neighbour_data_current_voronoi_cell
 
-    def per_leaflet_accumulation_neighbour_data(self, leaflet_data_key, data_dict, results_dictionary, simplified_data_dict, frame_index, voronoi_cell_row_accounting_dict):
+    def per_leaflet_accumulation_neighbour_data(self, leaflet_data_key, data_dict, results_dictionary, simplified_data_dict, frame_index, voronoi_cell_row_accounting_dict, radius):
         '''Populate results_dictionary with voronoi cell neighbour data structure for a given leaflet (and specific frame).'''
 
         results_dictionary = {}
@@ -235,7 +236,7 @@ class voronoi_neighbour_analysis_by_type(voronoi_neighbour_analysis):
                 assert dimensions_voronoi_cell_coord_array == 2, "Each voronoi cell coordinate array should have two dimensions, but got {ndim}.".format(ndim = dimensions_voronoi_cell_coord_array)
                 assert shape_voronoi_cell_coord_array[1] == 3, "Voronoi cell coordinates should have 3 data columns, but got {columns} data columns.".format(columns = shape_voronoi_cell_coord_array[1])
                 neighbour_count_subdictionary_by_lipid_type_current_voronoi_cell = self.count_neighbours_current_frame(voronoi_cell_coord_array,simplified_data_dict,frame_index, voronoi_cell_row_accounting_dict)
-                surface_area_current_voronoi_cell = voronoi_utility.calculate_surface_area_of_planar_polygon_in_3D_space(voronoi_cell_coord_array)
+                surface_area_current_voronoi_cell = calculate_surface_area_of_a_spherical_Voronoi_polygon(voronoi_cell_coord_array, radius)
                 neighbour_count_subdictionary_by_lipid_type_current_voronoi_cell['surface_area_voronoi_cell'] = surface_area_current_voronoi_cell
                 #so, at this stage I have a dictionary object for a single Voronoi cell of a specific molecular species type
                 #the dictionary is structured like this: {'POPC': {'num_neighbours': 0}, 'PPCE': {'num_neighbours': 0}, 'DPPE': {'num_neighbours': 3}, 'CER': {'num_neighbours': 1}, 'DUPC': {'num_neighbours': 1}, 'protein': {'num_neighbours': 0}, 'DOPS': {'num_neighbours': 0}, 'PPCS': {'num_neighbours': 2}}
@@ -757,7 +758,6 @@ def voronoi_analysis_loop(universe_object,start_frame,end_frame,skip_frame_value
             list_voronoi_polygon_vertices.append(voronoi_instance.vertices[region])
         for region in list_voronoi_polygon_vertex_indices_inner_leaflet:
             list_voronoi_polygon_vertices_inner_leaflet.append(inner_leaflet_voronoi_instance.vertices[region])
-        #avoid redundant calculation of Voronoi diagram by using the diagrams produced above (voronoi_utility module should probably eventually allow this workflow more naturally rather than requiring me to abstract the code)
 
         dictionary_voronoi_polygon_surface_areas = produce_Voronoi_area_dict(list_voronoi_polygon_vertices,voronoi_instance.radius)
         dictionary_voronoi_polygon_surface_areas_inner_leaflet = produce_Voronoi_area_dict(list_voronoi_polygon_vertices_inner_leaflet,inner_leaflet_voronoi_instance.radius)
