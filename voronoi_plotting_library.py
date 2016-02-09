@@ -460,3 +460,51 @@ def area_per_molecule_plotting_sysL_figures(figure_object_1,figure_object_2,figu
 
     figure_object_1.savefig(figure_name_1,dpi=300)
     figure_object_2.savefig(figure_name_2,dpi=300)
+
+class radial_distance_assessment_dengue:
+
+    def __init__(self,matplotlib_figure_object,list_frame_numbers_dengue,list_min_dengue_lipid_headgroup_distances,list_max_dengue_lipid_headgroup_distances,list_average_dengue_lipid_headgroup_distances,list_std_dev_dengue_lipid_headgroup_distances,list_dengue_lipid_headgroup_midpoint_distances,list_dengue_lipid_headgroup_percent_above_threshold,list_dengue_lipid_headgroup_percent_below_threshold,list_min_protein_distances,list_max_protein_distances, array_min_dengue_lipid_headgroup_radial_distances,array_max_dengue_lipid_headgroup_radial_distances,array_min_protein_distances,array_max_protein_distances,array_average_dengue_lipid_headgroup_radial_distances,array_std_dev_dengue_lipid_headgroup_radial_distances,array_dengue_lipid_headgroup_unbiased_midpoint_distances,array_dengue_lipid_headgroup_percent_above_midpoint_threshold,array_dengue_lipid_headgroup_percent_below_midpoint_threshold,array_frame_numbers):
+
+        self.matplotlib_figure_object = matplotlib_figure_object
+        #dengue data structure initialization:
+        self.array_min_dengue_lipid_headgroup_radial_distances = array_min_dengue_lipid_headgroup_radial_distances
+        self.array_max_dengue_lipid_headgroup_radial_distances = array_max_dengue_lipid_headgroup_radial_distances
+        self.array_min_protein_distances = array_min_protein_distances
+        self.array_max_protein_distances = array_max_protein_distances
+        self.array_average_dengue_lipid_headgroup_radial_distances = array_average_dengue_lipid_headgroup_radial_distances
+        self.array_std_dev_dengue_lipid_headgroup_radial_distances = array_std_dev_dengue_lipid_headgroup_radial_distances
+        self.array_dengue_lipid_headgroup_unbiased_midpoint_distances = array_dengue_lipid_headgroup_unbiased_midpoint_distances
+        self.array_dengue_lipid_headgroup_percent_above_midpoint_threshold = array_dengue_lipid_headgroup_percent_above_midpoint_threshold
+        self.array_dengue_lipid_headgroup_percent_below_midpoint_threshold = array_dengue_lipid_headgroup_percent_below_midpoint_threshold
+        self.array_frame_numbers = array_frame_numbers
+
+    def plot(self,title_string):
+        '''Plot the dengue radial distance assessment data.'''
+        ax = self.matplotlib_figure_object.add_subplot('121')
+        print self.array_frame_numbers.shape, self.array_min_dengue_lipid_headgroup_radial_distances.shape #debug
+        ax.scatter(self.array_frame_numbers,self.array_min_dengue_lipid_headgroup_radial_distances,label='min dengue lipid headgroup radial distance',c='black',edgecolor='None')
+        ax.scatter(self.array_frame_numbers,self.array_min_protein_distances,label='min protein distances',c='grey',edgecolor='None')
+        ax.scatter(self.array_frame_numbers,self.array_max_protein_distances,label='max protein distances',c='green',edgecolor='None')
+        ax.scatter(self.array_frame_numbers,self.array_max_dengue_lipid_headgroup_radial_distances,label='max dengue lipid headgroup radial distance',c='red',edgecolor='None')
+        ax.scatter(self.array_frame_numbers,self.array_average_dengue_lipid_headgroup_radial_distances,label='average dengue lipid headgroup radial distance',c='blue',edgecolor='None')
+        ax.fill_between(self.array_frame_numbers,self.array_average_dengue_lipid_headgroup_radial_distances-self.array_std_dev_dengue_lipid_headgroup_radial_distances,self.array_average_dengue_lipid_headgroup_radial_distances+self.array_std_dev_dengue_lipid_headgroup_radial_distances,color='blue',alpha=0.2) #show the standard deviation about the mean dengue lipid headgroup OD values
+        ax.scatter(self.array_frame_numbers,self.array_dengue_lipid_headgroup_unbiased_midpoint_distances,label='unbiased dengue lipid headgroup radial midpoints',c='yellow',edgecolor='None')
+        ax.set_xlim(-100,5100)
+        ax.set_ylim(10,70)
+        ax.set_xlabel('Frame #')
+        ax.set_ylabel('Radial distance from virion centroid (nm)')
+        ax.legend(loc=2,fontsize=8)
+
+        ax2 = self.matplotlib_figure_object.add_subplot('122')
+        ax2.scatter(self.array_frame_numbers,self.array_dengue_lipid_headgroup_percent_above_midpoint_threshold,label='above midpoint',color='orange')
+        ax2.scatter(self.array_frame_numbers,self.array_dengue_lipid_headgroup_percent_below_midpoint_threshold,label='below midpoint',color='blue')
+        ax2.set_ylabel('Percent dengue lipid headgroup particles above\n or below midpoint')
+        ax2.set_xlabel('Frame #')
+        ax2.set_xlim(-100,5100)
+        ax2.legend(loc=2)
+
+        for axis in [ax,ax2]:
+            axis.set_title(title_string)
+
+        self.matplotlib_figure_object.set_size_inches(16,6)
+
