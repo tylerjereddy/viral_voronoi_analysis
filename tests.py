@@ -463,3 +463,43 @@ class TestCartesianSphericalConversion(unittest.TestCase):
         '''Test conversion of a Cartesian coordinate array to a spherical coordinate array with radians used for angles in the output.'''
         actual_value = voronoi_analysis_library.convert_cartesian_array_to_spherical_array(self.Cartesian_input, angle_measure='radians')
         np.testing.assert_array_almost_equal(actual_value, self.expected_spherical_output_radians, decimal = 5, err_msg = "The conversion of cartesian coordinates to spherical coordinates using radian angle measurements did not achieve the expected values to the desired precision.")
+
+class TestRandomSphericalGenerators(unittest.TestCase):
+    '''Unit test(s) for the production of random points on the surface of a sphere.'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.prng_small = numpy.random.RandomState(1998)
+        cls.prng_large = numpy.random.RandomState(556)
+        cls.small_num_generators = 55
+        cls.large_num_generators = 905
+        cls.sphere_radius = 1.1178
+        cls.random_generators_small = voronoi_analysis_library.generate_random_array_spherical_generators(cls.small_num_generators, cls.sphere_radius, cls.prng_small)
+        cls.random_generators_large = voronoi_analysis_library.generate_random_array_spherical_generators(cls.large_num_generators, cls.sphere_radius, cls.prng_large)
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.prng_small
+        del cls.prng_large
+        del cls.small_num_generators
+        del cls.large_num_generators
+        del cls.sphere_radius 
+        del cls.random_generators_small
+        del cls.random_generators_large
+
+    def test_shape_random_spherical_generators(self):
+        '''Test the shapes of the data structures produced for small and large random sets of generators on a sphere.'''
+        self.assertEqual(self.random_generators_small.shape, (self.small_num_generators, 3), "Incorrect shape for small array of random spherical generators.")
+        self.assertEqual(self.random_generators_large.shape, (self.large_num_generators, 3), "Incorrect shape for large array of random spherical generators.")
+
+    def test_radii_random_spherical_systems(self):
+        '''Test that the random sets of points on a sphere have the correct radii.'''
+        small_distance_matrix = scipy.spatial.distance.pdist(self.random_generators_small)
+        large_distance_matrix = scipy.spatial.distance.pdist(self.random_generators_large)
+        actual_small_radius = small_distance_matrix.max() / 2.0
+        actual_large_radius = large_distance_matrix.max() / 2.0
+        self.assertAlmostEqual(actual_small_radius, self.sphere_radius, places = 2, msg="Incorrect radius for small random set of spherical generators. Actual: {actual}; target: {target}".format(actual=actual_small_radius,target=self.sphere_radius))
+        self.assertAlmostEqual(actual_large_radius, self.sphere_radius, places = 2, msg="Incorrect radius for large random set of spherical generators. Actual: {actual}; target: {target}".format(actual=actual_small_radius,target=self.sphere_radius))
+
+
+
