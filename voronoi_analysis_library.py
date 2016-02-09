@@ -841,12 +841,10 @@ def produce_universe_object_on_remote_engine(data_path_1 = None,data_path_2 = No
 
 def produce_universe_object_on_remote_engine_dengue(coordinate_file_path):
     '''Produce MDA Universe object on a remote IPython engine for dengue simulation [sim126 extended].'''
-    import dengue_utility_functions
     import MDAnalysis
     import numpy
     import scipy
     import math 
-    #list_xtc_file_paths = dengue_utility_functions.generate_ordered_list_processed_xtc_file_paths_sim126_extended()
     universe_object = MDAnalysis.Universe(coordinate_file_path,'/sansom/n22/bioc1009/sim126_extended/translated_test.xtc')
     return universe_object
 
