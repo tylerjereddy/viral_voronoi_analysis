@@ -14,6 +14,7 @@ import scipy
 import scipy.spatial
 from scipy.spatial import SphericalVoronoi
 from collections import namedtuple
+import pandas
 
 def generate_random_array_spherical_generators(num_generators,sphere_radius,prng_object):
     '''Recoded using standard uniform selector over theta and acos phi, http://mathworld.wolfram.com/SpherePointPicking.html
