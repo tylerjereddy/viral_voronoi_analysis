@@ -501,4 +501,32 @@ class TestRandomSphericalGenerators(unittest.TestCase):
         self.assertAlmostEqual(actual_large_radius, self.sphere_radius, places = 2, msg="Incorrect radius for large random set of spherical generators. Actual: {actual}; target: {target}".format(actual=actual_small_radius,target=self.sphere_radius))
 
 
+class TestProduceTrajList(unittest.TestCase):
+    '''Unit test(s) for produce_list_trajectories() function.'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.d = TempDirectory()
+        cls.xtcs = ['dummy1.xtc','dummy2.xtc','dummy3.xtc','dummy4.xtc']
+        for filename in cls.xtcs:
+            filepath = cls.d.path + '/' + filename
+            with open(filepath, 'w') as outfile:
+                outfile.write(filename)
+        cls.list_of_trajectories = voronoi_analysis_library.produce_list_trajectories(cls.d.path + '/', '*xtc')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.d.cleanup()
+        del cls.xtcs 
+        del cls.list_of_trajectories
+
+    def test_produce_list_trajs(self):
+        '''Quick test for proper globbing by produce_list_trajectories().'''
+        actual_length = len(self.list_of_trajectories)
+        self.assertEqual(actual_length, 4, "produce_list_trajectories is not picking up the full set of xtcs in the dummy directory. Target length: 4; actual length: {length}".format(length=actual_length))
+    
+    def test_recovered_xtc_files(self):
+        '''Test for xtc file names recovered by produce_list_trajectories() function.'''
+        xtc_filenames = [filepath.split('/')[-1] for filepath in self.list_of_trajectories]
+        self.assertEqual(sorted(xtc_filenames), self.xtcs)
 
