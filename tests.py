@@ -1,6 +1,5 @@
 import unittest
 import math
-import voronoi_utility
 import numpy as np
 import scipy
 from scipy.spatial import SphericalVoronoi
@@ -270,7 +269,7 @@ class TestVoronoiAreaDict(unittest.TestCase):
         self.prng = numpy.random.RandomState(117) 
         self.sphere_radius = 17.3
         self.num_points = 30
-        self.random_coords_sphere = voronoi_utility.generate_random_array_spherical_generators(self.num_points, self.sphere_radius, self.prng)
+        self.random_coords_sphere = voronoi_analysis_library.generate_random_array_spherical_generators(self.num_points, self.sphere_radius, self.prng)
 
     def tearDown(self):
         del self.prng
