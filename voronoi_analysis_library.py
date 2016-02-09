@@ -2,10 +2,6 @@
 import glob
 import math
 import numpy
-import matplotlib
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from matplotlib.patches import Rectangle
 import collections
 import scipy
 import scipy.spatial
