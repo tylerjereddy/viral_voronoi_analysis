@@ -913,7 +913,7 @@ def create_control_universe_data(flu_coordinate_file_path):
 
 
 
-def create_control_universe_coord_data(flu_coordinate_file_path):
+def create_control_universe_coord_data(flu_coordinate_file_path,output_path='/sansom/n22/bioc1009/spherical_Voronoi_virus_work/'):
     '''Produce the .gro coordinate files that correspond to the .xtc files produced by the similarly-named function. This should eventually be merged into the matching xtc producer function, but writing this so I don't have to rerun that slow code for now'''
     import MDAnalysis.coordinates.GRO
     import scipy
@@ -954,7 +954,7 @@ def create_control_universe_coord_data(flu_coordinate_file_path):
             residue_subdictionary['selection'].set_positions(outer_leaflet_coord_array[outer_leaflet_particle_counter:outer_leaflet_particle_counter + num_atoms,...])
             outer_leaflet_particle_counter += num_atoms
     #now write the first control gro file with the above random positions on sphere surface
-    gro_writer_instace_1 = MDAnalysis.coordinates.GRO.GROWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_1.gro')
+    gro_writer_instace_1 = MDAnalysis.coordinates.GRO.GROWriter(output_path + 'control_traj_1.gro')
     gro_writer_instace_1.write(input_flu_coordinate_file_universe_object.select_atoms('(resname DOPX and name PO4) or (resname DOPE and name PO4) or (resname POPS and name PO4) or (resname CHOL and name ROH) or (resname PPCH and name PO4)')) 
     #now, set up for writing a second control gro file, with about half as many total coordinates in each leaflet
     merged_halved_atom_groups = None
@@ -968,7 +968,7 @@ def create_control_universe_coord_data(flu_coordinate_file_path):
         else: #start concatenating once initialized
             merged_halved_atom_groups += halved_atomgroup_current_residue_type
     #now write the second control gro file with approx. half as many coordinates in each leaflet
-    gro_writer_instace_2 = MDAnalysis.coordinates.GRO.GROWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_2.gro')
+    gro_writer_instace_2 = MDAnalysis.coordinates.GRO.GROWriter(output_path + 'control_traj_2.gro')
     gro_writer_instace_2.write(merged_halved_atom_groups) 
 
 def TMD_particle_selector_dengue(asymmetric_unit_input_array):
