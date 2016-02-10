@@ -542,8 +542,6 @@ class TestControlCoordProduction(unittest.TestCase):
         cls.d = TempDirectory()
         cls.test_input_path = cls.d.path + '/test_input.gro'
         cls.all_selection.atoms.write(cls.test_input_path)
-        cls.large_output_path = cls.d.path + '/large.gro'
-        cls.small_output_path = cls.d.path + '/small.gro'
         voronoi_analysis_library.create_control_universe_coord_data(cls.test_input_path, output_path=cls.d.path + '/')
         cls.large_output_universe = MDAnalysis.Universe(cls.d.path + '/' + 'control_traj_1.gro')
         cls.small_output_universe = MDAnalysis.Universe(cls.d.path + '/' + 'control_traj_2.gro')
@@ -577,6 +575,53 @@ class TestControlCoordProduction(unittest.TestCase):
         actual_particles_large_sys = self.large_output_universe.select_atoms('all').n_atoms
         self.assertEqual(actual_particles_large_sys, expected_total_particles, "Total number of particles in large control system is not correct.")
         self.assertLess(actual_particles_small_sys, upper_limit_total_particles_small, "Total number of particles in small control system is not correct (Exceeds 60% of particles in original system).")
+
+
+class TestControlTrajProduction(unittest.TestCase):
+    '''Unit test(s) for create_control_universe_data() function.'''
+
+    @classmethod
+    def setUpClass(cls):
+        #need a small flu-like input file (only need residue names to be correct, don't even need coords on sphere for input)
+        cls.u = MDAnalysis.Universe('control_traj_2.gro') #using the output of the tested function as the input, so make sure to wipe the coords first
+        cls.all_selection = cls.u.select_atoms('all')
+        cls.all_selection.set_positions(np.zeros(3)) #all particles are at [0,0,0]
+        cls.d = TempDirectory()
+        cls.test_input_path = cls.d.path + '/test_input.gro'
+        cls.all_selection.atoms.write(cls.test_input_path)
+        voronoi_analysis_library.create_control_universe_data(cls.test_input_path, output_path=cls.d.path + '/', num_frames=3)
+        #call the control *coordinate* version of the function to generate the necessary topology files for reading the trajectories
+        voronoi_analysis_library.create_control_universe_coord_data(cls.test_input_path, output_path=cls.d.path + '/') #this function is tested individually elsewhere
+        cls.large_output_universe = MDAnalysis.Universe(cls.d.path + '/' + 'control_traj_1.gro', cls.d.path + '/' + 'control_traj_1.xtc')
+        cls.small_output_universe = MDAnalysis.Universe(cls.d.path + '/' + 'control_traj_2.gro', cls.d.path + '/' + 'control_traj_2.xtc')
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.d.cleanup()
+        del cls.all_selection
+        del cls.test_input_path
+        del cls.large_output_universe 
+        del cls.small_output_universe 
+
+    def test_control_traj_num_frames(self):
+        '''Test that both of the control trajectories produced have the anticipated number of frames.'''
+        small_traj_frames = self.small_output_universe.trajectory.n_frames
+        large_traj_frames = self.large_output_universe.trajectory.n_frames
+        self.assertEqual(small_traj_frames, 3, "Small control trajectory should have 3 frames, but has {actual_frames}.".format(actual_frames=small_traj_frames))
+        self.assertEqual(large_traj_frames, 3, "Large control trajectory should have 3 frames, but has {actual_frames}.".format(actual_frames=large_traj_frames))
+
+    def test_similarity_coords_all_frames(self):
+        '''Test that the particle coordinates are the same in each frame of both control trajectories (this is a feature of the function).'''
+        small_traj = self.small_output_universe.trajectory
+        large_traj = self.large_output_universe.trajectory
+        small_traj_coords_first_frame = self.small_output_universe.select_atoms('all').coordinates()
+        large_traj_coords_first_frame = self.large_output_universe.select_atoms('all').coordinates()
+        small_traj[-1]
+        large_traj[-1]
+        small_traj_coords_final_frame = self.small_output_universe.select_atoms('all').coordinates()
+        large_traj_coords_final_frame = self.large_output_universe.select_atoms('all').coordinates()
+        np.testing.assert_array_almost_equal(small_traj_coords_first_frame, small_traj_coords_final_frame, decimal = 5, err_msg = "First and final frame coordinates do not match to the desired precision for the small control trajectory.")
+        np.testing.assert_array_almost_equal(large_traj_coords_first_frame, large_traj_coords_final_frame, decimal = 5, err_msg = "First and final frame coordinates do not match to the desired precision for the large control trajectory.")
 
 
 
