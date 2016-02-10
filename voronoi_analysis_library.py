@@ -847,7 +847,7 @@ def precursor_radial_distance_analysis(universe_object,FORS_present=None,control
     else:
         return (list_min_FORS_AM2_distances,list_max_FORS_AM2_distances,list_average_FORS_AM2_distances,list_std_dev_FORS_AM2_distances,list_frame_numbers,list_FORS_percent_above_treshold,list_min_PPCH_PO4_distances,list_max_PPCH_PO4_distances,list_average_PPCH_PO4_distances,list_std_dev_PPCH_PO4_distances,list_PPCH_percent_above_treshold,list_min_CHOL_ROH_distances,list_max_CHOL_ROH_distances,list_average_CHOL_ROH_distances,list_std_dev_CHOL_ROH_distances,list_CHOL_ROH_midpoint_distances,list_CHOL_ROH_percent_above_threshold,list_CHOL_ROH_percent_below_threshold,list_min_remaining_headgroup_distances,list_max_remaining_headgroup_distances,list_average_remaining_headgroup_distances,list_std_dev_remaining_headgroup_distances,list_remaining_headgroup_midpoint_distances,list_remaining_headgroup_percent_above_threshold,list_remaining_headgroup_percent_below_threshold,threshold)
         
-def create_control_universe_data(flu_coordinate_file_path):
+def create_control_universe_data(flu_coordinate_file_path, output_path='/sansom/n22/bioc1009/spherical_Voronoi_virus_work/', num_frames=5000):
     '''Take a flu simulation coordinate file as input and output two different control xtc files for my ipynb Voronoi analysis (area per lipid) workflow. Will probably set the two control xtc files to have lipid densities (and therefore average area per lipid values) that differ by a factor of two. Will assume the input flu simulation data does NOT include FORS.'''
     import MDAnalysis.coordinates.XTC
     import scipy
@@ -888,8 +888,8 @@ def create_control_universe_data(flu_coordinate_file_path):
             residue_subdictionary['selection'].set_positions(outer_leaflet_coord_array[outer_leaflet_particle_counter:outer_leaflet_particle_counter + num_atoms,...])
             outer_leaflet_particle_counter += num_atoms
     #now write the first control xtc file with the above random positions on sphere surface
-    xtc_writer_instace_1 = MDAnalysis.coordinates.XTC.XTCWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_1.xtc',total_residue_headgroup_coordinates_outer_leaflet + total_residue_headgroup_coordinates_inner_leaflet)
-    frames_to_write = 5000
+    xtc_writer_instace_1 = MDAnalysis.coordinates.XTC.XTCWriter(output_path + 'control_traj_1.xtc',total_residue_headgroup_coordinates_outer_leaflet + total_residue_headgroup_coordinates_inner_leaflet)
+    frames_to_write = num_frames
     while frames_to_write > 0:
         xtc_writer_instace_1.write(input_flu_coordinate_file_universe_object.select_atoms('(resname DOPX and name PO4) or (resname DOPE and name PO4) or (resname POPS and name PO4) or (resname CHOL and name ROH) or (resname PPCH and name PO4)')) #5000 frames with the same custom random coordinates
         frames_to_write -= 1
@@ -905,8 +905,8 @@ def create_control_universe_data(flu_coordinate_file_path):
         else: #start concatenating once initialized
             merged_halved_atom_groups += halved_atomgroup_current_residue_type
     #now write the second control xtc file with approx. half as many coordinates in each leaflet
-    xtc_writer_instace_2 = MDAnalysis.coordinates.XTC.XTCWriter('/sansom/n22/bioc1009/spherical_Voronoi_virus_work/control_traj_2.xtc',merged_halved_atom_groups.n_atoms)
-    frames_to_write = 5000
+    xtc_writer_instace_2 = MDAnalysis.coordinates.XTC.XTCWriter(output_path + 'control_traj_2.xtc',merged_halved_atom_groups.n_atoms)
+    frames_to_write = num_frames
     while frames_to_write > 0:
         xtc_writer_instace_2.write(merged_halved_atom_groups) #5000 frames with the same custom random coordinates
         frames_to_write -= 1
