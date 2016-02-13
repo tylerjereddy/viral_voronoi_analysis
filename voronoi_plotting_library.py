@@ -4,6 +4,7 @@ import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from matplotlib.patches import Rectangle
+import numpy
 
 class plot_voronoi_neighbour_data_species_specific:
     '''Plot Voronoi neighbour data probing species-specific effects.'''
