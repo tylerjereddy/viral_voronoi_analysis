@@ -604,13 +604,13 @@ def produce_universe_object_on_remote_engine(data_path_1 = None,data_path_2 = No
     universe_object = MDAnalysis.Universe(coordinate_filepath,list_trajectories_compact_no_solvent) 
     return universe_object
 
-def produce_universe_object_on_remote_engine_dengue(coordinate_file_path):
+def produce_universe_object_on_remote_engine_dengue(coordinate_file_path, traj_file_path = '/sansom/n22/bioc1009/sim126_extended/translated_test.xtc'):
     '''Produce MDA Universe object on a remote IPython engine for dengue simulation [sim126 extended].'''
     import MDAnalysis
     import numpy
     import scipy
     import math 
-    universe_object = MDAnalysis.Universe(coordinate_file_path,'/sansom/n22/bioc1009/sim126_extended/translated_test.xtc')
+    universe_object = MDAnalysis.Universe(coordinate_file_path, traj_file_path)
     return universe_object
 
 

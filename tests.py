@@ -8,6 +8,7 @@ import voronoi_analysis_library
 import MDAnalysis
 import MDAnalysis.coordinates
 from MDAnalysis.coordinates.xdrfile.XTC import XTCWriter
+from MDAnalysis.tests.datafiles import GRO, XTC
 from testfixtures import TempDirectory
 
 class TestRawNeighbourAnalysis(unittest.TestCase):
@@ -624,4 +625,47 @@ class TestControlTrajProduction(unittest.TestCase):
         np.testing.assert_array_almost_equal(large_traj_coords_first_frame, large_traj_coords_final_frame, decimal = 5, err_msg = "First and final frame coordinates do not match to the desired precision for the large control trajectory.")
 
 
+class TestRemoteUniverse(unittest.TestCase):
+    '''Unit test(s) for creation of universe objects on remote IPython engines. Probably will not try to create a separate process, but can still make sure universe objects are generated, etc.'''
 
+    @classmethod
+    def setUpClass(cls):
+        cls.generated_dengue_u = voronoi_analysis_library.produce_universe_object_on_remote_engine_dengue(GRO, XTC)
+        #need a temporary directory with some artificial xtc files to properly test the generic universe object generation
+        cls.template_u = MDAnalysis.Universe(GRO)
+        cls.d = TempDirectory()
+        for dummy_xtc_filename in ['dummy_no_solvent_01.xtc','dummy_no_solvent_03.xtc','dummy_no_solvent_05.xtc','dummy_no_solvent_11.xtc', 'dummy_no_solvent_09.xtc']:
+            with XTCWriter(cls.d.path + '/' + dummy_xtc_filename, cls.template_u.trajectory.n_atoms) as W:
+                W.write(cls.template_u)
+        cls.d2 = TempDirectory()
+        for dummy_xtc_filename in ['dummy_no_solvent_99.xtc', 'dummy_no_solvent_81.xtc']:
+            with XTCWriter(cls.d2.path + '/' + dummy_xtc_filename, cls.template_u.trajectory.n_atoms) as W:
+                W.write(cls.template_u)
+        cls.generated_u = voronoi_analysis_library.produce_universe_object_on_remote_engine(data_path_1 = cls.d.path + '/', data_path_2 = cls.d2.path + '/', limit_1=-6, limit_2=-4, limit_3=-6,limit_4=-4,coordinate_filepath=GRO, traj_data_extension=1)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.d.cleanup()
+        cls.d2.cleanup()
+        del cls.generated_dengue_u
+        del cls.generated_u
+        del cls.template_u
+
+    def test_atom_total_generated_dengue_universe(self):
+        '''Simply test that artificial dengue universe object has more than 0 atoms.'''
+        num_atoms_dengue_u = self.generated_dengue_u.select_atoms('all').n_atoms
+        self.assertGreater(num_atoms_dengue_u, 0, "The number of atoms in the artificial dengue universe is not greater than zero.")
+
+    def test_frame_total_generated_dengue_universe(self):
+        num_frames_dengue_u = self.generated_dengue_u.trajectory.n_frames
+        self.assertGreater(num_frames_dengue_u, 0, "The number of frames in the artificial dengue universe is not greater than zero.")
+
+    def test_frame_total_generated_universe(self):
+        num_frames_u = self.generated_u.trajectory.n_frames
+        self.assertEqual(num_frames_u, 7, "Incorrect total number of frames in general universe.")
+
+    def test_atom_total_generated_universe(self):
+        num_atoms_u = self.generated_u.select_atoms('all').n_atoms
+        self.assertGreater(num_atoms_u, 0, "The number of atoms in the artificial general universe is not greater than 0.")
+
+        
