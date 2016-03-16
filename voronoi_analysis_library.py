@@ -106,12 +106,10 @@ def calculate_surface_area_of_a_spherical_Voronoi_polygon(array_ordered_Voronoi_
 class voronoi_neighbour_analysis(object):
     '''Accepts the dictionary of Voronoi diagram data structure I've been using in the ipynb and allows for parsing of neighbour properties in Voronoi diagrams.'''
 
-    def __init__(self,voronoi_data_dict,inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays', inner_leaflet_radius=None, outer_leaflet_radius=None):
+    def __init__(self,voronoi_data_dict,inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays'):
         self.voronoi_data_dict = voronoi_data_dict
         self.outer_leaflet_data_key = outer_leaflet_vertex_list_key
         self.inner_leaflet_data_key = inner_leaflet_vertex_list_key
-        self.inner_leaflet_radius = inner_leaflet_radius
-        self.outer_leaflet_radius = outer_leaflet_radius
 
     def voronoi_cell_row_accounting(self, simplified_dict, frame_index):
         '''Produce convenience dictionary that contains the number of rows in each voronoi cell array, as this is quite costly to calculate repetitively if not abstacted. Basically, tricky to work with because the data is not homogenously structured (sub-arrays have different numbers of rows so numpy convenience functions mostly don't work).'''
@@ -134,14 +132,14 @@ class voronoi_neighbour_analysis(object):
         outer_leaflet_neighbour_dict = {}
         inner_leaflet_neighbour_dict = {}
       
-        inner_leaflet_neighbour_dict = self.per_leaflet_accumulation_neighbour_data(self.inner_leaflet_data_key, self.voronoi_data_dict, inner_leaflet_neighbour_dict, simplified_inner_leaflet_voronoi_data_dict,frame_index, inner_leaflet_voronoi_row_accounting_dict, self.inner_leaflet_radius)
-        outer_leaflet_neighbour_dict = self.per_leaflet_accumulation_neighbour_data(self.outer_leaflet_data_key, self.voronoi_data_dict, outer_leaflet_neighbour_dict, simplified_outer_leaflet_voronoi_data_dict,frame_index, outer_leaflet_voronoi_row_accounting_dict, self.outer_leaflet_radius)
+        inner_leaflet_neighbour_dict = self.per_leaflet_accumulation_neighbour_data(self.inner_leaflet_data_key, self.voronoi_data_dict, inner_leaflet_neighbour_dict, simplified_inner_leaflet_voronoi_data_dict,frame_index, inner_leaflet_voronoi_row_accounting_dict)
+        outer_leaflet_neighbour_dict = self.per_leaflet_accumulation_neighbour_data(self.outer_leaflet_data_key, self.voronoi_data_dict, outer_leaflet_neighbour_dict, simplified_outer_leaflet_voronoi_data_dict,frame_index, outer_leaflet_voronoi_row_accounting_dict)
 
         #idea is to have dictionary data structures that look like this (prototype at the moment): {'POPC': {5 : {'frequency': 20, 'list_surface_areas':[22,11,17], ...}}} where 5 is the number of neighbours
         #I think this won't handle multiple frames correctly yet, but just trying to get things started
         return (inner_leaflet_neighbour_dict, outer_leaflet_neighbour_dict)
 
-    def per_leaflet_accumulation_neighbour_data(self, leaflet_data_key, data_dict, results_dictionary, simplified_data_dict, frame_index, voronoi_cell_row_accounting_dict, radius):
+    def per_leaflet_accumulation_neighbour_data(self, leaflet_data_key, data_dict, results_dictionary, simplified_data_dict, frame_index, voronoi_cell_row_accounting_dict):
         '''Populate results_dictionary with voronoi cell neighbour data structure for a given leaflet (and specific frame).'''
 
         def default_factory():
@@ -153,7 +151,8 @@ class voronoi_neighbour_analysis(object):
             neighbour_freq_dict = collections.defaultdict(default_factory)
             leaflet_voronoi_data_list_current_species = subdictionary[leaflet_data_key]
             list_voronoi_cells_current_frame = leaflet_voronoi_data_list_current_species[frame_index]
-            #print 'len(list_voronoi_cells_current_frame):', len(list_voronoi_cells_current_frame)
+            #pull out the radius, which is the same for all particles because they have been projected to a perfect sphere in voronoi_analysis_loop
+            radius = convert_cartesian_array_to_spherical_array(list_voronoi_cells_current_frame[0])[0,0]
             for voronoi_cell_coord_array in list_voronoi_cells_current_frame: #I'll want to find common vertices by checking all cells in current leaflet
                 shape_voronoi_cell_coord_array = voronoi_cell_coord_array.shape
                 dimensions_voronoi_cell_coord_array = voronoi_cell_coord_array.ndim 
@@ -218,7 +217,7 @@ class voronoi_neighbour_analysis_by_type(voronoi_neighbour_analysis):
             dict_neighbour_data_current_voronoi_cell[molecular_species_name] = {'num_neighbours': neighbour_count_current_voronoi_cell} 
         return dict_neighbour_data_current_voronoi_cell
 
-    def per_leaflet_accumulation_neighbour_data(self, leaflet_data_key, data_dict, results_dictionary, simplified_data_dict, frame_index, voronoi_cell_row_accounting_dict, radius):
+    def per_leaflet_accumulation_neighbour_data(self, leaflet_data_key, data_dict, results_dictionary, simplified_data_dict, frame_index, voronoi_cell_row_accounting_dict):
         '''Populate results_dictionary with voronoi cell neighbour data structure for a given leaflet (and specific frame).'''
 
         results_dictionary = {}
@@ -227,6 +226,7 @@ class voronoi_neighbour_analysis_by_type(voronoi_neighbour_analysis):
             print molecular_species_name_string, '(', leaflet_data_key, ')'
             leaflet_voronoi_data_list_current_species = subdictionary[leaflet_data_key]
             list_voronoi_cells_current_frame = leaflet_voronoi_data_list_current_species[frame_index]
+            radius = convert_cartesian_array_to_spherical_array(list_voronoi_cells_current_frame[0])[0,0]
             #print 'len(list_voronoi_cells_current_frame):', len(list_voronoi_cells_current_frame)
             for voronoi_cell_coord_array in list_voronoi_cells_current_frame: #I'll want to find common vertices by checking all cells in current leaflet
                 shape_voronoi_cell_coord_array = voronoi_cell_coord_array.shape

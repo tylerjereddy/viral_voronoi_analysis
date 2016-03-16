@@ -38,7 +38,7 @@ class TestRawNeighbourAnalysis(unittest.TestCase):
         for resname, subdict in self.small_data_dict.iteritems():
             subdict['voronoi_cell_list_vertex_arrays'] = [[self.a,self.b,self.c]]
             subdict['voronoi_cell_list_vertex_arrays_inner_leaflet'] = [[self.a,self.b,self.c]]
-        voronoi_neighbour_instance = voronoi_analysis_library.voronoi_neighbour_analysis(self.small_data_dict, inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays', inner_leaflet_radius=1.0, outer_leaflet_radius=2.0) #using dummy values for the radii as the points aren't actually on a sphere for the test
+        voronoi_neighbour_instance = voronoi_analysis_library.voronoi_neighbour_analysis(self.small_data_dict, inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays') #using dummy values for the radii as the points aren't actually on a sphere for the test
         inner_leaflet_neighbour_dict, outer_leaflet_neighbour_dict = voronoi_neighbour_instance.identify_voronoi_neighbours(frame_index = 0)
         self.assertEqual(inner_leaflet_neighbour_dict['POPC'].keys(), [0], "Inner leaflet POPC should have zero neighbours.") 
         self.assertEqual(inner_leaflet_neighbour_dict['PPCE'].keys(), [0], "Inner leaflet PPCE should have zero neighbours.") 
@@ -56,7 +56,7 @@ class TestRawNeighbourAnalysis(unittest.TestCase):
         for resname, subdict in self.small_data_dict.iteritems():
             subdict['voronoi_cell_list_vertex_arrays'] = [[a,b,b]]
             subdict['voronoi_cell_list_vertex_arrays_inner_leaflet'] = [[a,b,b]]
-        voronoi_neighbour_instance = voronoi_analysis_library.voronoi_neighbour_analysis(self.small_data_dict, inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays', inner_leaflet_radius=1.0, outer_leaflet_radius=2.0) #using dummy values for the radii as the points aren't actually on a sphere for the test
+        voronoi_neighbour_instance = voronoi_analysis_library.voronoi_neighbour_analysis(self.small_data_dict, inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays') #using dummy values for the radii as the points aren't actually on a sphere for the test
         inner_leaflet_neighbour_dict, outer_leaflet_neighbour_dict = voronoi_neighbour_instance.identify_voronoi_neighbours(frame_index = 0)
         self.assertEqual(inner_leaflet_neighbour_dict['POPC'].keys(), [2,4], "Inner leaflet POPC should have either 2 or 4 neighbours, but got {result}.".format(result=inner_leaflet_neighbour_dict['POPC'].keys())) 
         self.assertEqual(inner_leaflet_neighbour_dict['PPCE'].keys(), [2,4], "Inner leaflet PPCE should have either 2 or 4 neighbours.") 
@@ -77,7 +77,7 @@ class TestRawNeighbourAnalysis(unittest.TestCase):
         for resname, subdict in self.small_data_dict.iteritems():
             subdict['voronoi_cell_list_vertex_arrays'] = [[a,b,c]]
             subdict['voronoi_cell_list_vertex_arrays_inner_leaflet'] = [[a,b,c]]
-        voronoi_neighbour_instance = voronoi_analysis_library.voronoi_neighbour_analysis(self.small_data_dict, inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays', inner_leaflet_radius=1.0, outer_leaflet_radius=2.0) #using dummy values for the radii as the points aren't actually on a sphere for the test
+        voronoi_neighbour_instance = voronoi_analysis_library.voronoi_neighbour_analysis(self.small_data_dict, inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays') #using dummy values for the radii as the points aren't actually on a sphere for the test
         inner_leaflet_neighbour_dict, outer_leaflet_neighbour_dict = voronoi_neighbour_instance.identify_voronoi_neighbours(frame_index = 0)
         self.assertEqual(inner_leaflet_neighbour_dict['POPC'].keys(), [4], "Inner leaflet POPC should have 4 neighbours")
         self.assertEqual(inner_leaflet_neighbour_dict['PPCE'].keys(), [4], "Inner leaflet PPCE should have 4 neighbours.") 
@@ -109,7 +109,7 @@ class TestSpeciesSpecificNeighbourAnalysis(unittest.TestCase):
         for resname, subdict in self.small_data_dict.iteritems():
             subdict['voronoi_cell_list_vertex_arrays'] = [[self.a,self.b,self.c]]
             subdict['voronoi_cell_list_vertex_arrays_inner_leaflet'] = [[self.a,self.b,self.c]]
-        voronoi_neighbour_instance = voronoi_analysis_library.voronoi_neighbour_analysis_by_type(self.small_data_dict, inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays', inner_leaflet_radius=1.0, outer_leaflet_radius=2.0) #using dummy values for the radii as the points aren't actually on a sphere for the test
+        voronoi_neighbour_instance = voronoi_analysis_library.voronoi_neighbour_analysis_by_type(self.small_data_dict, inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays') #using dummy values for the radii as the points aren't actually on a sphere for the test
         inner_leaflet_neighbour_dict, outer_leaflet_neighbour_dict = voronoi_neighbour_instance.identify_voronoi_neighbours(frame_index = 0)
         self.assertEqual(inner_leaflet_neighbour_dict['POPC']['POPC'].keys(), [2], "Inner leaflet POPC should have 2 neighbours of type POPC.")
         self.assertEqual(inner_leaflet_neighbour_dict['POPC']['PPCE'].keys(), [2], "Inner leaflet POPC should have 2 neighbours of type PPCE.")
