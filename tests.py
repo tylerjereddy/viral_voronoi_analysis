@@ -668,4 +668,62 @@ class TestRemoteUniverse(unittest.TestCase):
         num_atoms_u = self.generated_u.select_atoms('all').n_atoms
         self.assertGreater(num_atoms_u, 0, "The number of atoms in the artificial general universe is not greater than 0.")
 
-        
+class TestRadialDistanceDengue(unittest.TestCase):
+    '''For testing voronoi_analysis_library.precursor_radial_distance_analysis_dengue()'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.dengue_universe = MDAnalysis.Universe('dengue_final_snapshot_compact_no_solvent.gro.bz2')
+        cls.d = TempDirectory()
+        with XTCWriter(cls.d.path + '/' + 'small_dengue_u_testing.xtc', cls.dengue_universe.trajectory.n_atoms) as W:
+            for frame in xrange(31): #using 31 frames because of skip 10 in code
+                W.write(cls.dengue_universe)
+        cls.generated_dengue_universe = MDAnalysis.Universe('dengue_final_snapshot_compact_no_solvent.gro.bz2', cls.d.path + '/small_dengue_u_testing.xtc')
+        cls.radial_analysis_output_data_list = voronoi_analysis_library.precursor_radial_distance_analysis_dengue(cls.generated_dengue_universe)
+
+    @classmethod
+    def tearDownClass(cls):
+        del cls.dengue_universe
+        cls.d.cleanup()
+        del cls.generated_dengue_universe
+        del cls.radial_analysis_output_data_list
+
+
+    def test_frame_numbers(self):
+        '''The list of frame numbers should be [0,10,20,30].'''
+        actual_list_frame_numbers = self.radial_analysis_output_data_list[4]
+        self.assertEqual(actual_list_frame_numbers, [0,10,20,30], "The list of frame numbers should be [0,10,20,30], but got {actual}".format(actual=actual_list_frame_numbers))
+    
+    def test_lipid_headgroup_distance_properties(self):
+        '''Test some simple properties of the lipid headgroup radial distances.'''
+        array_minimum_lipid_headgroup_distances = np.array(self.radial_analysis_output_data_list[0])
+        array_maximum_lipid_headgroup_distances = np.array(self.radial_analysis_output_data_list[1])
+        array_average_lipid_headgroup_distances = np.array(self.radial_analysis_output_data_list[2])
+        array_std_lipid_headgroup_distances = np.array(self.radial_analysis_output_data_list[3])
+        array_midpoint_lipid_headgroup_distances = np.array(self.radial_analysis_output_data_list[7])
+        np.testing.assert_array_less(array_minimum_lipid_headgroup_distances, array_maximum_lipid_headgroup_distances)
+        np.testing.assert_array_less(array_average_lipid_headgroup_distances, array_maximum_lipid_headgroup_distances)
+        np.testing.assert_array_less(array_minimum_lipid_headgroup_distances, array_average_lipid_headgroup_distances)
+        np.testing.assert_array_less(array_midpoint_lipid_headgroup_distances, array_maximum_lipid_headgroup_distances)
+        np.testing.assert_array_less(array_std_lipid_headgroup_distances, array_average_lipid_headgroup_distances)
+
+    def test_headgroup_threshold_percentages(self):
+        '''Test to ensure that there are always more headgroups in the outer leaflet than the inner leaflet, for obvious reasons.
+        Also, test to ensure that 100 % of headgroups are accounted for.'''
+        array_percent_lipid_headgroups_outer_leaflet = np.array(self.radial_analysis_output_data_list[5])
+        array_percent_lipid_headgroups_inner_leaflet = np.array(self.radial_analysis_output_data_list[6])
+        np.testing.assert_array_less(array_percent_lipid_headgroups_inner_leaflet, array_percent_lipid_headgroups_outer_leaflet)
+        np.testing.assert_array_almost_equal(array_percent_lipid_headgroups_inner_leaflet + array_percent_lipid_headgroups_outer_leaflet, numpy.zeros(array_percent_lipid_headgroups_outer_leaflet.shape) + 100., decimal = 1)
+
+    def test_protein_radial_distances(self):
+        '''Simple test(s) for the calculated protein radial distances.'''
+        array_max_protein_distances = np.array(self.radial_analysis_output_data_list[9])
+        array_min_protein_distances = np.array(self.radial_analysis_output_data_list[8])
+        np.testing.assert_array_less(array_min_protein_distances, array_max_protein_distances)
+        np.testing.assert_array_less(array_max_protein_distances, numpy.zeros(array_max_protein_distances.shape) + 300) #radial distance ceiling check
+        np.testing.assert_array_less(numpy.zeros(array_max_protein_distances.shape) + 100, array_max_protein_distances) #radial distance basement check
+
+    
+
+
+
