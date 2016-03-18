@@ -723,7 +723,96 @@ class TestRadialDistanceDengue(unittest.TestCase):
         np.testing.assert_array_less(array_max_protein_distances, numpy.zeros(array_max_protein_distances.shape) + 300) #radial distance ceiling check
         np.testing.assert_array_less(numpy.zeros(array_max_protein_distances.shape) + 100, array_max_protein_distances) #radial distance basement check
 
-    
+class TestRadialDistance(unittest.TestCase):
+    '''Tests for the general radial distance analysis code -- voronoi_analysis_library.precursor_radial_distance_analysis().'''
 
+    @classmethod
+    def setUpClass(cls):
+        cls.control_universe = MDAnalysis.Universe('control_traj_2.gro')
+        cls.flu_universe_NO_FORS = MDAnalysis.Universe('sim35_final_snapshot_compact_no_solvent.gro.bz2')
+        cls.flu_universe_WITH_FORS = MDAnalysis.Universe('sim39_final_snapshot_compact_no_solvent.gro.bz2')
 
+        cls.d = TempDirectory()
+        for temp_testing_xtc_filename, universe in zip(['small_control_testing.xtc', 'small_flu_NO_FORS.xtc','small_flu_WITH_FORS.xtc'],[cls.control_universe, cls.flu_universe_NO_FORS, cls.flu_universe_WITH_FORS]):
+            with XTCWriter(cls.d.path + '/' + temp_testing_xtc_filename, universe.trajectory.n_atoms) as W:
+                for frame in xrange(301): #using 301 frames because of skip 100 in code
+                    W.write(universe)
+        cls.generated_control_universe = MDAnalysis.Universe('control_traj_2.gro', cls.d.path + '/small_control_testing.xtc')
+        cls.generated_flu_universe_NO_FORS = MDAnalysis.Universe('sim35_final_snapshot_compact_no_solvent.gro.bz2', cls.d.path + '/small_flu_NO_FORS.xtc')
+        cls.generated_flu_universe_WITH_FORS = MDAnalysis.Universe('sim39_final_snapshot_compact_no_solvent.gro.bz2', cls.d.path + '/small_flu_WITH_FORS.xtc')
+        cls.radial_analysis_output_data_list_control = voronoi_analysis_library.precursor_radial_distance_analysis(cls.generated_control_universe, FORS_present=None,control_condition=1)
+        cls.radial_analysis_output_data_list_flu_NO_FORS = voronoi_analysis_library.precursor_radial_distance_analysis(cls.generated_flu_universe_NO_FORS, FORS_present=None)
+        cls.radial_analysis_output_data_list_flu_WITH_FORS = voronoi_analysis_library.precursor_radial_distance_analysis(cls.generated_flu_universe_WITH_FORS,FORS_present=1)
 
+    @classmethod
+    def tearDownClass(cls):
+        del cls.control_universe
+        del cls.flu_universe_NO_FORS
+        del cls.flu_universe_WITH_FORS
+        cls.d.cleanup()
+        del cls.generated_control_universe
+        del cls.generated_flu_universe_NO_FORS
+        del cls.generated_flu_universe_WITH_FORS
+        del cls.radial_analysis_output_data_list_control
+        del cls.radial_analysis_output_data_list_flu_NO_FORS
+        del cls.radial_analysis_output_data_list_flu_WITH_FORS
+
+    def test_frames_parsed(self):
+        '''Ensure that the correct frames are parsed in the radial distance analysis code for each of the three conditions (control, flu, flu + FORS).'''
+        actual_list_frame_numbers_control = self.radial_analysis_output_data_list_control[4]
+        actual_list_frame_numbers_flu_NO_FORS = self.radial_analysis_output_data_list_flu_NO_FORS[4]
+        actual_list_frame_numbers_flu_WITH_FORS = self.radial_analysis_output_data_list_flu_WITH_FORS[4]
+        self.assertEqual(actual_list_frame_numbers_control, [0,100,200,300], "The list of control condition frame numbers should be [0,100,200,300], but got {actual}".format(actual=actual_list_frame_numbers_control))
+        self.assertEqual(actual_list_frame_numbers_flu_NO_FORS, [0,100,200,300], "The list of flu (NO FORS) condition frame numbers should be [0,100,200,300], but got {actual}".format(actual=actual_list_frame_numbers_flu_NO_FORS))
+        self.assertEqual(actual_list_frame_numbers_flu_WITH_FORS, [0,100,200,300], "The list of flu (WITH FORS) condition frame numbers should be [0,100,200,300], but got {actual}".format(actual=actual_list_frame_numbers_flu_WITH_FORS))
+
+    def test_relative_radial_distances(self):
+        '''Perform some simple tests of radial distance properties in the three conditions.'''
+        PPCH_PO4_min_distances_control = np.array(self.radial_analysis_output_data_list_control[0])
+        PPCH_PO4_max_distances_control = np.array(self.radial_analysis_output_data_list_control[1])
+        PPCH_PO4_avg_distances_control = np.array(self.radial_analysis_output_data_list_control[2])
+        PPCH_PO4_std_distances_control = np.array(self.radial_analysis_output_data_list_control[3])
+
+        PPCH_PO4_min_distances_flu_NO_FORS = np.array(self.radial_analysis_output_data_list_flu_NO_FORS[0])
+        PPCH_PO4_max_distances_flu_NO_FORS = np.array(self.radial_analysis_output_data_list_flu_NO_FORS[1])
+        PPCH_PO4_avg_distances_flu_NO_FORS = np.array(self.radial_analysis_output_data_list_flu_NO_FORS[2])
+        PPCH_PO4_std_distances_flu_NO_FORS = np.array(self.radial_analysis_output_data_list_flu_NO_FORS[3])
+
+        FORS_AM2_min_distances_flu_WITH_FORS = np.array(self.radial_analysis_output_data_list_flu_WITH_FORS[0])
+        FORS_AM2_max_distances_flu_WITH_FORS = np.array(self.radial_analysis_output_data_list_flu_WITH_FORS[1])
+        FORS_AM2_avg_distances_flu_WITH_FORS = np.array(self.radial_analysis_output_data_list_flu_WITH_FORS[2])
+        FORS_AM2_std_distances_flu_WITH_FORS = np.array(self.radial_analysis_output_data_list_flu_WITH_FORS[3])
+
+        #min < max
+        np.testing.assert_array_less(PPCH_PO4_min_distances_flu_NO_FORS, PPCH_PO4_max_distances_flu_NO_FORS) 
+        np.testing.assert_array_less(FORS_AM2_min_distances_flu_WITH_FORS, FORS_AM2_max_distances_flu_WITH_FORS) 
+
+        #avg < max   
+        np.testing.assert_array_less(PPCH_PO4_avg_distances_flu_NO_FORS, PPCH_PO4_max_distances_flu_NO_FORS) 
+        np.testing.assert_array_less(FORS_AM2_avg_distances_flu_WITH_FORS, FORS_AM2_max_distances_flu_WITH_FORS) 
+
+        #std < avg
+        np.testing.assert_array_less(PPCH_PO4_std_distances_flu_NO_FORS, PPCH_PO4_avg_distances_flu_NO_FORS) 
+        np.testing.assert_array_less(FORS_AM2_std_distances_flu_WITH_FORS,FORS_AM2_avg_distances_flu_WITH_FORS) 
+
+        #exact values for control:
+        np.testing.assert_array_almost_equal(PPCH_PO4_max_distances_control, numpy.zeros(PPCH_PO4_max_distances_control.shape) + 701.8, decimal = 1)
+        np.testing.assert_array_almost_equal(PPCH_PO4_min_distances_control, numpy.zeros(PPCH_PO4_min_distances_control.shape) + 698.1, decimal = 1)
+
+    def test_thresholds(self):
+        '''Test some of the leaflet assignment thresholds from radial distance analysis for flu and control conditions.'''
+        control_percent_DOPE_DOPX_POPS_below_threshold = np.array(self.radial_analysis_output_data_list_control[19])
+        control_percent_DOPE_DOPX_POPS_above_threshold = np.array(self.radial_analysis_output_data_list_control[18])
+        control_percent_CHOL_above_threshold = np.array(self.radial_analysis_output_data_list_control[11])
+
+        np.testing.assert_array_almost_equal(control_percent_CHOL_above_threshold, np.zeros(control_percent_CHOL_above_threshold.shape) + 100., decimal=1)
+        np.testing.assert_array_less(control_percent_DOPE_DOPX_POPS_above_threshold, control_percent_DOPE_DOPX_POPS_below_threshold) 
+        
+        flu_NO_FORS_CHOL_above_threshold = np.array(self.radial_analysis_output_data_list_flu_NO_FORS[11])
+        flu_NO_FORS_CHOL_below_threshold = np.array(self.radial_analysis_output_data_list_flu_NO_FORS[12])
+
+        np.testing.assert_array_almost_equal(flu_NO_FORS_CHOL_above_threshold + flu_NO_FORS_CHOL_below_threshold, np.zeros(flu_NO_FORS_CHOL_above_threshold.shape) + 100., decimal=1)
+        np.testing.assert_array_less(flu_NO_FORS_CHOL_below_threshold, flu_NO_FORS_CHOL_above_threshold) 
+
+        flu_WITH_FORS_FORS_above_threshold = np.array(self.radial_analysis_output_data_list_flu_WITH_FORS[5])
+        np.testing.assert_array_less(np.zeros(flu_WITH_FORS_FORS_above_threshold.shape) + 95.0, flu_WITH_FORS_FORS_above_threshold) #vast majority of FORS should be outer leaflet
