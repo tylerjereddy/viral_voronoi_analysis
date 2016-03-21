@@ -206,50 +206,61 @@ class TestSurfaceAreaSphere(unittest.TestCase):
         calculated_SA = voronoi_analysis_library.calculate_surface_area_sphere(self.sphere_radius)
         self.assertAlmostEqual(calculated_SA, self.google_result, places = 3, msg = "Calculated surface area of sphere is not correct to 3 decimal places.")
 
-class TestVoronoiAnalysisLoop(unittest.TestCase):
-    '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function.'''
-
-    @classmethod
-    def setUpClass(cls):
-        cls.u = MDAnalysis.Universe('control_traj_2.gro') #mock flu universe with DOPE/X and POPS inner leaflet; PPCH / CHOL outer leaflet; no protein
-        cls.u_flu = MDAnalysis.Universe('sim39_final_snapshot_compact_no_solvent.gro.bz2') #actual flu universe
-        cls.u_dengue = MDAnalysis.Universe('dengue_final_snapshot_compact_no_solvent.gro.bz2') #dengue universe
-
-        cls.d = TempDirectory()
-        #create short trajectories for testing purposes
-        cls.xtc = cls.d.path + '/control_traj_2_dummy.xtc'
-        cls.xtc_flu = cls.d.path + '/flu_dummy.xtc'
-        cls.xtc_dengue = cls.d.path + '/dengue_dummy.xtc'
-
-        for output_xtc, universe in zip([cls.xtc, cls.xtc_flu, cls.xtc_dengue],[cls.u, cls.u_flu, cls.u_dengue]):
-            with XTCWriter(output_xtc, universe.trajectory.n_atoms) as W:
-                cls.num_frames = 4
-                while cls.num_frames > 0:
-                    W.write(universe)
-                    cls.num_frames -= 1
-        cls.u_multiframe = MDAnalysis.Universe('control_traj_2.gro', cls.xtc)
-        cls.u_multiframe_flu = MDAnalysis.Universe('sim39_final_snapshot_compact_no_solvent.gro.bz2', cls.xtc_flu)
-        cls.u_multiframe_dengue = MDAnalysis.Universe('dengue_final_snapshot_compact_no_solvent.gro.bz2', cls.xtc_dengue)
-        cls.loop_result = voronoi_analysis_library.voronoi_analysis_loop(cls.u_multiframe,0,'full',1,control_condition=1)
-        cls.loop_result_flu = voronoi_analysis_library.voronoi_analysis_loop(cls.u_multiframe_flu,0,'full',1,PPCH_PO4_threshold=275,proteins_present='yes',FORS_present='yes')
-        cls.loop_result_dengue = voronoi_analysis_library.voronoi_analysis_loop(cls.u_multiframe_dengue,0,'full',1,proteins_present='yes',dengue_condition=1)
+class CommonTestsVoronoiAnalysisLoop(object):
+    '''Tests that are reused for the voronoi_analysis_loop testing.'''
 
     @classmethod
     def tearDownClass(cls):
         del cls.u
-        del cls.u_flu
-        del cls.u_dengue
         cls.d.cleanup()
         del cls.num_frames
         del cls.loop_result
-        del cls.loop_result_flu
-        del cls.loop_result_dengue
         del cls.xtc
-        del cls.xtc_flu
-        del cls.xtc_dengue
         del cls.u_multiframe
-        del cls.u_multiframe_flu
-        del cls.u_multiframe_dengue
+        del cls.expected_keys
+        del cls.dict_test_key
+
+    def test_frame_count(self):
+        '''Ensure that data structures returned by voronoi_analysis_loop match the number of frames in the input data.'''
+        list_frame_numbers = self.loop_result[0]
+        first_list_percent_SA_reconstitution = self.loop_result[1]
+        second_list_percent_SA_reconstitution = self.loop_result[2]
+        self.assertEqual(list_frame_numbers, [0,1,2,3], "Incorrect frame numbers returned by voronoi_analysis_loop: {returned_list}.".format(returned_list=list_frame_numbers))
+        tuple_list_lengths = len(first_list_percent_SA_reconstitution), len(second_list_percent_SA_reconstitution)
+        self.assertEqual(tuple_list_lengths, (4,4), "Surface area reconstitution data structures are inconsistent with the number of frames in the data received by voronoi_analysis_loop. Actual list lengths received: {list_tuple}".format(list_tuple=tuple_list_lengths))
+
+    def test_dictionary_headgroup_data_structure(self):
+        '''Check data structures in the dictionary_headgroup_data as returned by voronoi_analysis_loop.'''
+        keys = self.dictionary_headgroup_data.keys()
+        self.assertEqual(sorted(keys), sorted(self.expected_keys), "Incorrect set of keys in dictionary_headgroup_data: {keys}".format(keys=keys))
+        self.assertEqual(len(self.dictionary_headgroup_data[self.dict_test_key]['voronoi_cell_avg_values_list']),4,"List of Voronoi cell areas is not consistent with the number of frames in the trajectory input to voronoi_analysis_loop.")
+
+    def test_voronoi_analysis_loop_invariance(self):
+        '''As the input test xtc has the same 4 frames, the data extracted from each frame should match (loop invariance).'''
+        list_percent_SA_reconstitution = self.loop_result[1]
+        list_percent_SA_reconstitution_2 = self.loop_result[2]
+        self.assertTrue(list_percent_SA_reconstitution.count(list_percent_SA_reconstitution[0]) == len(list_percent_SA_reconstitution), "Not all surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in test trajectory.")
+        self.assertTrue(list_percent_SA_reconstitution_2.count(list_percent_SA_reconstitution_2[0]) == len(list_percent_SA_reconstitution_2), "Not all surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in test trajectory.")
+
+class TestVoronoiAnalysisLoopControl(CommonTestsVoronoiAnalysisLoop,unittest.TestCase):
+    '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function for CONTROL condition.'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.u = MDAnalysis.Universe('control_traj_2.gro') #mock flu universe with DOPE/X and POPS inner leaflet; PPCH / CHOL outer leaflet; no protein
+        cls.d = TempDirectory()
+        #create short trajectory for testing purposes
+        cls.xtc = cls.d.path + '/control_traj_2_dummy.xtc'
+        cls.num_frames = 4
+        with XTCWriter(cls.xtc, cls.u.trajectory.n_atoms) as W:
+            while cls.num_frames > 0:
+                W.write(cls.u)
+                cls.num_frames -= 1
+        cls.u_multiframe = MDAnalysis.Universe('control_traj_2.gro', cls.xtc)
+        cls.loop_result = voronoi_analysis_library.voronoi_analysis_loop(cls.u_multiframe,0,'full',1,control_condition=1)
+        cls.expected_keys = ['POPS', 'DOPE', 'CHOL', 'PPCH', 'DOPX']
+        cls.dictionary_headgroup_data = cls.loop_result[3]
+        cls.dict_test_key = 'CHOL'
 
     def test_surface_area_reconstitution(self):
         '''For a control system with no proteins we should achive > 99% surface area reconstitution in all frames.'''
@@ -260,12 +271,32 @@ class TestVoronoiAnalysisLoop(unittest.TestCase):
         self.assertGreaterEqual(outer_min, 99.0, "Outer leaflet % surface area reconsitution drops below 99%. Minimum value found was {mini}.".format(mini=outer_min))
         self.assertGreaterEqual(inner_min, 99.0, "Inner leaflet % surface area reconsitution drops below 99%. Minimum value found was {mini}.".format(mini=inner_min))
 
+class TestVoronoiAnalysisLoopFlu(CommonTestsVoronoiAnalysisLoop,unittest.TestCase):
+    '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function for FLU condition.'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.u = MDAnalysis.Universe('sim39_final_snapshot_compact_no_solvent.gro.bz2') #actual flu universe
+        cls.d = TempDirectory()
+        #create short trajectory for testing purposes
+        cls.xtc = cls.d.path +  '/flu_dummy.xtc'
+        cls.num_frames = 4
+        with XTCWriter(cls.xtc, cls.u.trajectory.n_atoms) as W:
+            while cls.num_frames > 0:
+                W.write(cls.u)
+                cls.num_frames -= 1
+        cls.u_multiframe = MDAnalysis.Universe('sim39_final_snapshot_compact_no_solvent.gro.bz2', cls.xtc)
+        cls.loop_result = voronoi_analysis_library.voronoi_analysis_loop(cls.u_multiframe,0,'full',1,PPCH_PO4_threshold=275,proteins_present='yes',FORS_present='yes')
+        cls.expected_keys = ['POPS', 'DOPE', 'CHOL', 'PPCH', 'DOPX', 'FORS', 'protein']
+        cls.dictionary_headgroup_data = cls.loop_result[5]
+        cls.dict_test_key = 'CHOL'
+
     def test_surface_area_reconstitution_flu(self):
         '''Various checks for surface area reconstitution properties of the flu virion condition.'''
-        sim39_outer_leaflet_lipid_reconstitutions = np.array(self.loop_result_flu[1])
-        sim39_outer_leaflet_protein_reconstitutions = np.array(self.loop_result_flu[2])
-        sim39_inner_leaflet_lipid_reconstitutions = np.array(self.loop_result_flu[3])
-        sim39_inner_leaflet_protein_reconstitutions = np.array(self.loop_result_flu[4])
+        sim39_outer_leaflet_lipid_reconstitutions = np.array(self.loop_result[1])
+        sim39_outer_leaflet_protein_reconstitutions = np.array(self.loop_result[2])
+        sim39_inner_leaflet_lipid_reconstitutions = np.array(self.loop_result[3])
+        sim39_inner_leaflet_protein_reconstitutions = np.array(self.loop_result[4])
         
         np.testing.assert_allclose(sim39_outer_leaflet_lipid_reconstitutions + sim39_outer_leaflet_protein_reconstitutions, np.zeros(sim39_outer_leaflet_lipid_reconstitutions.shape) + 100., rtol=1e-07, err_msg="Total % reconstitution of surface area in outer leaflet is not close to 100.")
         np.testing.assert_allclose(sim39_inner_leaflet_lipid_reconstitutions + sim39_inner_leaflet_protein_reconstitutions, np.zeros(sim39_inner_leaflet_lipid_reconstitutions.shape) + 100., rtol=1e-01, err_msg="Total % reconstitution of surface area in inner leaflet is not close to 100.")
@@ -276,12 +307,32 @@ class TestVoronoiAnalysisLoop(unittest.TestCase):
         np.testing.assert_array_less(np.zeros(sim39_outer_leaflet_protein_reconstitutions.shape), sim39_outer_leaflet_protein_reconstitutions, err_msg="The % surface area contribution from protein in flu simulations should always exceed 0 (outer leaflet)")
         np.testing.assert_array_less(np.zeros(sim39_inner_leaflet_protein_reconstitutions.shape), sim39_inner_leaflet_protein_reconstitutions, err_msg="The % surface area contribution from protein in flu simulations should always exceed 0 (inner leaflet)")
 
+class TestVoronoiAnalysisLoopDengue(CommonTestsVoronoiAnalysisLoop,unittest.TestCase):
+    '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function for DENGUE condition.'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.u = MDAnalysis.Universe('dengue_final_snapshot_compact_no_solvent.gro.bz2') #dengue universe
+        cls.d = TempDirectory()
+        #create short trajectory for testing purposes
+        cls.xtc = cls.d.path + '/dengue_dummy.xtc'
+        cls.num_frames = 4
+        with XTCWriter(cls.xtc, cls.u.trajectory.n_atoms) as W:
+            while cls.num_frames > 0:
+                W.write(cls.u)
+                cls.num_frames -= 1
+        cls.u_multiframe = MDAnalysis.Universe('dengue_final_snapshot_compact_no_solvent.gro.bz2', cls.xtc)
+        cls.loop_result = voronoi_analysis_library.voronoi_analysis_loop(cls.u_multiframe,0,'full',1,proteins_present='yes',dengue_condition=1)
+        cls.expected_keys = ['POPC', 'PPCE', 'DPPE', 'CER', 'DUPC', 'DOPS', 'PPCS', 'protein']
+        cls.dictionary_headgroup_data = cls.loop_result[5]
+        cls.dict_test_key = 'PPCE'
+
     def test_surface_area_reconstitution_dengue(self):
         '''Various checks for surface area reconstitution properties of the dengue virion condition.'''
-        dengue_outer_leaflet_lipid_reconstitutions = np.array(self.loop_result_dengue[1])
-        dengue_outer_leaflet_protein_reconstitutions = np.array(self.loop_result_dengue[2])
-        dengue_inner_leaflet_lipid_reconstitutions = np.array(self.loop_result_dengue[3])
-        dengue_inner_leaflet_protein_reconstitutions = np.array(self.loop_result_dengue[4])
+        dengue_outer_leaflet_lipid_reconstitutions = np.array(self.loop_result[1])
+        dengue_outer_leaflet_protein_reconstitutions = np.array(self.loop_result[2])
+        dengue_inner_leaflet_lipid_reconstitutions = np.array(self.loop_result[3])
+        dengue_inner_leaflet_protein_reconstitutions = np.array(self.loop_result[4])
 
         np.testing.assert_allclose(dengue_outer_leaflet_lipid_reconstitutions + dengue_outer_leaflet_protein_reconstitutions, np.zeros(dengue_outer_leaflet_lipid_reconstitutions.shape) + 100., rtol=1e-07, err_msg="Total % reconstitution of surface area in outer leaflet is not close to 100.")
         np.testing.assert_allclose(dengue_inner_leaflet_lipid_reconstitutions + dengue_inner_leaflet_protein_reconstitutions, np.zeros(dengue_inner_leaflet_lipid_reconstitutions.shape) + 100., rtol=1e-01, err_msg="Total % reconstitution of surface area in inner leaflet is not close to 100.")
@@ -291,52 +342,6 @@ class TestVoronoiAnalysisLoop(unittest.TestCase):
 
         np.testing.assert_array_less(np.zeros(dengue_outer_leaflet_protein_reconstitutions.shape), dengue_outer_leaflet_protein_reconstitutions, err_msg="The % surface area contribution from protein in dengue simulations should always exceed 0 (outer leaflet)")
         np.testing.assert_array_less(np.zeros(dengue_inner_leaflet_protein_reconstitutions.shape), dengue_inner_leaflet_protein_reconstitutions, err_msg="The % surface area contribution from protein in dengue simulations should always exceed 0 (inner leaflet)")
-
-    def test_frame_count(self):
-        '''Ensure that data structures returned by voronoi_analysis_loop match the number of frames in the input data.'''
-        list_frame_numbers = self.loop_result[0]
-        list_outer_leaflet_percent_SA_reconstitution = self.loop_result[1]
-        list_inner_leaflet_percent_SA_reconstitution = self.loop_result[2]
-        self.assertEqual(list_frame_numbers, [0,1,2,3], "Incorrect frame numbers returned by voronoi_analysis_loop: {returned_list}.".format(returned_list=list_frame_numbers))
-        tuple_list_lengths = len(list_outer_leaflet_percent_SA_reconstitution), len(list_inner_leaflet_percent_SA_reconstitution)
-        self.assertEqual(tuple_list_lengths, (4,4), "Surface area reconstitution data structures are inconsistent with the number of frames in the data received by voronoi_analysis_loop. Actual list lengths received: {list_tuple}".format(list_tuple=tuple_list_lengths))
-
-    def test_frame_count_flu(self):
-        '''Check that data structures for analysis of flu simulations match the number of frames in the input data.'''
-        list_frame_numbers = self.loop_result_flu[0]
-        self.assertEqual(list_frame_numbers, [0,1,2,3], "Incorrect frame numbers returned by voronoi_analysis_loop for sim39: {returned_list}.".format(returned_list=list_frame_numbers))
-        sim39_outer_leaflet_lipid_reconstitutions = self.loop_result_flu[1]
-        sim39_outer_leaflet_protein_reconstitutions = self.loop_result_flu[2]
-        tuple_list_lengths = len(sim39_outer_leaflet_lipid_reconstitutions), len(sim39_outer_leaflet_protein_reconstitutions)
-        self.assertEqual(tuple_list_lengths, (4,4), "Surface area reconstitution data structures are inconsistent with the number of frames in the data received by voronoi_analysis_loop for the flu (sim39) condition. Actual list lengths received: {list_tuple}".format(list_tuple=tuple_list_lengths))
-
-    def test_dictionary_headgroup_data_structure(self):
-        '''Check data structures in the dictionary_headgroup_data as returned by voronoi_analysis_loop.'''
-        dictionary_headgroup_data = self.loop_result[3]
-        keys = dictionary_headgroup_data.keys()
-        self.assertEqual(keys, ['POPS', 'DOPE', 'CHOL', 'PPCH', 'DOPX'], "Incorrect set of keys in dictionary_headgroup_data: {keys}".format(keys=keys))
-        self.assertEqual(len(dictionary_headgroup_data['CHOL']['voronoi_cell_avg_values_list']),4,"List of outer leaflet Voronoi cell areas is not consistent with the number of frames in the trajectory input to voronoi_analysis_loop.")
-
-    def test_dictionary_headgroup_data_structure_flu(self):
-        '''Check data structures in the dictionary_headgroup_data as returned by voronoi_analysis_loop for the flu condition.'''
-        dictionary_headgroup_data = self.loop_result_flu[5]
-        keys = dictionary_headgroup_data.keys()
-        self.assertEqual(sorted(keys), sorted(['POPS', 'DOPE', 'CHOL', 'PPCH', 'DOPX', 'FORS', 'protein']), "Incorrect set of keys in dictionary_headgroup_data for flu condition: {keys}".format(keys=keys))
-        self.assertEqual(len(dictionary_headgroup_data['FORS']['voronoi_cell_avg_values_list']),4,"List of outer leaflet Voronoi cell areas is not consistent with the number of frames in the trajectory input to voronoi_analysis_loop for flu condition.")
-
-    def test_voronoi_analysis_loop_invariance(self):
-        '''As the input test xtc has the same 4 frames, the data extracted from each frame should match (loop invariance).'''
-        list_outer_leaflet_percent_SA_reconstitution = self.loop_result[1]
-        list_inner_leaflet_percent_SA_reconstitution = self.loop_result[2]
-        self.assertTrue(list_outer_leaflet_percent_SA_reconstitution.count(list_outer_leaflet_percent_SA_reconstitution[0]) == len(list_outer_leaflet_percent_SA_reconstitution), "Not all outer leaflet surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in test trajectory.")
-        self.assertTrue(list_inner_leaflet_percent_SA_reconstitution.count(list_inner_leaflet_percent_SA_reconstitution[0]) == len(list_inner_leaflet_percent_SA_reconstitution), "Not all inner leaflet surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in test trajectory.")
-
-    def test_voronoi_analysis_loop_invariance_flu(self):
-        '''As the input test xtc has the same 4 frames, the data extracted from each frame should match (loop invariance) for the flu condition.'''
-        list_outer_leaflet_lipid_percent_SA_reconstitution = self.loop_result_flu[1]
-        list_outer_leaflet_protein_percent_SA_reconstitution = self.loop_result_flu[2]
-        self.assertTrue(list_outer_leaflet_lipid_percent_SA_reconstitution.count(list_outer_leaflet_lipid_percent_SA_reconstitution[0]) == len(list_outer_leaflet_lipid_percent_SA_reconstitution), "Not all outer leaflet lipid surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in flu test trajectory.")
-        self.assertTrue(list_outer_leaflet_protein_percent_SA_reconstitution.count(list_outer_leaflet_protein_percent_SA_reconstitution[0]) == len(list_outer_leaflet_protein_percent_SA_reconstitution), "Not all outer leaflet protein surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in flu test trajectory.")
 
 class TestVoronoiAreaDict(unittest.TestCase):
 
