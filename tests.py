@@ -7,7 +7,7 @@ import numpy.testing
 import voronoi_analysis_library
 import MDAnalysis
 import MDAnalysis.coordinates
-from MDAnalysis.coordinates.xdrfile.XTC import XTCWriter
+from MDAnalysis.coordinates.XTC import XTCWriter
 from MDAnalysis.tests.datafiles import GRO, XTC
 from testfixtures import TempDirectory
 
