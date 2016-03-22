@@ -242,6 +242,7 @@ class CommonTestsVoronoiAnalysisLoop(object):
         self.assertTrue(list_percent_SA_reconstitution.count(list_percent_SA_reconstitution[0]) == len(list_percent_SA_reconstitution), "Not all surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in test trajectory.")
         self.assertTrue(list_percent_SA_reconstitution_2.count(list_percent_SA_reconstitution_2[0]) == len(list_percent_SA_reconstitution_2), "Not all surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in test trajectory.")
 
+@unittest.skip("Temporarily disabled for Travis CI")
 class TestVoronoiAnalysisLoopControl(CommonTestsVoronoiAnalysisLoop,unittest.TestCase):
     '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function for CONTROL condition.'''
 
@@ -308,6 +309,7 @@ class TestVoronoiAnalysisLoopFlu(CommonTestsVoronoiAnalysisLoop,unittest.TestCas
         np.testing.assert_array_less(np.zeros(sim39_outer_leaflet_protein_reconstitutions.shape), sim39_outer_leaflet_protein_reconstitutions, err_msg="The % surface area contribution from protein in flu simulations should always exceed 0 (outer leaflet)")
         np.testing.assert_array_less(np.zeros(sim39_inner_leaflet_protein_reconstitutions.shape), sim39_inner_leaflet_protein_reconstitutions, err_msg="The % surface area contribution from protein in flu simulations should always exceed 0 (inner leaflet)")
 
+@unittest.skip("Temporarily disabled for Travis CI")
 class TestVoronoiAnalysisLoopDengue(CommonTestsVoronoiAnalysisLoop,unittest.TestCase):
     '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function for DENGUE condition.'''
 
