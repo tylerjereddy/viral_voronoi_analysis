@@ -42,10 +42,10 @@ before_install:
   - conda update -q conda
   - conda info -a
   - conda create -q -n test-environment python=2.7 numpy=1.10.2 nose=1.3.7 matplotlib pandas cython=0.23.4 mdanalysis=0.14.0 tempdir
+  - source activate test-environment
   - conda install -c https://conda.anaconda.org/ioos testfixtures
   - conda install -c https://conda.anaconda.org/dan_blanchard coverage
-  - source activate test-environment
-  - travis_wait pip install --quiet git+https://github.com/tylerjereddy/scipy.git
+  - conda install -c https://conda.anaconda.org/treddy scipy
   - chmod +x ./
 script:
   - travis_wait 30 nosetests --with-coverage --cover-package voronoi_analysis_library --processes=2 --process-timeout=900 tests.py 
