@@ -242,36 +242,35 @@ class CommonTestsVoronoiAnalysisLoop(object):
         self.assertTrue(list_percent_SA_reconstitution.count(list_percent_SA_reconstitution[0]) == len(list_percent_SA_reconstitution), "Not all surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in test trajectory.")
         self.assertTrue(list_percent_SA_reconstitution_2.count(list_percent_SA_reconstitution_2[0]) == len(list_percent_SA_reconstitution_2), "Not all surface area reconstitution values are the same for each frame, despite identical coordinates for each input frame in test trajectory.")
 
-#@unittest.skip("Temporarily disabled for Travis CI")
-#class TestVoronoiAnalysisLoopControl(CommonTestsVoronoiAnalysisLoop,unittest.TestCase):
-#    '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function for CONTROL condition.'''
-#
-#    @classmethod
-#    def setUpClass(cls):
-#        cls.u = MDAnalysis.Universe('control_traj_2.gro') #mock flu universe with DOPE/X and POPS inner leaflet; PPCH / CHOL outer leaflet; no protein
-#        cls.d = TempDirectory()
-#        #create short trajectory for testing purposes
-#        cls.xtc = cls.d.path + '/control_traj_2_dummy.xtc'
-#        cls.num_frames = 4
-#        with XTCWriter(cls.xtc, cls.u.trajectory.n_atoms) as W:
-#            while cls.num_frames > 0:
-#                W.write(cls.u)
-#                cls.num_frames -= 1
-#        cls.u_multiframe = MDAnalysis.Universe('control_traj_2.gro', cls.xtc)
-#        cls.loop_result = voronoi_analysis_library.voronoi_analysis_loop(cls.u_multiframe,0,'full',1,control_condition=1)
-#        cls.expected_keys = ['POPS', 'DOPE', 'CHOL', 'PPCH', 'DOPX']
-#        cls.dictionary_headgroup_data = cls.loop_result[3]
-#        cls.dict_test_key = 'CHOL'
-#
-#    def test_surface_area_reconstitution(self):
-#        '''For a control system with no proteins we should achive > 99% surface area reconstitution in all frames.'''
-#        array_outer_leaflet_percent_SA_reconstitution = np.array(self.loop_result[1])
-#        array_inner_leaflet_percent_SA_reconstitution = np.array(self.loop_result[2])
-#        outer_min = array_outer_leaflet_percent_SA_reconstitution.min()
-#        inner_min = array_inner_leaflet_percent_SA_reconstitution.min()
-#        self.assertGreaterEqual(outer_min, 99.0, "Outer leaflet % surface area reconsitution drops below 99%. Minimum value found was {mini}.".format(mini=outer_min))
-#        self.assertGreaterEqual(inner_min, 99.0, "Inner leaflet % surface area reconsitution drops below 99%. Minimum value found was {mini}.".format(mini=inner_min))
-#
+class TestVoronoiAnalysisLoopControl(CommonTestsVoronoiAnalysisLoop,unittest.TestCase):
+    '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function for CONTROL condition.'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.u = MDAnalysis.Universe('control_traj_2_small.gro.bz2') #mock flu universe with DOPE/X and POPS inner leaflet; PPCH / CHOL outer leaflet; no protein
+        cls.d = TempDirectory()
+        #create short trajectory for testing purposes
+        cls.xtc = cls.d.path + '/control_traj_2_dummy.xtc'
+        cls.num_frames = 4
+        with XTCWriter(cls.xtc, cls.u.trajectory.n_atoms) as W:
+            while cls.num_frames > 0:
+                W.write(cls.u)
+                cls.num_frames -= 1
+        cls.u_multiframe = MDAnalysis.Universe('control_traj_2_small.gro.bz2', cls.xtc)
+        cls.loop_result = voronoi_analysis_library.voronoi_analysis_loop(cls.u_multiframe,0,'full',1,control_condition=1)
+        cls.expected_keys = ['POPS', 'DOPE', 'CHOL', 'PPCH', 'DOPX']
+        cls.dictionary_headgroup_data = cls.loop_result[3]
+        cls.dict_test_key = 'CHOL'
+
+    def test_surface_area_reconstitution(self):
+        '''For a control system with no proteins we should achive > 99% surface area reconstitution in all frames.'''
+        array_outer_leaflet_percent_SA_reconstitution = np.array(self.loop_result[1])
+        array_inner_leaflet_percent_SA_reconstitution = np.array(self.loop_result[2])
+        outer_min = array_outer_leaflet_percent_SA_reconstitution.min()
+        inner_min = array_inner_leaflet_percent_SA_reconstitution.min()
+        self.assertGreaterEqual(outer_min, 99.0, "Outer leaflet % surface area reconsitution drops below 99%. Minimum value found was {mini}.".format(mini=outer_min))
+        self.assertGreaterEqual(inner_min, 99.0, "Inner leaflet % surface area reconsitution drops below 99%. Minimum value found was {mini}.".format(mini=inner_min))
+
 #@unittest.skip("Temporarily disabled for Travis CI")
 #class TestVoronoiAnalysisLoopFlu(CommonTestsVoronoiAnalysisLoop,unittest.TestCase):
 #    '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function for FLU condition.'''
