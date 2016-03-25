@@ -48,6 +48,6 @@ before_install:
   - conda install -c https://conda.anaconda.org/treddy scipy
   - chmod +x ./
 script:
-  - nosetests --with-coverage --cover-package voronoi_analysis_library tests.py
+  - ./virus_nosetests --with-coverage --cover-package voronoi_analysis_library --processes=2 --process-timeout=300
 after_success:
   - coveralls
