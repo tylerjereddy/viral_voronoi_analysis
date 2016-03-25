@@ -271,42 +271,42 @@ class TestVoronoiAnalysisLoopControl(CommonTestsVoronoiAnalysisLoop,unittest.Tes
         self.assertGreaterEqual(outer_min, 99.0, "Outer leaflet % surface area reconsitution drops below 99%. Minimum value found was {mini}.".format(mini=outer_min))
         self.assertGreaterEqual(inner_min, 99.0, "Inner leaflet % surface area reconsitution drops below 99%. Minimum value found was {mini}.".format(mini=inner_min))
 
-#class TestVoronoiAnalysisLoopFlu(CommonTestsVoronoiAnalysisLoop,unittest.TestCase):
-#    '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function for FLU condition.'''
-#
-#    @classmethod
-#    def setUpClass(cls):
-#        cls.u = MDAnalysis.Universe('sim39_final_snapshot_compact_no_solvent.gro.bz2') #actual flu universe
-#        cls.d = TempDirectory()
-#        #create short trajectory for testing purposes
-#        cls.xtc = cls.d.path +  '/flu_dummy.xtc'
-#        cls.num_frames = 4
-#        with XTCWriter(cls.xtc, cls.u.trajectory.n_atoms) as W:
-#            while cls.num_frames > 0:
-#                W.write(cls.u)
-#                cls.num_frames -= 1
-#        cls.u_multiframe = MDAnalysis.Universe('sim39_final_snapshot_compact_no_solvent.gro.bz2', cls.xtc)
-#        cls.loop_result = voronoi_analysis_library.voronoi_analysis_loop(cls.u_multiframe,0,'full',1,PPCH_PO4_threshold=275,proteins_present='yes',FORS_present='yes')
-#        cls.expected_keys = ['POPS', 'DOPE', 'CHOL', 'PPCH', 'DOPX', 'FORS', 'protein']
-#        cls.dictionary_headgroup_data = cls.loop_result[5]
-#        cls.dict_test_key = 'CHOL'
-#
-#    def test_surface_area_reconstitution_flu(self):
-#        '''Various checks for surface area reconstitution properties of the flu virion condition.'''
-#        sim39_outer_leaflet_lipid_reconstitutions = np.array(self.loop_result[1])
-#        sim39_outer_leaflet_protein_reconstitutions = np.array(self.loop_result[2])
-#        sim39_inner_leaflet_lipid_reconstitutions = np.array(self.loop_result[3])
-#        sim39_inner_leaflet_protein_reconstitutions = np.array(self.loop_result[4])
-#        
-#        np.testing.assert_allclose(sim39_outer_leaflet_lipid_reconstitutions + sim39_outer_leaflet_protein_reconstitutions, np.zeros(sim39_outer_leaflet_lipid_reconstitutions.shape) + 100., rtol=1e-07, err_msg="Total % reconstitution of surface area in outer leaflet is not close to 100.")
-#        np.testing.assert_allclose(sim39_inner_leaflet_lipid_reconstitutions + sim39_inner_leaflet_protein_reconstitutions, np.zeros(sim39_inner_leaflet_lipid_reconstitutions.shape) + 100., rtol=1e-01, err_msg="Total % reconstitution of surface area in inner leaflet is not close to 100.")
-#
-#        np.testing.assert_array_less(sim39_outer_leaflet_protein_reconstitutions, sim39_outer_leaflet_lipid_reconstitutions, err_msg="For flu simulations, the % SA reconstitution from protein should always be less than the contribution from lipid (outer leaflet).")
-#        np.testing.assert_array_less(sim39_inner_leaflet_protein_reconstitutions, sim39_inner_leaflet_lipid_reconstitutions, err_msg="For flu simulations, the % SA reconstitution from protein should always be less than the contribution from lipid (inner leaflet).")
-#
-#        np.testing.assert_array_less(np.zeros(sim39_outer_leaflet_protein_reconstitutions.shape), sim39_outer_leaflet_protein_reconstitutions, err_msg="The % surface area contribution from protein in flu simulations should always exceed 0 (outer leaflet)")
-#        np.testing.assert_array_less(np.zeros(sim39_inner_leaflet_protein_reconstitutions.shape), sim39_inner_leaflet_protein_reconstitutions, err_msg="The % surface area contribution from protein in flu simulations should always exceed 0 (inner leaflet)")
-#
+class TestVoronoiAnalysisLoopFlu(CommonTestsVoronoiAnalysisLoop,unittest.TestCase):
+    '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function for FLU condition.'''
+
+    @classmethod
+    def setUpClass(cls):
+        cls.u = MDAnalysis.Universe('sim39_final_snapshot_compact_no_solvent_small_proteins_retained.gro.bz2') #actual flu universe
+        cls.d = TempDirectory()
+        #create short trajectory for testing purposes
+        cls.xtc = cls.d.path +  '/flu_dummy.xtc'
+        cls.num_frames = 4
+        with XTCWriter(cls.xtc, cls.u.trajectory.n_atoms) as W:
+            while cls.num_frames > 0:
+                W.write(cls.u)
+                cls.num_frames -= 1
+        cls.u_multiframe = MDAnalysis.Universe('sim39_final_snapshot_compact_no_solvent_small_proteins_retained.gro.bz2', cls.xtc)
+        cls.loop_result = voronoi_analysis_library.voronoi_analysis_loop(cls.u_multiframe,0,'full',1,PPCH_PO4_threshold=275,proteins_present='yes',FORS_present='yes')
+        cls.expected_keys = ['POPS', 'DOPE', 'CHOL', 'PPCH', 'DOPX', 'FORS', 'protein']
+        cls.dictionary_headgroup_data = cls.loop_result[5]
+        cls.dict_test_key = 'CHOL'
+
+    def test_surface_area_reconstitution_flu(self):
+        '''Various checks for surface area reconstitution properties of the flu virion condition.'''
+        sim39_outer_leaflet_lipid_reconstitutions = np.array(self.loop_result[1])
+        sim39_outer_leaflet_protein_reconstitutions = np.array(self.loop_result[2])
+        sim39_inner_leaflet_lipid_reconstitutions = np.array(self.loop_result[3])
+        sim39_inner_leaflet_protein_reconstitutions = np.array(self.loop_result[4])
+        
+        np.testing.assert_allclose(sim39_outer_leaflet_lipid_reconstitutions + sim39_outer_leaflet_protein_reconstitutions, np.zeros(sim39_outer_leaflet_lipid_reconstitutions.shape) + 100., rtol=1e-07, err_msg="Total % reconstitution of surface area in outer leaflet is not close to 100.")
+        np.testing.assert_allclose(sim39_inner_leaflet_lipid_reconstitutions + sim39_inner_leaflet_protein_reconstitutions, np.zeros(sim39_inner_leaflet_lipid_reconstitutions.shape) + 100., rtol=1e-01, err_msg="Total % reconstitution of surface area in inner leaflet is not close to 100.")
+
+        np.testing.assert_array_less(sim39_outer_leaflet_protein_reconstitutions, sim39_outer_leaflet_lipid_reconstitutions, err_msg="For flu simulations, the % SA reconstitution from protein should always be less than the contribution from lipid (outer leaflet).")
+        np.testing.assert_array_less(sim39_inner_leaflet_protein_reconstitutions, sim39_inner_leaflet_lipid_reconstitutions, err_msg="For flu simulations, the % SA reconstitution from protein should always be less than the contribution from lipid (inner leaflet).")
+
+        np.testing.assert_array_less(np.zeros(sim39_outer_leaflet_protein_reconstitutions.shape), sim39_outer_leaflet_protein_reconstitutions, err_msg="The % surface area contribution from protein in flu simulations should always exceed 0 (outer leaflet)")
+        np.testing.assert_array_less(np.zeros(sim39_inner_leaflet_protein_reconstitutions.shape), sim39_inner_leaflet_protein_reconstitutions, err_msg="The % surface area contribution from protein in flu simulations should always exceed 0 (inner leaflet)")
+
 class TestVoronoiAnalysisLoopDengue(CommonTestsVoronoiAnalysisLoop,unittest.TestCase):
     '''Functional test(s) to ensure stability / correctness of the huge voronoi_analysis_library.voronoi_analysis_loop() function for DENGUE condition.'''
 
