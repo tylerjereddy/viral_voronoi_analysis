@@ -482,7 +482,7 @@ class radial_distance_assessment_dengue:
     def plot(self,title_string):
         '''Plot the dengue radial distance assessment data.'''
         ax = self.matplotlib_figure_object.add_subplot('121')
-        print self.array_frame_numbers.shape, self.array_min_dengue_lipid_headgroup_radial_distances.shape #debug
+        #print self.array_frame_numbers.shape, self.array_min_dengue_lipid_headgroup_radial_distances.shape #debug
         ax.scatter(self.array_frame_numbers,self.array_min_dengue_lipid_headgroup_radial_distances,label='min dengue lipid headgroup radial distance',c='black',edgecolor='None')
         ax.scatter(self.array_frame_numbers,self.array_min_protein_distances,label='min protein distances',c='grey',edgecolor='None')
         ax.scatter(self.array_frame_numbers,self.array_max_protein_distances,label='max protein distances',c='green',edgecolor='None')
