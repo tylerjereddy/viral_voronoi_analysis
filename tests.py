@@ -86,6 +86,19 @@ class TestRawNeighbourAnalysis(unittest.TestCase):
         self.assertEqual(outer_leaflet_neighbour_dict['PPCE'][4]['frequency'], 3, "Outer leaflet PPCE should have 3 cells with 4 neighbours.")
         self.assertEqual(inner_leaflet_neighbour_dict['POPC'][4]['frequency'], 3, "Inner leaflet POPC should have 3 cells with 4 neighbours.")
 
+    def test_sample_neighbour_data_production(self):
+        '''Test sample_neighbour_data() method, which is used to generate sample data for plotting specific examples of Voronoi cells surrounded by N neighbours.'''
+        a = np.array([[3,3,3],[5,5,5],[7,7,7]])
+        b = np.array([[3,3,3],[0,0,0],[9,9,9]])
+        c = np.array([[9,9,9],[1,1,1],[5,5,5]])
+        for resname, subdict in self.small_data_dict.iteritems():
+            subdict['voronoi_cell_list_vertex_arrays'] = [[a,b,c]]
+            subdict['voronoi_cell_list_vertex_arrays_inner_leaflet'] = [[a,b,c]]
+        voronoi_neighbour_instance = voronoi_analysis_library.voronoi_neighbour_analysis(self.small_data_dict, inner_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays_inner_leaflet',outer_leaflet_vertex_list_key = 'voronoi_cell_list_vertex_arrays') 
+        sample_dict_result = voronoi_neighbour_instance.sample_neighbour_data(0, 'POPC', 4, 'outer')
+        np.testing.assert_array_almost_equal(sample_dict_result['central_cell'], a, decimal=6, err_msg = "The central cell should be equivalent to the array 'a,' because the underlying sample_neighbour_data method always takes the first match as the example.")
+        self.assertEqual(len(sample_dict_result['neighbours']['POPC']),2, "The central cell should have 2 POPC neighbours.")
+        self.assertEqual(len(sample_dict_result['neighbours']['PPCE']),2, "The central cell should have 2 PPCE neighbours.")
 
 class TestSpeciesSpecificNeighbourAnalysis(unittest.TestCase):
 

@@ -236,7 +236,7 @@ class voronoi_neighbour_analysis(object):
 
         for species_name, list_arrays_voronoi_cells_in_all_parsed_frames in simplified_leaflet_voronoi_data_dict.iteritems():
             list_arrays_voronoi_cell_coords_current_species_current_frame = list_arrays_voronoi_cells_in_all_parsed_frames[frame_index]
-            current_species_Voronoi_cell_row_sizes = leaflet_voronoi_row_accounting_dict[molecular_species_name]
+            current_species_Voronoi_cell_row_sizes = leaflet_voronoi_row_accounting_dict[species_name]
             list_index_ranges = numpy.cumsum([0] + current_species_Voronoi_cell_row_sizes) #overlapping: i.e., [0, 6, 11, 15, 20]
             list_index_range_tuples = zip(list_index_ranges[:-1],list_index_ranges[1:]) #should be i.e., [(0, 6), (6, 11), ...]
             flattened_array_all_voronoi_cell_coords_current_frame = numpy.concatenate(list_arrays_voronoi_cell_coords_current_species_current_frame)
