@@ -204,6 +204,63 @@ class voronoi_neighbour_analysis(object):
         neighbour_count_current_voronoi_cell = matching_vertices_current_cell
 
         return neighbour_count_current_voronoi_cell
+
+    def sample_neighbour_data(self, frame_index, molecular_species_name, num_surrounding_neighbours, leaflet):
+        '''Given the name of the molecular species of interest and the raw number of surrounding Voronoi neighbours, pull out the ordered polygon coordinates for the Voronoi cell of interest as well as for the neighbouring Voronoi cells. The idea is to eventually use the returned data to produce a sample plot of a region with N neighbours.''' 
+
+        subdict = self.voronoi_data_dict[molecular_species_name]
+
+        if leaflet == 'inner':
+            key = self.inner_leaflet_data_key
+        elif leaflet == 'outer':
+            key = self.outer_leaflet_data_key
+
+        list_vertex_arrays_current_molecular_species_current_leaflet_current_frame = subdict[key][frame_index]
+        simplified_leaflet_voronoi_data_dict = self.condense_voronoi_cell_data_by_leaflet(self.voronoi_data_dict,key)
+        leaflet_voronoi_row_accounting_dict = self.voronoi_cell_row_accounting(simplified_leaflet_voronoi_data_dict, frame_index)            
+
+        for species_of_interest_Voronoi_cell_coords in list_vertex_arrays_current_molecular_species_current_leaflet_current_frame:
+            neighbour_count_current_cell = self.count_neighbours_current_frame(species_of_interest_Voronoi_cell_coords, simplified_leaflet_voronoi_data_dict, frame_index, leaflet_voronoi_row_accounting_dict)
+            #as soon as I find a Voronoi cell with the correct number of neighbours for the desired species type, just use that one
+            if neighbour_count_current_cell == num_surrounding_neighbours:
+                coordinates_of_interest_central_Voronoi_cell = species_of_interest_Voronoi_cell_coords
+                break
+
+        #now, given the coordinates of the central Voronoi cell of interest, identify the coordinates (and probably species names, if possible) of its neighbouring cells
+        #for now, this will be a hacked version of count_neighbours_current_frame()
+
+        def default_factory():
+            return []
+
+        dict_sample_Voronoi_cells = {'central_cell':coordinates_of_interest_central_Voronoi_cell, 'neighbours': collections.defaultdict(default_factory)} #for storing the central and neighbouring Voronoi cells
+
+        for species_name, list_arrays_voronoi_cells_in_all_parsed_frames in simplified_leaflet_voronoi_data_dict.iteritems():
+            list_arrays_voronoi_cell_coords_current_species_current_frame = list_arrays_voronoi_cells_in_all_parsed_frames[frame_index]
+            current_species_Voronoi_cell_row_sizes = leaflet_voronoi_row_accounting_dict[species_name]
+            list_index_ranges = numpy.cumsum([0] + current_species_Voronoi_cell_row_sizes) #overlapping: i.e., [0, 6, 11, 15, 20]
+            list_index_range_tuples = zip(list_index_ranges[:-1],list_index_ranges[1:]) #should be i.e., [(0, 6), (6, 11), ...]
+            flattened_array_all_voronoi_cell_coords_current_frame = numpy.concatenate(list_arrays_voronoi_cell_coords_current_species_current_frame)
+            view_structured_array_flattened_array_voronoi_cell_coords_current_frame = flattened_array_all_voronoi_cell_coords_current_frame.view(dtype = 'f8,f8,f8').reshape(flattened_array_all_voronoi_cell_coords_current_frame.shape[0])
+            single_voronoi_cell_array_of_coordinates_view = coordinates_of_interest_central_Voronoi_cell.view(dtype = 'f8,f8,f8').reshape(coordinates_of_interest_central_Voronoi_cell.shape[0])
+            mask = numpy.in1d(view_structured_array_flattened_array_voronoi_cell_coords_current_frame, single_voronoi_cell_array_of_coordinates_view)
+            non_zero_count_array = numpy.array([numpy.count_nonzero(mask[start:end]) for start, end in list_index_range_tuples])
+            #I want to use non_zero_count_array to generate another mask -- the new mask should have 0 for 0 counts & counts == coordinates_of_interest_central_Voronoi_cell.shape[0] and 1 for all other counts
+            mask_zeros = (non_zero_count_array == 0) & (non_zero_count_array == coordinates_of_interest_central_Voronoi_cell.shape[0])
+            mask_ones = (non_zero_count_array > 0) & (non_zero_count_array < coordinates_of_interest_central_Voronoi_cell.shape[0])
+            non_zero_count_array[mask_zeros] = 0
+            non_zero_count_array[mask_ones] = 1
+            for voronoi_cell_coord, mask_value in zip(list_arrays_voronoi_cell_coords_current_species_current_frame, non_zero_count_array):
+                if mask_value == 1:
+                    dict_sample_Voronoi_cells['neighbours'][species_name].append(voronoi_cell_coord)
+
+        return dict_sample_Voronoi_cells
+
+
+                
+
+
+
+
         
 class voronoi_neighbour_analysis_by_type(voronoi_neighbour_analysis):
     '''Should parse the number of neighbours of *each type* of molecular species surrounding each voronoi cell in the Voronoi diagrams. This is intended as an extension of the basic functionality of the parent class, which only parses and reports the raw number of neighbours around each Voronoi cell.'''
