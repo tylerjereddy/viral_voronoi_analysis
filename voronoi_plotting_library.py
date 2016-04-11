@@ -693,3 +693,85 @@ class radial_distance_assessment:
             axis.set_title(title_string)
 
         self.matplotlib_figure_object.set_size_inches(16,24)
+
+class plot_sample_N_neighbours(object):
+    '''Produce sample zoom-in Voronoi diagrams with a central molecular species surrounded by N neighbours (and nothing else).'''
+
+    def __init__(self, sample_neighbour_dict, name_central_species, condition=None):
+        self.central_species_name = name_central_species
+        self.central_Voronoi_cell_array = sample_neighbour_dict['central_cell']
+        self.neighbour_dict = sample_neighbour_dict['neighbours']
+        self.figure = matplotlib.pyplot.figure()
+        if condition == 'flu':
+            self.color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
+        elif condition == 'dengue':
+            self.color_dict = {'POPC':'black','PPCE':'blue','DPPE':'green','CER':'red','DUPC':'purple','protein':'orange','DOPS':'brown','PPCS':'pink'}
+        self.list_residue_names = [self.central_species_name]
+
+    def plot(self, plot_title):
+        #infer plot limits from Voronoi cell data
+        list_x_value_arrays_neighbours = self.central_Voronoi_cell_array[...,0].tolist()
+        list_y_value_arrays_neighbours = self.central_Voronoi_cell_array[...,1].tolist()
+        list_z_value_arrays_neighbours = self.central_Voronoi_cell_array[...,2].tolist()
+
+        for species_name, list_arrays_Voronoi_cells in self.neighbour_dict.iteritems():
+            for vertex_array in list_arrays_Voronoi_cells: 
+                list_x_value_arrays_neighbours.extend(vertex_array[...,0])
+                list_y_value_arrays_neighbours.extend(vertex_array[...,1])
+                list_z_value_arrays_neighbours.extend(vertex_array[...,2])
+
+        x_values = numpy.array(list_x_value_arrays_neighbours)
+        y_values = numpy.array(list_y_value_arrays_neighbours)
+        z_values = numpy.array(list_z_value_arrays_neighbours)
+        
+        #equalize axis limits for visualization purposes:
+        x_size = abs(x_values.max() - x_values.min())
+        y_size = abs(y_values.max() - y_values.min())
+        z_size = abs(z_values.max() - z_values.min())
+        max_width = numpy.array([x_size, y_size, z_size]).max()
+        x_delta = max_width - x_size
+        y_delta = max_width - y_size
+        z_delta = max_width - z_size
+        #balance the widths by adding half the data to the min and max positions:
+        x_min = x_values.min() - x_delta / 2.0
+        y_min = y_values.min() - y_delta / 2.0
+        z_min = z_values.min() - z_delta / 2.0
+        x_max = x_values.max() + x_delta / 2.0
+        y_max = y_values.max() + y_delta / 2.0
+        z_max = z_values.max() + z_delta / 2.0
+
+
+        #prepare for plotting
+        ax = self.figure.add_subplot('111', projection = '3d')
+        ax.set_title(plot_title)
+
+        #plot the central Voronoi cell
+        polygon = Poly3DCollection([self.central_Voronoi_cell_array/10.],alpha=0.5) #convert to nm
+        color = self.color_dict[self.central_species_name]
+        polygon.set_color(color)
+        ax.add_collection3d(polygon)
+        
+        #plot the neighbouring Voronoi cells   
+        for species_name, list_arrays_Voronoi_cells in self.neighbour_dict.iteritems():
+            if species_name not in self.list_residue_names:
+                self.list_residue_names.append(species_name)
+            for vertex_array in list_arrays_Voronoi_cells: 
+                polygon = Poly3DCollection([vertex_array/10.],alpha=0.5) #convert to nm
+                color = self.color_dict[species_name]
+                polygon.set_color(color)
+                ax.add_collection3d(polygon)
+
+        ax.set_xlim(x_min/10., x_max/10.)
+        ax.set_ylim(y_min/10., y_max/10.)
+        ax.set_zlim(z_min/10., z_max/10.)
+        ax.set_xlabel('x (nm)')
+        ax.set_ylabel('y (nm)')
+        ax.set_zlabel('z (nm)')
+        ax.azim = 0
+        ax.elev = 0
+        list_legend_objects = [Rectangle((0, 0), 1, 1, fc=self.color_dict[residue_name], alpha=0.5) for residue_name in self.list_residue_names]
+        ax.legend(list_legend_objects,self.list_residue_names,loc=2,prop={'size':8})
+        self.figure.set_size_inches(10,10)
+
+    def save_plot(self, filename):
+        self.figure.savefig(filename, dpi = 300)
