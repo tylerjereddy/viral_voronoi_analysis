@@ -743,7 +743,7 @@ class plot_sample_N_neighbours(object):
 
         #prepare for plotting
         ax = self.figure.add_subplot('111', projection = '3d')
-        ax.set_title(plot_title)
+        #ax.set_title(plot_title)
 
         #plot the central Voronoi cell
         polygon = Poly3DCollection([self.central_Voronoi_cell_array/10.],alpha=0.5) #convert to nm
@@ -764,14 +764,16 @@ class plot_sample_N_neighbours(object):
         ax.set_xlim(x_min/10., x_max/10.)
         ax.set_ylim(y_min/10., y_max/10.)
         ax.set_zlim(z_min/10., z_max/10.)
-        ax.set_xlabel('x (nm)')
-        ax.set_ylabel('y (nm)')
-        ax.set_zlabel('z (nm)')
+        #ax.set_xlabel('x (nm)', fontsize=16)
+        ax.set_ylabel('\ny (nm)', fontsize=16)
+        ax.set_zlabel('z (nm)\n', fontsize=16)
+        ax.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
         ax.azim = 0
         ax.elev = 0
+        ax.tick_params(axis='both', which='major', labelsize=11)
         list_legend_objects = [Rectangle((0, 0), 1, 1, fc=self.color_dict[residue_name], alpha=0.5) for residue_name in self.list_residue_names]
-        ax.legend(list_legend_objects,self.list_residue_names,loc=2,prop={'size':8})
-        self.figure.set_size_inches(10,10)
+        ax.legend(list_legend_objects,self.list_residue_names,loc='center',prop={'size':10}, bbox_to_anchor=[1.0, 0.5])
+        self.figure.set_size_inches(5,5)
 
     def save_plot(self, filename):
         self.figure.savefig(filename, dpi = 300)
