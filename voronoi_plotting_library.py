@@ -1,5 +1,6 @@
 '''Library of plotting functions for analysis of virus simulations with spherical Voronoi diagrams.'''
 
+import os
 import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -777,3 +778,35 @@ class plot_sample_N_neighbours(object):
 
     def save_plot(self, filename):
         self.figure.savefig(filename, dpi = 300)
+
+def plot_panel_fig_isolated_raw(dictionary_data_list, lipid_name,  plot_title, plot_filename, time_value_list_microseconds):
+    '''Plot one of the panels for figure isolated_raw.'''
+    fig = matplotlib.pyplot.figure()
+    ax = fig.add_subplot('111')
+    legend_added = []
+    for dictionary_data, colour, time_value in zip(dictionary_data_list, ['red', 'green', 'grey'], time_value_list_microseconds):
+        for neighbour_count, subdict in dictionary_data[lipid_name].iteritems():
+            avg_surface_area = numpy.average(subdict['list_surface_areas'])
+            std_surface_area = numpy.std(subdict['list_surface_areas'])
+            if time_value in legend_added:
+                ax.errorbar(neighbour_count,avg_surface_area, yerr = std_surface_area, marker = 'o', c = colour, markeredgecolor='none')
+            else:
+                ax.errorbar(neighbour_count,avg_surface_area, yerr = std_surface_area, marker = 'o', c = colour, markeredgecolor='none', label = str(time_value) + ' $\mu$s')
+                legend_added.append(time_value)
+
+    try:
+        os.mkdir('./fig_isolated_raw')
+    except:
+        pass
+
+    ax.set_title(plot_title)
+    ax.set_xlim(0,15)
+    ax.set_ylim(0,300)
+    ax.set_xlabel('Raw Neighbour Count')
+    ax.set_ylabel('Avg Surface Area ($\AA^2$)')
+    ax.legend(loc=2, numpoints=1)
+    fig.set_size_inches(4.3,3.5)
+    fig.subplots_adjust(left=0.2)
+    fig.savefig(os.path.join('./fig_isolated_raw',plot_filename), dpi = 300)
+
+
