@@ -66,5 +66,5 @@ display shadows on
 display ambientocclusion on
 
 #use Tachyon to generate a .dat file, which can then be rendered externally:
-render TachyonInternal test.tga
+render TachyonInternal [lindex $argv 1]
 #render Tachyon dengue_final_snapshot.dat
