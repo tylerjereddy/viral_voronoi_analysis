@@ -97,9 +97,11 @@ for {set repnum 1} {$repnum < [expr {$num_resid_values * 3}]} {incr repnum 3} {
 #zoom:
 #scale by 2.5
 #rotate the view:
-rotate x by 180
-rotate y by 0
-rotate z by 50
+# read in the rotation values from argv
+
+rotate x by [lindex $argv [expr {$argv_position + 1}]]
+rotate y by [lindex $argv [expr {$argv_position + 2}]]
+rotate z by [lindex $argv [expr {$argv_position + 3}]]
 #tranlate the view a bit (in screen units):
 #translate by -0.2 0.0 0
 
