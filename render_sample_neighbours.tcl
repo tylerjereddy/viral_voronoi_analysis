@@ -1,7 +1,10 @@
 mol load gro [lindex $argv 0]
 
+# define colour dictionaries for dengue and flu residue type of interest
+set dengue_colour_dict [dict create DUPC "11" PPCE "0" PPCS "9" DPPE "7"]
+
 #turn off the axes:
-axes location Off 
+#axes location Off 
 
 #switch to Orthographic view:
 display projection Orthographic
@@ -9,11 +12,51 @@ display projection Orthographic
 #switch to white background:
 color Display Background white
 
-#colour proteins blue:
+# set all atoms to the approximate vdw radius in MARTINI FF
+set all_atoms [atomselect top "all"]
+$all_atoms set radius 2.3
+
+# as a background, colour all particles in a non-imposing silver / gray colour
 mol modselect 0 0 all
-mol modstyle 0 0 VDW 1.0 20.0
-mol modmaterial 0 0 AOShiny
-mol modcolor 0 0 ColorID 10 
+mol modstyle 0 0 QuickSurf 1.0 0.5 1.0 1.0
+mol modmaterial 0 0 Ghost
+mol modcolor 0 0 ColorID 6 
+
+set num_resid_values [lindex $argv 2]
+set argv_position 2
+for {set repnum 1} {$repnum < [expr {$num_resid_values * 3}]} {incr repnum 3} {
+	set argv_position [expr {$argv_position + 1}]
+	set resid_value [lindex $argv $argv_position]
+	puts $resid_value
+	set sel [atomselect top "resid $resid_value"]
+	set current_resname [lindex [$sel get resname] 0]
+	set current_colour_ID [dict get $dengue_colour_dict $current_resname]
+	puts "repnum: $repnum"
+	mol addrep 0
+	mol modselect $repnum 0 (resid $resid_value) and name PO4
+	mol modstyle $repnum 0 VDW 1.0 20.0
+	mol modmaterial $repnum 0 AOShiny
+	mol modcolor $repnum 0 ColorID $current_colour_ID 
+
+	# display the rest of the (non-headgroup) particles in the highlight lipids in gray
+	set second_rep [expr {$repnum + 1}]
+	puts "second_rep: $second_rep"
+	mol addrep 0
+	mol modselect $second_rep 0 (resid $resid_value) and not name PO4 NC3 NH3
+	mol modstyle $second_rep 0 VDW 1.0 20.0
+	#mol modstyle $second_rep 0 DynamicBonds 6.0 0.3 6.0
+	mol modmaterial $second_rep 0 AOShiny
+	mol modcolor $second_rep 0 ColorID 6
+
+	# connect the CG particles
+	set third_rep [expr {$repnum + 2}]
+	mol addrep 0
+	mol modselect $third_rep 0 (resid $resid_value) and not name NC3 NH3
+	mol modstyle $third_rep 0 DynamicBonds 6.0 0.9 9.0
+	mol modmaterial $third_rep 0 AOShiny
+	mol modcolor $third_rep 0 ColorID 16
+
+}
 
 #color lipids orange:
 #mol addrep 0
@@ -54,9 +97,9 @@ mol modcolor 0 0 ColorID 10
 #zoom:
 #scale by 2.5
 #rotate the view:
-#rotate x by 50
-#rotate y by -60
-#rotate z by 194
+rotate x by 180
+rotate y by 0
+rotate z by 50
 #tranlate the view a bit (in screen units):
 #translate by -0.2 0.0 0
 
