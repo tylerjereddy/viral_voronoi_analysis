@@ -1,8 +1,6 @@
 mol load gro [lindex $argv 0]
 
 # define colour dictionaries for dengue and flu residue type of interest
-set dengue_colour_dict [dict create DUPC "11" PPCE "0" PPCS "9" DPPE "7"]
-set flu_colour_dict [dict create CHOL "7" FORS "5" PPCH "1" DOPX "11"]
 
 #turn off the axes:
 #axes location Off 
@@ -24,6 +22,14 @@ mol modmaterial 0 0 Ghost
 mol modcolor 0 0 ColorID 6 
 
 set num_resid_values [lindex $argv 2]
+set virus_type [lindex $argv [expr {$num_resid_values + 6}]]
+
+if {$virus_type == "dengue"} {
+	set colour_dict [dict create DUPC "11" PPCE "0" PPCS "9" DPPE "7"]
+} else {
+	set colour_dict [dict create CHOL "7" FORS "5" PPCH "1" DOPX "11"]
+}
+
 set argv_position 2
 for {set repnum 1} {$repnum < [expr {$num_resid_values * 3}]} {incr repnum 3} {
 	set argv_position [expr {$argv_position + 1}]
@@ -31,7 +37,7 @@ for {set repnum 1} {$repnum < [expr {$num_resid_values * 3}]} {incr repnum 3} {
 	puts $resid_value
 	set sel [atomselect top "resid $resid_value"]
 	set current_resname [lindex [$sel get resname] 0]
-	set current_colour_ID [dict get $dengue_colour_dict $current_resname]
+	set current_colour_ID [dict get $colour_dict $current_resname]
 	puts "repnum: $repnum"
 	mol addrep 0
 	mol modselect $repnum 0 (resid $resid_value) and name PO4
