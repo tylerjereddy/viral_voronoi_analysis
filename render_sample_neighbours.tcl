@@ -2,6 +2,7 @@ mol load gro [lindex $argv 0]
 
 # define colour dictionaries for dengue and flu residue type of interest
 set dengue_colour_dict [dict create DUPC "11" PPCE "0" PPCS "9" DPPE "7"]
+set flu_colour_dict [dict create CHOL "7" FORS "5" PPCH "1" DOPX "11"]
 
 #turn off the axes:
 #axes location Off 
