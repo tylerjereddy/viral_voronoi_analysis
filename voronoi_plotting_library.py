@@ -703,9 +703,12 @@ class plot_sample_N_neighbours(object):
         self.central_Voronoi_cell_array = sample_neighbour_dict['central_cell']
         self.neighbour_dict = sample_neighbour_dict['neighbours']
         self.figure = matplotlib.pyplot.figure()
+        self.condition = condition
         if condition == 'flu':
+            self.azimuth = 180
             self.color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
         elif condition == 'dengue':
+            self.azimuth = 0
             self.color_dict = {'POPC':'black','PPCE':'blue','DPPE':'green','CER':'red','DUPC':'purple','protein':'orange','DOPS':'brown','PPCS':'pink'}
         self.list_residue_names = [self.central_species_name]
 
@@ -767,13 +770,17 @@ class plot_sample_N_neighbours(object):
         ax.set_zlim(z_min/10., z_max/10.)
         #ax.set_xlabel('x (nm)', fontsize=16)
         ax.set_ylabel('\ny (nm)', fontsize=16)
-        ax.set_zlabel('z (nm)\n', fontsize=16)
         ax.xaxis.set_major_formatter(matplotlib.pyplot.NullFormatter())
-        ax.azim = 0
+        ax.azim = self.azimuth
         ax.elev = 0
         ax.tick_params(axis='both', which='major', labelsize=11)
         list_legend_objects = [Rectangle((0, 0), 1, 1, fc=self.color_dict[residue_name], alpha=0.5) for residue_name in self.list_residue_names]
-        ax.legend(list_legend_objects,self.list_residue_names,loc='center',prop={'size':10}, bbox_to_anchor=[1.0, 0.5])
+        if self.condition == 'flu':
+            ax.legend(list_legend_objects,self.list_residue_names,loc='center',prop={'size':10}, bbox_to_anchor=[0.2, 0.5])
+            ax.set_zlabel('\nz (nm)', fontsize=16)
+        elif self.condition == 'dengue':
+            ax.legend(list_legend_objects,self.list_residue_names,loc='center',prop={'size':10}, bbox_to_anchor=[1.0, 0.5])
+            ax.set_zlabel('z (nm)\n', fontsize=16)
         self.figure.set_size_inches(5,5)
 
     def save_plot(self, filename):
