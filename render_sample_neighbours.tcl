@@ -40,7 +40,12 @@ for {set repnum 1} {$repnum < [expr {$num_resid_values * 3}]} {incr repnum 3} {
 	puts "current_resname: $current_resname"
 	set current_colour_ID [dict get $colour_dict $current_resname]
 	mol addrep 0
-	mol modselect $repnum 0 (resid $resid_value) and name PO4
+
+	if {$virus_type == "dengue"} {
+		mol modselect $repnum 0 (resid $resid_value) and name PO4
+} else {
+		mol modselect $repnum 0 (resid $resid_value) and ((resname PPCH and name PO4) or (resname CHOL and name ROH) or (resname FORS and name AM2))
+}
 	mol modstyle $repnum 0 VDW 1.0 20.0
 	mol modmaterial $repnum 0 AOShiny
 	mol modcolor $repnum 0 ColorID $current_colour_ID 
@@ -48,7 +53,11 @@ for {set repnum 1} {$repnum < [expr {$num_resid_values * 3}]} {incr repnum 3} {
 	# display the rest of the (non-headgroup) particles in the highlight lipids in gray
 	set second_rep [expr {$repnum + 1}]
 	mol addrep 0
-	mol modselect $second_rep 0 (resid $resid_value) and not name PO4 NC3 NH3 BC B2 B3 INV
+	if {$virus_type == "dengue"} {
+		mol modselect $second_rep 0 (resid $resid_value) and not name PO4 NC3 NH3
+} else {
+		mol modselect $second_rep 0 (resid $resid_value) and not name PO4 NC3 NH3 BC B2 B3 INV ROH AM2 B1 B4
+}
 	mol modstyle $second_rep 0 VDW 1.0 20.0
 	#mol modstyle $second_rep 0 DynamicBonds 6.0 0.3 6.0
 	mol modmaterial $second_rep 0 AOShiny
@@ -57,7 +66,7 @@ for {set repnum 1} {$repnum < [expr {$num_resid_values * 3}]} {incr repnum 3} {
 	# connect the CG particles
 	set third_rep [expr {$repnum + 2}]
 	mol addrep 0
-	mol modselect $third_rep 0 (resid $resid_value) and not name NC3 NH3 BC B2 B3 INV
+	mol modselect $third_rep 0 (resid $resid_value) and not name NC3 NH3 BC B2 B3 INV AM2 B1 B4
 	mol modstyle $third_rep 0 DynamicBonds 6.0 0.9 9.0
 	mol modmaterial $third_rep 0 AOShiny
 	mol modcolor $third_rep 0 ColorID 16
