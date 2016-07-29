@@ -34,11 +34,11 @@ set argv_position 2
 for {set repnum 1} {$repnum < [expr {$num_resid_values * 3}]} {incr repnum 3} {
 	set argv_position [expr {$argv_position + 1}]
 	set resid_value [lindex $argv $argv_position]
-	puts $resid_value
+	puts "resid_value: $resid_value"
 	set sel [atomselect top "resid $resid_value"]
 	set current_resname [lindex [$sel get resname] 0]
+	puts "current_resname: $current_resname"
 	set current_colour_ID [dict get $colour_dict $current_resname]
-	puts "repnum: $repnum"
 	mol addrep 0
 	mol modselect $repnum 0 (resid $resid_value) and name PO4
 	mol modstyle $repnum 0 VDW 1.0 20.0
@@ -47,9 +47,8 @@ for {set repnum 1} {$repnum < [expr {$num_resid_values * 3}]} {incr repnum 3} {
 
 	# display the rest of the (non-headgroup) particles in the highlight lipids in gray
 	set second_rep [expr {$repnum + 1}]
-	puts "second_rep: $second_rep"
 	mol addrep 0
-	mol modselect $second_rep 0 (resid $resid_value) and not name PO4 NC3 NH3
+	mol modselect $second_rep 0 (resid $resid_value) and not name PO4 NC3 NH3 BC B2 B3 INV
 	mol modstyle $second_rep 0 VDW 1.0 20.0
 	#mol modstyle $second_rep 0 DynamicBonds 6.0 0.3 6.0
 	mol modmaterial $second_rep 0 AOShiny
@@ -58,7 +57,7 @@ for {set repnum 1} {$repnum < [expr {$num_resid_values * 3}]} {incr repnum 3} {
 	# connect the CG particles
 	set third_rep [expr {$repnum + 2}]
 	mol addrep 0
-	mol modselect $third_rep 0 (resid $resid_value) and not name NC3 NH3
+	mol modselect $third_rep 0 (resid $resid_value) and not name NC3 NH3 BC B2 B3 INV
 	mol modstyle $third_rep 0 DynamicBonds 6.0 0.9 9.0
 	mol modmaterial $third_rep 0 AOShiny
 	mol modcolor $third_rep 0 ColorID 16
