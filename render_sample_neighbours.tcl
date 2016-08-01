@@ -44,7 +44,7 @@ for {set repnum 1} {$repnum < [expr {$num_resid_values * 3}]} {incr repnum 3} {
 	if {$virus_type == "dengue"} {
 		mol modselect $repnum 0 (resid $resid_value) and name PO4
 } else {
-		mol modselect $repnum 0 (resid $resid_value) and ((resname PPCH and name PO4) or (resname CHOL and name ROH) or (resname FORS and name AM2))
+		mol modselect $repnum 0 (resid $resid_value) and ((resname PPCH and name PO4) or (resname CHOL and name ROH) or (resname FORS and name AM2) or (resname DOPX and name PO4))
 }
 	mol modstyle $repnum 0 VDW 1.0 20.0
 	mol modmaterial $repnum 0 AOShiny
