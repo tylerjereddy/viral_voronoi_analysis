@@ -109,8 +109,6 @@ for {set repnum 1} {$repnum < [expr {$num_resid_values * 3}]} {incr repnum 3} {
 #draw color black
 #draw cylinder {260 110 0} {660 110 0} radius 20.0
 
-#zoom:
-#scale by 2.5
 #rotate the view:
 # read in the rotation values from argv
 
@@ -120,6 +118,10 @@ rotate z by [lindex $argv [expr {$argv_position + 3}]]
 #tranlate the view a bit (in screen units):
 #translate by -0.2 0.0 0
 
+set scale_value [lindex $argv [expr {$argv_position + 5}]]
+puts "scale value: $scale_value"
+#zoom:
+scale by $scale_value
 
 #activate ambient occlusion lighting and shadows:
 display shadows on
