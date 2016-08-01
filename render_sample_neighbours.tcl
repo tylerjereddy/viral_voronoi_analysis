@@ -3,7 +3,7 @@ mol load gro [lindex $argv 0]
 # define colour dictionaries for dengue and flu residue type of interest
 
 #turn off the axes:
-#axes location Off 
+axes location Off 
 
 #switch to Orthographic view:
 display projection Orthographic
