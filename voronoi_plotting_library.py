@@ -779,7 +779,7 @@ class plot_sample_N_neighbours(object):
             ax.legend(list_legend_objects,self.list_residue_names,loc='center',prop={'size':10}, bbox_to_anchor=[0.2, 0.5])
             ax.set_zlabel('\nz (nm)', fontsize=16)
         elif self.condition == 'dengue':
-            ax.legend(list_legend_objects,self.list_residue_names,loc='center',prop={'size':10}, bbox_to_anchor=[1.0, 0.5])
+            ax.legend(list_legend_objects,self.list_residue_names,loc='center',prop={'size':10}, bbox_to_anchor=[0.85, 0.7])
             ax.set_zlabel('z (nm)\n', fontsize=16)
         self.figure.set_size_inches(5,5)
 
