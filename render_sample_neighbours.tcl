@@ -11,6 +11,11 @@ display projection Orthographic
 #switch to white background:
 color Display Background white
 
+#custom color adjustments for renders:
+
+# darker brown colour:
+color change rgb 5 0.55 0.27 0.07
+
 # set all atoms to the approximate vdw radius in MARTINI FF
 set all_atoms [atomselect top "all"]
 $all_atoms set radius 2.3
