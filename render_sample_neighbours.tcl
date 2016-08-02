@@ -11,6 +11,12 @@ display projection Orthographic
 #switch to white background:
 color Display Background white
 
+# adjust lighting
+display light 2 on
+display light 3 on
+display aoambient 1.0
+display aodirect 0.7
+
 #custom color adjustments for renders:
 
 # darker brown colour:
@@ -141,7 +147,7 @@ puts "scale value: $scale_value"
 scale by $scale_value
 
 #activate ambient occlusion lighting and shadows:
-display shadows on
+#display shadows on
 display ambientocclusion on
 
 #use Tachyon to generate a .dat file, which can then be rendered externally:
