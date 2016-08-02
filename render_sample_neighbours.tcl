@@ -15,11 +15,12 @@ color Display Background white
 set all_atoms [atomselect top "all"]
 $all_atoms set radius 2.3
 
-# as a background, colour all particles in a non-imposing silver / gray colour
-mol modselect 0 0 all
+# as a background, colour all non-protein particles in a non-imposing silver / gray colour
+mol modselect 0 0 not resname ALA ARG ASN ASP CYS GLN GLU GLY HIS ILE LEU LYS MET PHE PRO SER THR TRP TYR VAL PLM
 mol modstyle 0 0 QuickSurf 1.0 0.5 1.0 1.0
 mol modmaterial 0 0 Ghost
 mol modcolor 0 0 ColorID 6 
+
 
 set num_resid_values [lindex $argv 2]
 set virus_type [lindex $argv [expr {$num_resid_values + 6}]]
@@ -70,8 +71,19 @@ for {set repnum 1} {$repnum < [expr {$num_resid_values * 3}]} {incr repnum 3} {
 	mol modstyle $third_rep 0 DynamicBonds 6.0 0.9 9.0
 	mol modmaterial $third_rep 0 AOShiny
 	mol modcolor $third_rep 0 ColorID 16
+	puts "third_rep: $third_rep"
 
 }
+
+set protein_repnum [expr {$num_resid_values * 3 + 1}]
+puts "protein_repnum: $protein_repnum"
+
+# use a yellow tint for protein particles, but don't obstruct the lipid headgroups
+mol addrep 0
+mol modselect $protein_repnum 0 (resname ALA ARG ASN ASP CYS GLN GLU GLY HIS ILE LEU LYS MET PHE PRO SER THR TRP TYR VAL) and within 5 of {name "C.*"}
+mol modstyle $protein_repnum 0 QuickSurf 1.0 0.5 1.0 1.0
+mol modmaterial $protein_repnum 0 AOShiny
+mol modcolor $protein_repnum 0 ColorID 4 
 
 #color lipids orange:
 #mol addrep 0
