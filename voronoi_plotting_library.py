@@ -10,13 +10,17 @@ import numpy
 class plot_voronoi_neighbour_data_species_specific:
     '''Plot Voronoi neighbour data probing species-specific effects.'''
 
-    def __init__(self,matplotlib_figure_object,inner_leaflet_dict_by_species, outer_leaflet_dict_by_species):
+    def __init__(self,matplotlib_figure_object,inner_leaflet_dict_by_species, outer_leaflet_dict_by_species, simulation_type):
         self.fig = matplotlib_figure_object
         self.subplot_number = 1
         self.inner_leaflet_dict = inner_leaflet_dict_by_species
         self.outer_leaflet_dict = outer_leaflet_dict_by_species
+        if simulation_type == 'flu':
+            self.color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'} #this should be fine for control, which simply lacks protein
+        else:
+            self.color_dict = {'POPC':'black','PPCE':'blue','DPPE':'green','CER':'red','DUPC':'purple','protein':'orange','DOPS':'brown','PPCS':'pink'} 
 
-    def plot(self, num_lipid_species, timestamp_list_microseconds, list_additional_inner_leaflet_dicts, list_additional_outer_leaflet_dicts, area_range, max_num_neighbours = 12):
+    def plot(self, num_lipid_species, timestamp_list_microseconds, list_additional_inner_leaflet_dicts, list_additional_outer_leaflet_dicts, area_range, max_num_neighbours = 12, outfile_path = None):
         list_inner_leaflet_dicts = [self.inner_leaflet_dict] + list_additional_inner_leaflet_dicts
         list_outer_leaflet_dicts = [self.outer_leaflet_dict] + list_additional_outer_leaflet_dicts
         current_time_index = 0
@@ -38,7 +42,7 @@ class plot_voronoi_neighbour_data_species_specific:
                             list_avg_surface_areas.append(average_surface_area)
                             list_std_dev_values.append(std_surface_area)
                         #ax.bar(numpy.array(list_neighbour_counts) - 0.4, list_avg_surface_areas, yerr = numpy.array(list_std_dev_values), alpha = 0.4)
-                        ax.errorbar(numpy.array(list_neighbour_counts), list_avg_surface_areas, yerr = None, alpha = 1.0, label = neighbour_species_name)
+                        ax.errorbar(numpy.array(list_neighbour_counts), list_avg_surface_areas, yerr = None, alpha = 1.0, label = neighbour_species_name, color = self.color_dict[neighbour_species_name])
                         error_array = numpy.array(list_std_dev_values)
                         array_avg_surface_areas = numpy.array(list_avg_surface_areas)
                         ax.fill_between(numpy.array(list_neighbour_counts), array_avg_surface_areas - error_array, array_avg_surface_areas + error_array, alpha = 0.05)
@@ -54,6 +58,8 @@ class plot_voronoi_neighbour_data_species_specific:
             self.subplot_number = current_time_index + 1
         self.fig.set_size_inches(25,80) 
         self.fig.subplots_adjust(hspace = 0.3, wspace = 0.3)
+        if outfile_path is not None:
+            self.fig.savefig(outfile_path, dpi = 300, bbox_inches = 'tight')
 
 class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specific):
     '''Plot Voronoi raw neighbour data results.'''
