@@ -64,7 +64,7 @@ class plot_voronoi_neighbour_data_species_specific:
 class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specific):
     '''Plot Voronoi raw neighbour data results.'''
 
-    def plot(self, species_count_dictionary, sim_name, aggregate_figure_object, color_dict, fig_width_inches, fig_height_inches, list_additional_data_dictionaries_inner_leaflet = None, list_additional_data_dictionaries_outer_leaflet = None, list_time_stamps = None, general_plots_xmax = None, aggregate_ymax = None):
+    def plot(self, species_count_dictionary, sim_name, aggregate_figure_object, color_dict, fig_width_inches, fig_height_inches, list_additional_data_dictionaries_inner_leaflet = None, list_additional_data_dictionaries_outer_leaflet = None, list_time_stamps = None, general_plots_xmax = None, aggregate_ymax = None, hspace = 0.4, wspace = 0.5):
         '''species_count_dictionary is for verification that total frequencies of a given molecular species match the amount of that species in the system'''
         full_list_inner_leaflet_data_dicts = [self.inner_leaflet_dict] + list_additional_data_dictionaries_inner_leaflet
         full_list_outer_leaflet_data_dicts = [self.outer_leaflet_dict] + list_additional_data_dictionaries_outer_leaflet
@@ -198,7 +198,7 @@ class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specif
 #            ax.set_title(leaflet_name + ' leaflet ' + lipid_name)
 #            self.subplot_number += 1
         self.fig.set_size_inches(fig_width_inches,fig_height_inches) 
-        self.fig.subplots_adjust(hspace = 0.4, wspace = 0.5)
+        self.fig.subplots_adjust(hspace = hspace, wspace = wspace)
         aggregate_figure_object.set_size_inches(8,3) 
         #aggregate_figure_object(hspace = 0.7, wspace = 0.3)
 
