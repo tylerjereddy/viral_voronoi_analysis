@@ -97,6 +97,10 @@ class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specif
                     #print molecular_species_name, leaflet_name, time_stamp, list_subplot_numbers_current_time_stamp[subplot_index]
                     ax = self.fig.add_subplot(num_rows,num_columns,list_subplot_numbers_current_time_stamp[subplot_index][0])
                     ax2 = self.fig.add_subplot(num_rows,num_columns,list_subplot_numbers_current_time_stamp[subplot_index][1])
+                    for axis in [ax, ax2]:
+                        axis.tick_params(axis = 'x', labelsize = 3)
+                        axis.tick_params(axis = 'y', labelsize = 3)
+                        axis.tick_params(which='major', length = 1)
                     num_neighbours_list = []
                     frequency_of_neighbour_count_list = []
                     for num_neighbours, subdictionary in leaflet_dict[molecular_species_name].iteritems():
@@ -105,9 +109,9 @@ class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specif
                         array_surface_areas = numpy.array(list_surface_area_for_voronoi_cells_with_this_neighbour_count)
                         average_surface_area = numpy.average(array_surface_areas)
                         std_surface_area = numpy.std(array_surface_areas)
-                        ax.errorbar(num_neighbours,average_surface_area, yerr = std_surface_area, marker = 'o',c='blue')
-                        ax.set_xlabel('number of Voronoi neighbours')
-                        ax.set_ylabel('avg Voronoi cell surface area ($\AA^2$)')
+                        ax.errorbar(num_neighbours,average_surface_area, yerr = std_surface_area, marker = 'o',c='blue', markeredgecolor='none', ms = 2, capsize=1, elinewidth=0.5)
+                        ax.set_xlabel('# neighbours', fontsize =3, labelpad = 0.1)
+                        ax.set_ylabel('avg Voronoi cell\n surface area ($\AA^2$)', fontsize =3, labelpad = 0.1)
                         if general_plots_xmax:
                             ax.set_xlim(-0.2,general_plots_xmax)
                         else:
@@ -119,7 +123,7 @@ class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specif
                             list_aggregate_frequency_data_inner_leaflet.extend(frequency_of_neighbour_count * [num_neighbours])
                             if inner_species_counter == 0:
                                 ax_aggregate_inner_area.scatter(num_neighbours,average_surface_area,color=color_dict[molecular_species_name],label=molecular_species_name)
-                                ax_aggregate_inner_area.set_title('{condition} aggregate inner Leaflet ({time_stamp})'.format(condition = sim_name, time_stamp = time_stamp))
+                                ax_aggregate_inner_area.set_title('{condition} aggregate inner Leaflet ({time_stamp})'.format(condition = sim_name, time_stamp = time_stamp), fontsize =3)
                                 inner_species_counter += 1
                             else:
                                 ax_aggregate_inner_area.scatter(num_neighbours,average_surface_area,color=color_dict[molecular_species_name])
@@ -127,29 +131,30 @@ class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specif
                             list_aggregate_frequency_data_outer_leaflet.extend(frequency_of_neighbour_count * [num_neighbours])
                             if outer_species_counter == 0:
                                 ax_aggregate_outer_area.scatter(num_neighbours,average_surface_area,color=color_dict[molecular_species_name],label=molecular_species_name)
-                                ax_aggregate_outer_area.set_title('{condition} aggregate outer Leaflet ({time_stamp})'.format(condition = sim_name, time_stamp = time_stamp))
+                                ax_aggregate_outer_area.set_title('{condition} aggregate outer Leaflet ({time_stamp})'.format(condition = sim_name, time_stamp = time_stamp), fontsize =3)
                                 outer_species_counter += 1
                             else:
                                 ax_aggregate_outer_area.scatter(num_neighbours,average_surface_area,color=color_dict[molecular_species_name])
                                 
-                    ax2.bar(numpy.array(num_neighbours_list) - 0.3, frequency_of_neighbour_count_list)
+                    ax2.bar(numpy.array(num_neighbours_list) - 0.3, frequency_of_neighbour_count_list, lw = 0)
                     if general_plots_xmax:
                         ax2.set_xlim(-1,general_plots_xmax)
                     else:
                         ax2.set_xlim(-1,12)
-                    ax2.set_ylabel('frequency')
-                    ax2.set_xlabel('number of Voronoi neighbours')
+                    ax2.set_ylabel('frequency', fontsize =3, labelpad = 0.1)
+                    ax2.set_xlabel('# neighbours', fontsize =3, labelpad = 0.1)
                     for axis in [ax,ax2]:
-                        axis.set_title('{condition} {leaflet_flag} Leaflet {species} ({time_stamp})'.format(leaflet_flag = leaflet_name, species = molecular_species_name, condition = sim_name, time_stamp = time_stamp))
+                        axis.set_title('{condition} {leaflet_flag}\nleaflet {species} ({time_stamp})'.format(leaflet_flag = leaflet_name, species = molecular_species_name, condition = sim_name, time_stamp = time_stamp), fontsize = 3, y = 0.92)
+                        axis.tick_params(direction='in', pad = 1)
                     subplot_index += 1
                     #print 'subplot_index:', subplot_index
                     frequency_count_molecular_species += sum(frequency_of_neighbour_count_list)
                 assert frequency_count_molecular_species == species_count_dictionary[molecular_species_name], "The neighbour frequency count for {mol_species} does not match the total molecules of this type in the system. Got {actual_count} instead.".format(mol_species = molecular_species_name, actual_count = frequency_count_molecular_species)
                 
             for axis in [ax_aggregate_inner_area, ax_aggregate_outer_area]:
-                axis.legend(loc=2,fontsize=10,scatterpoints=1)
-                axis.set_xlabel('number of Voronoi neighbours')
-                axis.set_ylabel('avg Voronoi cell surface area ($\AA^2$)')
+                axis.legend(loc=2,fontsize=3,scatterpoints=1)
+                axis.set_xlabel('# neighbours', fontsize = 3)
+                axis.set_ylabel('avg Voronoi cell\n surface area ($\AA^2$)', fontsize = 3, labelpad = 0.1)
                 if general_plots_xmax:
                     axis.set_xlim(0,general_plots_xmax)
                 else:
@@ -157,12 +162,12 @@ class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specif
                 axis.set_ylim(0,350)
                 
             for axis in [ax_aggregate_inner_freq,ax_aggregate_outer_freq]:
-                axis.set_xlabel('number of Voronoi neighbours')
+                axis.set_xlabel('number of Voronoi neighbours', fontsize = 3)
                 if general_plots_xmax:
                     axis.set_xlim(0,general_plots_xmax)
                 else:
                     axis.set_xlim(0,14)
-                axis.set_ylabel('Frequency')
+                axis.set_ylabel('Frequency', fontsize = 3)
                 if aggregate_ymax:
                     axis.set_ylim(0,aggregate_ymax)
                 else:
@@ -171,9 +176,9 @@ class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specif
             assert len(list_aggregate_frequency_data_inner_leaflet) + len(list_aggregate_frequency_data_outer_leaflet) == sum(species_count_dictionary.itervalues()), "The total number of Voronoi cells for which there are requency values should match the total number of particles in the system."
 
             bins = numpy.arange(14) + 0.1
-            ax_aggregate_inner_freq.set_title('{condition} aggregate inner leaflet ({time_stamp})'.format(condition = sim_name, time_stamp = time_stamp))
+            ax_aggregate_inner_freq.set_title('{condition} aggregate inner leaflet ({time_stamp})'.format(condition = sim_name, time_stamp = time_stamp), fontsize =3)
             ax_aggregate_inner_freq.hist(list_aggregate_frequency_data_inner_leaflet,bins = bins)
-            ax_aggregate_outer_freq.set_title('{condition} aggregate outer leaflet ({time_stamp})'.format(condition = sim_name, time_stamp = time_stamp))
+            ax_aggregate_outer_freq.set_title('{condition} aggregate outer leaflet ({time_stamp})'.format(condition = sim_name, time_stamp = time_stamp), fontsize =3)
             ax_aggregate_outer_freq.hist(list_aggregate_frequency_data_outer_leaflet,bins = bins)
 
 
@@ -193,8 +198,8 @@ class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specif
 #            ax.set_title(leaflet_name + ' leaflet ' + lipid_name)
 #            self.subplot_number += 1
         self.fig.set_size_inches(fig_width_inches,fig_height_inches) 
-        #self.fig.subplots_adjust(hspace = 0.7, wspace = 0.3)
-        aggregate_figure_object.set_size_inches(fig_width_inches,10) 
+        self.fig.subplots_adjust(hspace = 0.4, wspace = 0.5)
+        aggregate_figure_object.set_size_inches(8,3) 
         #aggregate_figure_object(hspace = 0.7, wspace = 0.3)
 
 def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data,dengue_condition=None,control_condition=None):
