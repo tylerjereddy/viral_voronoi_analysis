@@ -20,7 +20,7 @@ class plot_voronoi_neighbour_data_species_specific:
         else:
             self.color_dict = {'POPC':'black','PPCE':'blue','DPPE':'green','CER':'red','DUPC':'purple','protein':'orange','DOPS':'brown','PPCS':'pink'} 
 
-    def plot(self, num_lipid_species, timestamp_list_microseconds, list_additional_inner_leaflet_dicts, list_additional_outer_leaflet_dicts, area_range, max_num_neighbours = 12, outfile_path = None):
+    def plot(self, num_lipid_species, timestamp_list_microseconds, list_additional_inner_leaflet_dicts, list_additional_outer_leaflet_dicts, area_range, max_num_neighbours = 12, outfile_path = None, hspace = 0.3, wspace = 0.3):
         list_inner_leaflet_dicts = [self.inner_leaflet_dict] + list_additional_inner_leaflet_dicts
         list_outer_leaflet_dicts = [self.outer_leaflet_dict] + list_additional_outer_leaflet_dicts
         current_time_index = 0
@@ -45,19 +45,25 @@ class plot_voronoi_neighbour_data_species_specific:
                         ax.errorbar(numpy.array(list_neighbour_counts), list_avg_surface_areas, yerr = None, alpha = 1.0, label = neighbour_species_name, color = self.color_dict[neighbour_species_name])
                         error_array = numpy.array(list_std_dev_values)
                         array_avg_surface_areas = numpy.array(list_avg_surface_areas)
-                        ax.fill_between(numpy.array(list_neighbour_counts), array_avg_surface_areas - error_array, array_avg_surface_areas + error_array, alpha = 0.05)
+                        ax.fill_between(numpy.array(list_neighbour_counts), array_avg_surface_areas - error_array, array_avg_surface_areas + error_array, alpha = 0.10)
 
-                        ax.set_xlabel('num neighbours')
-                        ax.set_ylabel('avg Voronoi cell surface area ($\AA^2$)')
+                        ax.set_xlabel('num neighbours', fontsize = 3,labelpad = 0.1)
+                        ax.set_ylabel('avg Voronoi cell\n surface area ($\AA^2$)', fontsize = 3, labelpad=0.1)
                         ax.set_xticks(numpy.arange(0,max_num_neighbours, 2))
-                        ax.set_title(leaflet_name + ' leaflet ' + lipid_name + ' ({time} $\mu$s)'.format(time = time))
-                        ax.legend(prop={'size':8})
+                        ax.set_title(leaflet_name + ' leaflet ' + lipid_name + ' ({time} $\mu$s)'.format(time = time), fontsize = 3,y = 0.92)
+                        ax.tick_params(axis = 'x', labelsize = 3)
+                        ax.tick_params(axis = 'y', labelsize = 3)
+                        ax.tick_params(which='major', length = 1)
+                        lg = ax.legend(prop={'size':1.8}, bbox_to_anchor=(0.97,0.95))
+                        fr = lg.get_frame()
+                        fr.set_lw(0.2) #thinner legend frame
+                        ax.tick_params(direction='in', pad = 1)
                         ax.set_ylim(area_range)
                     self.subplot_number += len(timestamp_list_microseconds)
             current_time_index += 1
             self.subplot_number = current_time_index + 1
-        self.fig.set_size_inches(25,80) 
-        self.fig.subplots_adjust(hspace = 0.3, wspace = 0.3)
+        self.fig.set_size_inches(8.5,11) 
+        self.fig.subplots_adjust(hspace = hspace, wspace = wspace)
         if outfile_path is not None:
             self.fig.savefig(outfile_path, dpi = 300, bbox_inches = 'tight')
 
