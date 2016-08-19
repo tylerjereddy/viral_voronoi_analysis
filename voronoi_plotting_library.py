@@ -300,7 +300,7 @@ def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indi
     #matplotlib_figure_object.savefig('control_1_inner_leaflet_pydata_london_2015.png', dpi = 300)
     matplotlib_figure_object.savefig('sim35_outer_leaflet_pydata_london_2015.png', dpi = 300)
 
-def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_surface_area_reconstitution=None,list_percent_surface_area_reconstitution_inner_leaflet=None,protein_present=None,simulation_title=None,dictionary_headgroup_data=None,list_percent_surface_area_reconstitution_from_lipids_only=None,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet=None,list_percent_surface_area_reconstitution_from_proteins_only=None,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet=None,control_condition=None,dengue_condition=None):
+def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_surface_area_reconstitution=None,list_percent_surface_area_reconstitution_inner_leaflet=None,protein_present=None,simulation_title=None,dictionary_headgroup_data=None,list_percent_surface_area_reconstitution_from_lipids_only=None,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet=None,list_percent_surface_area_reconstitution_from_proteins_only=None,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet=None,control_condition=None,dengue_condition=None, output_file=None):
     if not dengue_condition:
         color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
     else: #dengue has a very different lipid profile
@@ -430,6 +430,38 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         ax_4.set_title(simulation_title + ' inner leaflet')
 #ax_4.set_ylim(34,54)
 
+    if output_file is not None:
+        figure_object.subplots_adjust(wspace = 0.5)
+        figure_object.set_size_inches(8.5,3)
+
+        for axis in [ax_outer, ax_inner, ax2, ax4]:
+            axis.set_title(axis.get_title(), fontsize=6)
+            if axis == ax_outer or axis == ax_inner:
+                axis.legend(loc = 4, prop={'size':6}, scatterpoints=1)
+            else:
+                if 'control_2' in output_file:
+                    location = 4
+                else:
+                    location = 0
+                axis.legend(loc = location, prop={'size':6}, scatterpoints=1)
+            ylbl = axis.yaxis.get_label()
+            old_ylbl_fontsize = ylbl.get_fontsize()
+            ylbl.set_fontsize(6)
+                    
+
+        figure_object.savefig(output_file, dpi = 300, bbox_inches = 'tight')
+
+        #reset values after producing images so I don't throw off the render in the Jupyter nb
+        for axis in [ax_outer, ax_inner, ax2, ax4]:
+            axis.set_title(axis.get_title(), fontdict=None)
+            if axis == ax_outer or axis == ax_inner:
+                axis.legend(loc = 4, prop={'size':10})
+            else:
+                axis.legend(loc = 0, prop={'size':10})
+            ylbl = axis.yaxis.get_label()
+            ylbl.set_fontsize(old_ylbl_fontsize)
+
+    figure_object.subplots_adjust(wspace = 0.2)
     figure_object.set_size_inches(25,4)
 
 def area_per_molecule_plotting_sysL_figures(figure_object_1,figure_object_2,figure_name_1,figure_name_2,list_frame_numbers,list_percent_surface_area_reconstitution=None,list_percent_surface_area_reconstitution_inner_leaflet=None,protein_present=None,simulation_title=None,dictionary_headgroup_data=None,list_percent_surface_area_reconstitution_from_lipids_only=None,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet=None,list_percent_surface_area_reconstitution_from_proteins_only=None,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet=None,control_condition=None,dengue_condition=None):
