@@ -248,7 +248,7 @@ def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,d
         plot_number += 1
     matplotlib_figure_object.set_size_inches(24,6)
 
-def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data,dengue_condition=None,debug_generators=None,generator_array=None):
+def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data,dengue_condition=None,debug_generators=None,generator_array=None, outfile_name=None):
     plot_number = 1
     if not dengue_condition:
         color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
@@ -298,7 +298,8 @@ def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indi
         plot_number += 1
     matplotlib_figure_object.set_size_inches(24,6)
     #matplotlib_figure_object.savefig('control_1_inner_leaflet_pydata_london_2015.png', dpi = 300)
-    matplotlib_figure_object.savefig('sim35_outer_leaflet_pydata_london_2015.png', dpi = 300)
+    if outfile_name is not None:
+        matplotlib_figure_object.savefig(outfile_name, dpi = 300, bbox_inches = 'tight')
 
 def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_surface_area_reconstitution=None,list_percent_surface_area_reconstitution_inner_leaflet=None,protein_present=None,simulation_title=None,dictionary_headgroup_data=None,list_percent_surface_area_reconstitution_from_lipids_only=None,list_percent_surface_area_reconstitution_from_lipids_only_inner_leaflet=None,list_percent_surface_area_reconstitution_from_proteins_only=None,list_percent_surface_area_reconstitution_from_proteins_only_inner_leaflet=None,control_condition=None,dengue_condition=None, output_file=None):
     if not dengue_condition:
