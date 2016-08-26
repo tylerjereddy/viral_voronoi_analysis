@@ -208,7 +208,7 @@ class plot_voronoi_neighbour_data_raw(plot_voronoi_neighbour_data_species_specif
         aggregate_figure_object.set_size_inches(8,3) 
         #aggregate_figure_object(hspace = 0.7, wspace = 0.3)
 
-def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data,dengue_condition=None,control_condition=None):
+def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data,dengue_condition=None,control_condition=None, output_file=None):
     plot_number = 1
 
     if not dengue_condition:
@@ -247,6 +247,8 @@ def plot_sample_Voronoi_diagrams(matplotlib_figure_object,list_Voronoi_indices,d
         ax.legend(list_legend_objects,list_residue_names,loc=2,prop={'size':8})
         plot_number += 1
     matplotlib_figure_object.set_size_inches(24,6)
+    if output_file is not None:
+        matplotlib_figure_object.savefig(output_file, dpi = 300, bbox_inches = 'tight')
 
 def plot_sample_Voronoi_diagrams_zoom(matplotlib_figure_object,list_Voronoi_indices,dict_key_Voronoi_data,plot_title,dict_data,dengue_condition=None,debug_generators=None,generator_array=None, outfile_name=None):
     plot_number = 1
