@@ -517,7 +517,7 @@ def area_per_molecule_plotting_sysL_figures(figure_object_1,figure_object_2,figu
 
 class radial_distance_assessment_dengue:
 
-    def __init__(self,matplotlib_figure_object,list_frame_numbers_dengue,list_min_dengue_lipid_headgroup_distances,list_max_dengue_lipid_headgroup_distances,list_average_dengue_lipid_headgroup_distances,list_std_dev_dengue_lipid_headgroup_distances,list_dengue_lipid_headgroup_midpoint_distances,list_dengue_lipid_headgroup_percent_above_threshold,list_dengue_lipid_headgroup_percent_below_threshold,list_min_protein_distances,list_max_protein_distances, array_min_dengue_lipid_headgroup_radial_distances,array_max_dengue_lipid_headgroup_radial_distances,array_min_protein_distances,array_max_protein_distances,array_average_dengue_lipid_headgroup_radial_distances,array_std_dev_dengue_lipid_headgroup_radial_distances,array_dengue_lipid_headgroup_unbiased_midpoint_distances,array_dengue_lipid_headgroup_percent_above_midpoint_threshold,array_dengue_lipid_headgroup_percent_below_midpoint_threshold,array_frame_numbers):
+    def __init__(self,matplotlib_figure_object,list_frame_numbers_dengue,list_min_dengue_lipid_headgroup_distances,list_max_dengue_lipid_headgroup_distances,list_average_dengue_lipid_headgroup_distances,list_std_dev_dengue_lipid_headgroup_distances,list_dengue_lipid_headgroup_midpoint_distances,list_dengue_lipid_headgroup_percent_above_threshold,list_dengue_lipid_headgroup_percent_below_threshold,list_min_protein_distances,list_max_protein_distances, array_min_dengue_lipid_headgroup_radial_distances,array_max_dengue_lipid_headgroup_radial_distances,array_min_protein_distances,array_max_protein_distances,array_average_dengue_lipid_headgroup_radial_distances,array_std_dev_dengue_lipid_headgroup_radial_distances,array_dengue_lipid_headgroup_unbiased_midpoint_distances,array_dengue_lipid_headgroup_percent_above_midpoint_threshold,array_dengue_lipid_headgroup_percent_below_midpoint_threshold,array_frame_numbers, outfile_name = None):
 
         self.matplotlib_figure_object = matplotlib_figure_object
         #dengue data structure initialization:
@@ -531,6 +531,7 @@ class radial_distance_assessment_dengue:
         self.array_dengue_lipid_headgroup_percent_above_midpoint_threshold = array_dengue_lipid_headgroup_percent_above_midpoint_threshold
         self.array_dengue_lipid_headgroup_percent_below_midpoint_threshold = array_dengue_lipid_headgroup_percent_below_midpoint_threshold
         self.array_frame_numbers = array_frame_numbers
+        self.outfile_name = outfile_name
 
     def plot(self,title_string):
         '''Plot the dengue radial distance assessment data.'''
@@ -561,6 +562,8 @@ class radial_distance_assessment_dengue:
             axis.set_title(title_string)
 
         self.matplotlib_figure_object.set_size_inches(16,6)
+        if self.outfile_name is not None:
+            self.matplotlib_figure_object.savefig(self.outfile_name, dpi = 300, bbox_inches = 'tight')
 
 class radial_distance_assessment:
 
