@@ -322,7 +322,7 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         for axis in [ax_outer,ax_inner]:
             axis.set_ylim(90,101)
             axis.set_xlim(0,5)
-            axis.legend(loc=4)
+            #axis.legend(loc=4)
             axis.set_ylabel('Percent surface area reconstitution\n from Voronoi cells')
             axis.set_xlabel('Time ($\mu$s)')
             axis.set_title(simulation_title)
@@ -356,7 +356,7 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
             ax4.scatter(array_time_values,array_voronoi_cell_areas,label=residue_name,edgecolor='None',color=color)
             #ax2.fill_between(array_frame_numbers,array_voronoi_cell_areas-array_voronoi_cell_std_dev,array_voronoi_cell_areas+array_voronoi_cell_std_dev,color=color,alpha=0.2) 
             index += 1
-        ax4.legend()
+        #ax4.legend()
         ax4.set_ylabel('Average area per lipid ($\AA^2$)')
         ax4.set_xlim(0,5)
         ax4.set_xlabel('Time ($\mu$s)')
@@ -398,7 +398,7 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
             axis.set_xlim(0,5)
             axis.set_ylabel('Percent surface area reconstitution\n from Voronoi cells')
             axis.set_xlabel('Time ($\mu$s)')
-            axis.legend(loc=0,bbox_to_anchor=[1.0, 0.5],ncol=2,fontsize=8)
+            #axis.legend(loc=0,bbox_to_anchor=[1.0, 0.5],ncol=2,fontsize=8)
             axis.set_title(simulation_title)
 
         ax_2 = figure_object.add_subplot('143')
@@ -425,7 +425,7 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
             array_voronoi_cell_std_dev = numpy.array(subdictionary['voronoi_cell_std_values_list_inner_leaflet'])
             ax_4.scatter(array_time_values,array_voronoi_cell_areas,label=residue_name,edgecolor='None',color=color)
             index += 1
-        ax_4.legend(loc=0)
+        #ax_4.legend(loc=0)
         ax_4.set_ylabel('Average area per molecule ($\AA^2$)')
         ax_4.set_xlim(0,5)
         ax_4.set_ylim(20,200)
@@ -437,10 +437,18 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         figure_object.subplots_adjust(wspace = 0.5)
         figure_object.set_size_inches(8.5,3)
 
-        for axis in [ax_outer, ax_inner, ax2, ax4]:
-            axis.set_title(axis.get_title(), fontsize=6)
-            if axis == ax_outer or axis == ax_inner:
-                axis.legend(loc = 4, prop={'size':6}, scatterpoints=1)
+        if control_condition or not protein_present:
+            list_axes = [ax_outer, ax_inner, ax2, ax4]
+        else:
+            list_axes = [ax_1_outer, ax_1_inner, ax_2, ax_4]
+
+        list_axis_titles  = []
+        for axis in list_axes:
+            list_axis_titles.append(axis.get_title())
+            axis.set_title('', fontsize=0)
+            if axis == list_axes[1] or axis == list_axes[2]:
+                pass
+                #axis.legend(loc = 4, prop={'size':6}, scatterpoints=1)
             else:
                 if 'control_2' in output_file:
                     location = 4
@@ -455,9 +463,9 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         figure_object.savefig(output_file, dpi = 300, bbox_inches = 'tight')
 
         #reset values after producing images so I don't throw off the render in the Jupyter nb
-        for axis in [ax_outer, ax_inner, ax2, ax4]:
-            axis.set_title(axis.get_title(), fontdict=None)
-            if axis == ax_outer or axis == ax_inner:
+        for axis in list_axes:
+            axis.set_title(list_axis_titles.pop(0), fontdict=None)
+            if axis == list_axes[0] or axis == list_axes[1]:
                 axis.legend(loc = 4, prop={'size':10})
             else:
                 axis.legend(loc = 0, prop={'size':10})
