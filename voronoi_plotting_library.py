@@ -446,7 +446,10 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
         for axis in list_axes:
             list_axis_titles.append(axis.get_title())
             axis.set_title('', fontsize=0)
-            if axis == list_axes[1] or axis == list_axes[2]:
+            ylbl = axis.yaxis.get_label()
+            old_ylbl_fontsize = ylbl.get_fontsize()
+            ylbl.set_fontsize(6)
+            if axis == list_axes[1] or axis == list_axes[2] or axis == list_axes[0]:
                 pass
                 #axis.legend(loc = 4, prop={'size':6}, scatterpoints=1)
             else:
@@ -455,9 +458,6 @@ def area_per_molecule_plotting(figure_object,list_frame_numbers,list_percent_sur
                 else:
                     location = 0
                 axis.legend(loc = location, prop={'size':6}, scatterpoints=1)
-            ylbl = axis.yaxis.get_label()
-            old_ylbl_fontsize = ylbl.get_fontsize()
-            ylbl.set_fontsize(6)
                     
 
         figure_object.savefig(output_file, dpi = 300, bbox_inches = 'tight')
