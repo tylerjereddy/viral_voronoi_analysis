@@ -885,14 +885,13 @@ def plot_panel_fig_isolated_raw(dictionary_data_list, lipid_name,  plot_title, p
 def plot_panel_fig_aggregate_raw(dictionary_data_list, plot_title, plot_filename, time_value_list_microseconds):
     '''Plot one of the panels for figure aggregate_raw.'''
     fig = matplotlib.pyplot.figure()
-    subplots = ['131','132','133']
     if 'Flu' in plot_title:
         color_dict = {'POPS':'black','DOPE':'blue','CHOL':'green','PPCH':'red','DOPX':'purple','protein':'orange','FORS':'brown'}
     else:
         color_dict = {'POPC':'black','PPCE':'blue','DPPE':'green','CER':'red','DUPC':'purple','protein':'orange','DOPS':'brown','PPCS':'pink'}
     for dictionary_data, time_value in zip(dictionary_data_list, time_value_list_microseconds):
         legend_added = []
-        ax = fig.add_subplot(subplots.pop(0))
+        ax = fig.add_subplot('111')
         ax.set_ylim(0,300)
         ax.set_xlim(0,15)
         ax.set_title(plot_title + ' ' + str(time_value) + ' $\mu$s')
@@ -909,14 +908,14 @@ def plot_panel_fig_aggregate_raw(dictionary_data_list, plot_title, plot_filename
                     ax.scatter(neighbour_count,avg_surface_area, marker = 'o', c = color_dict[lipid_name], edgecolor='none', label = lipid_name)
                     legend_added.append(lipid_name)
 
-    ax.legend(loc=4, scatterpoints=1, bbox_to_anchor = [1.9, -0.3], ncol=2)
+    ax.legend(loc=4, scatterpoints=1, bbox_to_anchor = [1.6, -0.05], ncol=1)
 
     try:
         os.mkdir('./fig_aggregate_raw')
     except:
         pass
 
-    fig.set_size_inches(13.5, 1.5)
-    fig.subplots_adjust(left=0.05, wspace = 0.25, top = 0.72, bottom = 0.29, right = 0.8)
-    fig.savefig(os.path.join('./fig_aggregate_raw',plot_filename), dpi = 300)
+    fig.set_size_inches(4.2,4)
+    fig.subplots_adjust(left=0.15, wspace = 0.25, top = 0.72, bottom = 0.29, right = 0.68)
+    fig.savefig(os.path.join('./fig_aggregate_raw',plot_filename), dpi = 300, bbox_inches= 'tight')
 
